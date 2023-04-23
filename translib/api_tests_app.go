@@ -43,6 +43,26 @@ type apiTests struct {
 	echoErr string
 }
 
+func (app *apiTests) translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error) {
+	return nil, nil
+}
+
+func (app *apiTests) translateMDBGet(mdb db.MDB) error {
+	return nil
+}
+
+func (app *apiTests) processMDBReplace(numDB db.NumberDB) (SetResponse, error) {
+	return SetResponse{}, nil
+}
+
+func (app *apiTests) processMDBGet(mdb db.MDB) (GetResponse, error) {
+	return GetResponse{}, nil
+}
+
+func (app *apiTests) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
+	return nil, nil
+}
+
 func init() {
 	err := register("/api-tests:",
 		&appInfo{
@@ -81,7 +101,7 @@ func (app *apiTests) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return app.translatePath()
 }
 
-func (app *apiTests) translateAction(dbs [db.MaxDB]*db.DB) error {
+func (app *apiTests) translateAction(mdb db.MDB) error {
 	var req struct {
 		Input struct {
 			Message string `json:"message"`
@@ -137,7 +157,7 @@ func (app *apiTests) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	return gr, err
 }
 
-func (app *apiTests) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+func (app *apiTests) processAction(mdb db.MDB) (ActionResponse, error) {
 	var ar ActionResponse
 
 	err := app.getError()

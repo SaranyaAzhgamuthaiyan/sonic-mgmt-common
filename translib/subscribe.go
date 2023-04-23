@@ -34,9 +34,13 @@ import (
 	"sync"
 	"time"
 	"bytes"
+	"errors"
 	"strconv"
+	"fmt"
+	"strings"
+	"reflect"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
-	log "github.com/golang/glog"
+	"github.com/golang/glog"
 	"github.com/Workiva/go-datastructures/queue"
 )
 
@@ -49,11 +53,10 @@ type notificationInfo struct{
 	dbno				db.DBNum
 	needCache			bool
 	path				string
-	app				   *appInterface
-	appInfo			   *appInfo
-	cache			  []byte
-	sKey			   *db.SKey
-	dbs [db.MaxDB]	   *db.DB //used to perform get operations
+	app				    *appInterface
+	appInfo			    *appInfo
+	caches              map[string][]byte
+	sKey			    *db.SKey
 }
 
 type subscribeInfo struct{
@@ -103,91 +106,192 @@ func startDBSubscribe(opt db.Options, nInfoList []*notificationInfo, sInfo *subs
 		sMap[nInfo] = sInfo
 	}
 
-	sDB, err := db.SubscribeDB(opt, sKeyList, notificationHandler)
+	dbs, err := db.NewNumberDB(opt.DBNo, true)
+	if err != nil {
+		return err
+	}
 
-	if err == nil {
-		sInfo.sDBs = append(sInfo.sDBs, sDB)
-		cleanupMap[sDB] = sInfo
-	} else {
-		for i, nInfo := range nInfoList {
-			delete(nMap, sKeyList[i])
-			delete(sMap, nInfo)
+	for _, dbCl := range dbs {
+		err = db.SubscribeDB(dbCl, sKeyList, notificationHandler)
+		if err == nil {
+			sInfo.sDBs = append(sInfo.sDBs, dbCl)
+			cleanupMap[dbCl] = sInfo
+		} else {
+			for i, nInfo := range nInfoList {
+				delete(nMap, sKeyList[i])
+				delete(sMap, nInfo)
+			}
 		}
 	}
 
 	return err
 }
 
-func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) error {
-    log.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key,
-        " event: ", event)
-	switch event {
-	case db.SEventHSet, db.SEventHDel, db.SEventDel:
-		sMutex.Lock()
-		defer sMutex.Unlock()
+func getSubRelatedInfo(sKey *db.SKey) (*subscribeInfo, *notificationInfo, error) {
+	err := errors.New("get subscription related info failed")
 
-		if sKey != nil {
-			if nInfo, ok := nMap[sKey]; (ok && nInfo != nil) {
-				if sInfo, ok := sMap[nInfo]; (ok && sInfo != nil) {
-					isChanged := isCacheChanged(nInfo)
-
-					if isChanged {
-						sendNotification(sInfo, nInfo, false)
-					}
-				} else {
-					log.Info("sInfo not in map", sInfo)
-				}
-			} else {
-				log.Info("nInfo not in map", nInfo)
-			}
-		}
-	case db.SEventClose:
-	case db.SEventErr:
-		if sInfo, ok := cleanupMap[d]; (ok && sInfo != nil) {
-			nInfo := sInfo.nInfoArr[0]
-			if nInfo != nil {
-				sendNotification(sInfo, nInfo, true)
-			}
-		}
+	if sKey == nil {
+		return nil, nil, err
 	}
 
-    return nil
+	nInfo := nMap[sKey]
+	if nInfo == nil {
+		return nil, nil, err
+	}
+
+	sInfo := sMap[nInfo]
+	if sInfo == nil {
+		return nil, nil, err
+	}
+
+	return sInfo, nInfo, nil
 }
 
-func updateCache(nInfo *notificationInfo) error {
-	var err error
-
-	json, err1 := getJson (nInfo)
-
-	if err1 == nil {
-		nInfo.cache = json
-	} else {
-		log.Error("Failed to get the Json for the path = ", nInfo.path)
-		log.Error("Error returned = ", err1)
-
-		nInfo.cache = []byte("{}")
-	}
-
-	return err
-}
-
-func isCacheChanged(nInfo *notificationInfo) bool {
-	json, err := getJson (nInfo)
-
-    if err != nil {
-		json = []byte("{}")
-	}
-
-    if bytes.Equal(nInfo.cache, json) {
-		log.Info("Cache is same as DB")
-		return false
-	} else {
-		log.Info("Cache is NOT same as DB")
-		nInfo.cache = json
+func isPrecisePath(path string) bool {
+	if strings.Contains(path, "{") {
 		return true
 	}
 
 	return false
+}
+
+func getOnChangePrecisePath(subPath string, key *db.Key) string {
+	if isPrecisePath(subPath) {
+		return subPath
+	}
+
+	precisePath := subPath
+
+	supportedNodes := []struct {
+		moduleName string
+		listName []string
+		keyName []string
+		prefix []string
+	}{
+		// system
+		{
+			moduleName: "openconfig-system",
+			listName: []string{"alarm"},
+			keyName:  []string{"id"},
+			prefix:   []string{""},
+		},
+		// terminal-device
+		{
+			moduleName: "openconfig-terminal-device",
+			listName: []string{"channel", "neighbor"},
+			keyName:  []string{"index", "id"},
+			prefix:   []string{"CH", ""},
+		},
+		// platform
+		{
+			moduleName: "openconfig-platform",
+			listName: []string{"component", "channel"},
+			keyName:  []string{"name", "index"},
+			prefix:   []string{"", "CH-"},
+		},
+	}
+
+	for _, node := range supportedNodes {
+		if !strings.HasPrefix(subPath, "/" + node.moduleName) {
+			continue
+		}
+		for i, _ := range node.listName {
+			oldElmt := fmt.Sprintf("/%s/", node.listName[i])
+			if strings.Contains(subPath, oldElmt) {
+				mdlKey, err := getYangMdlKey(node.prefix[i], key.Get(i), reflect.TypeOf(""))
+				if err != nil {
+					glog.Errorf("construct path %s with key %v failed", subPath, mdlKey)
+					return ""
+				}
+				mdlKeyStr, _ := mdlKey.(string)
+				newElmt := fmt.Sprintf("/%s[%s=%s]/", node.listName[i], node.keyName[i], mdlKeyStr)
+				precisePath = strings.ReplaceAll(precisePath, oldElmt, newElmt)
+			}
+		}
+	}
+
+	return precisePath
+}
+
+func processOnChangePayload(nInfo *notificationInfo, precisePath string) ([]byte, bool) {
+	changed := false
+	tmpInfo := *nInfo
+
+	tmpInfo.path = precisePath
+
+	payload, err := getJson(&tmpInfo)
+	if err != nil {
+		glog.Errorf("get on-change payload failed as %v", err)
+		return nil, changed
+	}
+
+	if !nInfo.needCache || nInfo.caches == nil {
+		return payload, changed
+	}
+
+	cache := nInfo.caches[precisePath]
+	if cache == nil {
+		changed = true
+	} else {
+		changed = !bytes.Equal(cache, payload)
+	}
+
+	if changed {
+		nInfo.caches[precisePath] = payload
+	}
+
+	return payload, changed
+}
+
+func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) error {
+    glog.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key, " event: ", event)
+
+	sInfo, nInfo, err := getSubRelatedInfo(sKey)
+	if err != nil {
+		glog.Info(err)
+		return nil
+	}
+	precisePath := getOnChangePrecisePath(nInfo.path, key)
+
+	switch event {
+	case db.SEventHSet, db.SEventHDel:
+		sMutex.Lock()
+		defer sMutex.Unlock()
+
+		var payload []byte
+		if nInfo.table.Name == "HISEVENT" {
+			payload, err = getEventPayload(d, *key, nInfo)
+			if err != nil {
+				glog.Errorf("get event %s payload failed", key.String())
+				return err
+			}
+			precisePath = nInfo.path
+		} else {
+			newCache, changed := processOnChangePayload(nInfo, precisePath)
+			if !changed {
+				glog.Infof("data of %s is not changed", precisePath)
+				break
+			}
+			payload = newCache
+		}
+
+		onChangeQueuePushSingle(sInfo, precisePath, payload, false, false)
+	case db.SEventDel:
+		cache := nInfo.caches[precisePath]
+		if cache == nil {
+			break
+		}
+		onChangeQueuePushSingle(sInfo, precisePath, cache, false, true)
+		delete(nInfo.caches, precisePath)
+	case db.SEventClose:
+	case db.SEventErr:
+		cleanInfo := cleanupMap[d]
+		if cleanInfo != nil {
+			onChangeQueuePushSingle(cleanInfo, precisePath, nil, true, false)
+		}
+	}
+
+    return nil
 }
 
 func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*notificationInfo) error {
@@ -200,7 +304,7 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 
     for dbno, nInfoArr := range dbNotificationMap {
 		isWriteDisabled := true
-        opt := getDBOptions(dbno, isWriteDisabled)
+        opt := db.GetDBOptions(dbno, isWriteDisabled)
         err = startDBSubscribe(opt, nInfoArr, sInfo)
 
 		if err != nil {
@@ -212,18 +316,28 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
     }
 
     for i, nInfo := range sInfo.nInfoArr {
-        err = updateCache(nInfo)
-
-		if err != nil {
-			cleanup (sInfo.stop)
-            return err
-        }
-
 		if i == len(sInfo.nInfoArr)-1 {
 			sInfo.syncDone = true
 		}
 
-		sendNotification(sInfo, nInfo, false)
+		if nInfo.table.Name == "HISEVENT" {
+			continue
+		}
+
+		regexResp, err := getPayloadRegex(nInfo)
+		if err != nil {
+			cleanup (sInfo.stop)
+			return err
+		}
+
+		if nInfo.needCache && nInfo.caches == nil {
+			nInfo.caches = make(map[string][]byte)
+		}
+		for _, rsp := range regexResp {
+			nInfo.caches[rsp.Path] = rsp.Payload
+		}
+
+		onChangeQueuePushAll(sInfo, nInfo.caches)
     }
 	//printAllMaps()
 
@@ -245,41 +359,98 @@ func getJson (nInfo *notificationInfo) ([]byte, error) {
         return payload, err
     }
 
-	dbs := nInfo.dbs
+	mdb, err := db.GetMDBInstances(true)
+	if err != nil {
+		return payload, err
+	}
+	defer db.CloseMDBInstances(mdb)
 
-    err = (*app).translateGet (dbs)
+    err = (*app).translateMDBGet(mdb)
 
     if err != nil {
         return payload, err
     }
 
-    resp, err := (*app).processGet(dbs)
+    resp, err := (*app).processMDBGet(mdb)
 
     if err == nil {
-        payload = resp.Payload
+       payload = resp.Payload
     }
 
     return payload, err
 }
 
-func sendNotification(sInfo *subscribeInfo, nInfo *notificationInfo, isTerminated bool){
-	log.Info("Sending notification for sInfo = ", sInfo)
-	log.Info("payload = ", string(nInfo.cache))
-	log.Info("isTerminated", strconv.FormatBool(isTerminated))
+func getPayloadRegex(nInfo *notificationInfo) ([]GetResponseRegex, error) {
+	var resp []GetResponseRegex
+
+	app := nInfo.app
+	path := nInfo.path
+	appInfo := nInfo.appInfo
+
+	err := appInitialize(app, appInfo, path, nil, nil, GET)
+
+	if  err != nil {
+		return resp, err
+	}
+
+	mdb, err := db.GetMDBInstances(true)
+	if err != nil {
+		return resp, err
+	}
+	defer db.CloseMDBInstances(mdb)
+
+	err = (*app).translateMDBGet(mdb)
+
+	if err != nil {
+		return resp, err
+	}
+
+	resp, err = (*app).processGetRegex(mdb)
+
+	return resp, err
+}
+
+func FormatPayloadForGnmi(payload []byte) []byte {
+	//input: {"state":{"id":"PORT-1-1-C12#XCVRMISSING",...,"type-id":"XCVRMISSING"}}
+	//output: {"id":"PORT-1-1-C12#XCVRMISSING",...,"type-id":"XCVRMISSING"}
+	
+	if payload == nil {
+		return nil
+	}
+
+	tmp := string(payload)
+	start := strings.Index(tmp, ":") + 1
+	end := len(tmp) - 1
+	tmp = tmp[start:end]
+
+	return []byte(tmp)
+}
+
+func onChangeQueuePushSingle(sInfo *subscribeInfo, path string, payload []byte, isTerminated bool, isDel bool){
+	gnmiPayload := FormatPayloadForGnmi(payload)
+	glog.Infof("push notification for path = %s, isTerminated = %s  isDel = %s",
+		path, strconv.FormatBool(isTerminated), strconv.FormatBool(isDel))
 	sInfo.q.Put(&SubscribeResponse{
-			Path:nInfo.path,
-			Payload:nInfo.cache,
-			Timestamp:    time.Now().UnixNano(),
-			SyncComplete: sInfo.syncDone,
-			IsTerminated: isTerminated,
+		Path:         path,
+		Payload:      gnmiPayload,
+		Timestamp:    time.Now().UnixNano(),
+		SyncComplete: sInfo.syncDone,
+		IsTerminated: isTerminated,
+		IsDeleted:    isDel,
 	})
+}
+
+func onChangeQueuePushAll(sInfo *subscribeInfo, caches map[string][]byte) {
+	for k, v := range caches {
+		onChangeQueuePushSingle(sInfo, k, v, false, false)
+	}
 }
 
 func stophandler(stop chan struct{}) {
 	for {
 		select {
 		case <-stop:
-			log.Info("stop channel signalled")
+			glog.Info("stop channel signalled")
 		    sMutex.Lock()
 			defer sMutex.Unlock()
 
@@ -304,6 +475,11 @@ func cleanup(stop chan struct{}) {
 			delete(sMap, nInfo)
 		}
 
+		if sInfo.q != nil {
+			if !sInfo.q.Disposed() {
+				sInfo.q.Dispose()
+			}
+		}
 		delete(stopMap, stop)
 	}
 	//printAllMaps()
@@ -311,26 +487,26 @@ func cleanup(stop chan struct{}) {
 
 //Debugging functions
 func printnMap() {
-	log.Info("Printing the contents of nMap")
+	glog.Info("Printing the contents of nMap")
 	for sKey, nInfo := range nMap {
-		log.Info("sKey = ", sKey)
-		log.Info("nInfo = ", nInfo)
+		glog.Info("sKey = ", sKey)
+		glog.Info("nInfo = ", nInfo)
 	}
 }
 
 func printStopMap() {
-	log.Info("Printing the contents of stopMap")
+	glog.Info("Printing the contents of stopMap")
 	for stop, sInfo := range stopMap {
-		log.Info("stop = ", stop)
-		log.Info("sInfo = ", sInfo)
+		glog.Info("stop = ", stop)
+		glog.Info("sInfo = ", sInfo)
 	}
 }
 
 func printsMap() {
-	log.Info("Printing the contents of sMap")
+	glog.Info("Printing the contents of sMap")
 	for sInfo, nInfo := range sMap {
-		log.Info("nInfo = ", nInfo)
-		log.Info("sKey = ", sInfo)
+		glog.Info("nInfo = ", nInfo)
+		glog.Info("sKey = ", sInfo)
 	}
 }
 

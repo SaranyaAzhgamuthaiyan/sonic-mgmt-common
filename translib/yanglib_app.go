@@ -86,6 +86,26 @@ func (app *yanglibApp) initialize(data appData) {
 	app.ygotTarget = data.ygotTarget
 }
 
+func (app *yanglibApp) translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error) {
+	return nil, tlerr.NotSupported("Unsupported")
+}
+
+func (app *yanglibApp) translateMDBGet(mdb db.MDB) error {
+	return tlerr.NotSupported("Unsupported")
+}
+
+func (app *yanglibApp) translateGetRegex(mdb db.MDB) error {
+	return tlerr.NotSupported("Unsupported")
+}
+
+func (app *yanglibApp) processMDBReplace(numDB db.NumberDB) (SetResponse, error) {
+	return SetResponse{}, tlerr.NotSupported("Unsupported")
+}
+
+func (app *yanglibApp) processMDBGet(mdb db.MDB) (GetResponse, error) {
+	return GetResponse{}, tlerr.NotSupported("Unsupported")
+}
+
 func (app *yanglibApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
 	return nil, errors.NotSupported("Unsupported")
 }
@@ -106,7 +126,7 @@ func (app *yanglibApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	return nil // NOOP! everyting is in processGet
 }
 
-func (app *yanglibApp) translateAction(dbs [db.MaxDB]*db.DB) error {
+func (app *yanglibApp) translateAction(mdb db.MDB) error {
 	return errors.NotSupported("Unsupported")
 }
 
@@ -130,7 +150,7 @@ func (app *yanglibApp) processDelete(d *db.DB) (SetResponse, error) {
 	return SetResponse{}, errors.NotSupported("Unsupported")
 }
 
-func (app *yanglibApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
+func (app *yanglibApp) processAction(mdb db.MDB) (ActionResponse, error) {
 	return ActionResponse{}, errors.NotSupported("Unsupported")
 }
 
@@ -161,6 +181,11 @@ func (app *yanglibApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
 	}
 
 	return resp, err
+}
+
+func (app *yanglibApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
+	var err error
+	return nil, err
 }
 
 // copyOneModuleInfo fills one module from given ygot IETFYangLibrary_ModulesState

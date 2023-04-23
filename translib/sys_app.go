@@ -20,12 +20,16 @@ package translib
 
 import (
 	"errors"
-	log "github.com/golang/glog"
+	"fmt"
+	"github.com/Azure/sonic-mgmt-common/translib/db"
+	"github.com/Azure/sonic-mgmt-common/translib/ocbinds"
+	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
+	"github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strconv"
-	"github.com/Azure/sonic-mgmt-common/translib/db"
-	"github.com/Azure/sonic-mgmt-common/translib/ocbinds"
+	"strings"
+	"time"
 )
 
 type SysApp struct {
@@ -33,42 +37,33 @@ type SysApp struct {
 	reqData    []byte
 	ygotRoot   *ygot.GoStruct
 	ygotTarget *interface{}
-
-	dockerTs *db.TableSpec
-	procTs   *db.TableSpec
-
-	dockerTable map[string]dbEntry
-	procTable   map[uint64]dbEntry
 }
 
+const currentAlarmTabPrefix = "CURALARM"
+
 func init() {
-	log.Info("SysApp: Init called for System module")
+	glog.V(3).Info("SysApp: Init called for System module")
 	err := register("/openconfig-system:system",
 		&appInfo{appType: reflect.TypeOf(SysApp{}),
 			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigSystem_System{}),
 			isNative:     false})
 	if err != nil {
-		log.Fatal("SysApp:  Register System app module with App Interface failed with error=", err)
+		glog.Fatal("SysApp:  Register openconfig-system:system with App Interface failed with error=", err)
 	}
 
 	err = addModel(&ModelData{Name: "openconfig-system",
 		Org: "OpenConfig working group",
 		Ver: "1.0.2"})
 	if err != nil {
-		log.Fatal("SysApp:  Adding model data to appinterface failed with error=", err)
+		glog.Fatal("SysApp:  Adding model data to appinterface failed with error=", err)
 	}
 }
 
 func (app *SysApp) initialize(data appData) {
-	log.Info("SysApp: initialize:if:path =", data.path)
-
 	app.path = NewPathInfo(data.path)
 	app.reqData = data.payload
 	app.ygotRoot = data.ygotRoot
 	app.ygotTarget = data.ygotTarget
-
-	app.dockerTs = &db.TableSpec{Name: "DOCKER_STATS"}
-	app.procTs = &db.TableSpec{Name: "PROCESS_STATS"}
 }
 
 func (app *SysApp) getAppRootObject() *ocbinds.OpenconfigSystem_System {
@@ -76,15 +71,42 @@ func (app *SysApp) getAppRootObject() *ocbinds.OpenconfigSystem_System {
 	return deviceObj.System
 }
 
-func (app *SysApp) translateAction(dbs [db.MaxDB]*db.DB) error {
-    err := errors.New("Not supported")
-    return err
+func (app *SysApp) translateAction(mdb db.MDB) error {
+	glog.V(3).Info("SysApp translateAction called")
+	return nil
 }
 
 func (app *SysApp) translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error) {
-	var err error
 
-	return nil, nil, err
+	var notifInfo notificationInfo
+	var tblName string
+	var dbKey db.Key
+	var dbNum db.DBNum
+
+	if strings.Contains(path, "system/state") || strings.Contains(path, "system/clock") {
+		tblName = "DEVICE_METADATA"
+		dbKey = asKey("localhost")
+		dbNum = db.ConfigDB
+	} else if strings.Contains(path, "/alarm/state") {
+		tblName = currentAlarmTabPrefix
+		dbKey = asKey("*")
+		dbNum = db.StateDB
+	} else if strings.Contains(path, "/cpu/state") {
+		tblName = "CPU"
+		dbKey = asKey("*")
+		dbNum = db.StateDB
+	} else {
+		glog.Errorf("Subscribe not supported for path %s", path)
+		notSupported := tlerr.NotSupportedError{Format: "Subscribe not supported", Path: path}
+		return nil, nil, notSupported
+	}
+
+	notifInfo = notificationInfo{dbno: dbNum}
+	notifInfo.table = db.TableSpec{Name: tblName}
+	notifInfo.key = dbKey
+	notifInfo.needCache = true
+
+	return &notificationOpts{isOnChangeSupported: true, pType: OnChange}, &notifInfo, nil
 }
 
 func (app *SysApp) translateCreate(d *db.DB) ([]db.WatchKeys, error) {
@@ -105,7 +127,15 @@ func (app *SysApp) translateUpdate(d *db.DB) ([]db.WatchKeys, error) {
 func (app *SysApp) translateReplace(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
-	err = errors.New("Not implemented SysApp translateReplace")
+	return keys, err
+}
+
+func (app *SysApp) translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error)  {
+	var err error
+	var keys []db.WatchKeys
+
+	glog.V(3).Info("SysApp: translateMDBReplace - path: ", app.path.Path)
+
 	return keys, err
 }
 
@@ -113,14 +143,20 @@ func (app *SysApp) translateDelete(d *db.DB) ([]db.WatchKeys, error) {
 	var err error
 	var keys []db.WatchKeys
 
-	err = errors.New("Not implemented SysApp translateDelete")
 	return keys, err
 }
 
 func (app *SysApp) translateGet(dbs [db.MaxDB]*db.DB) error {
 	var err error
-	log.Info("SysApp: translateGet:intf:path =", app.path)
 	return err
+}
+
+func (app *SysApp) translateMDBGet(mdb db.MDB) error  {
+	return nil
+}
+
+func (app *SysApp) translateGetRegex(mdb db.MDB) error  {
+	return nil
 }
 
 func (app *SysApp) processCreate(d *db.DB) (SetResponse, error) {
@@ -142,213 +178,535 @@ func (app *SysApp) processUpdate(d *db.DB) (SetResponse, error) {
 func (app *SysApp) processReplace(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
-	err = errors.New("Not implemented, SysApp processReplace")
+
+	err = errors.New("Not implemented SysApp processReplace")
 	return resp, err
+}
+
+func (app *SysApp) processMDBReplace(numDB db.NumberDB) (SetResponse, error) {
+	var resp SetResponse
+	glog.V(3).Info("processMDBReplace:system:path =", app.path)
+
+	system := app.getAppRootObject()
+	if system.Config != nil {
+		data := convertRequestBodyToInternal(system.Config)
+		if !data.IsPopulated() {
+			resp = SetResponse{ErrSrc: AppErr}
+		}
+
+		err := numDB["host"].ModEntry(asTableSpec("DEVICE_METADATA"), asKey("localhost"), data)
+		if err != nil {
+			return resp, err
+		}
+
+		if system.Config.Hostname != nil {
+			data := db.Value{Field: map[string]string{
+				"hostname" : *system.Config.Hostname,
+			}}
+
+			for dbName, d := range numDB {
+				if !strings.HasPrefix(dbName, "asic") {
+					continue
+				}
+				tmp, err := strconv.Atoi(dbName[len("asic"):])
+				if err != nil {
+					return resp, err
+				}
+				slotNum := tmp + 1
+				ts := asTableSpec("LINECARD")
+				key := asKey("LINECARD-1-" + strconv.Itoa(slotNum))
+				// sync hostname to linecard if the type is P230C
+				linecardType, _ := getTableFieldStringValue(d, ts, key, "linecard-type")
+				if linecardType == "P230C" {
+					err = d.ModEntry(ts, key, data)
+					if err != nil {
+						return resp, err
+					}
+				}
+			}
+		}
+	}
+
+	if system.Ntp != nil && system.Ntp.Config != nil {
+		data := convertRequestBodyToInternal(system.Ntp.Config)
+		if !data.IsPopulated() {
+			resp = SetResponse{ErrSrc: AppErr}
+		}
+
+		err := numDB["host"].ModEntry(asTableSpec("NTP"), asKey("global"), data)
+		if err != nil {
+			return resp, err
+		}
+		numDB["host"].PersistConfigData("host")
+	}
+
+	if system.Ntp != nil && system.Ntp.Servers != nil {
+		for addr, server := range system.Ntp.Servers.Server {
+			data := convertRequestBodyToInternal(server.Config)
+			if !data.IsPopulated() {
+				resp = SetResponse{ErrSrc: AppErr}
+			}
+
+			// add default values
+			if !data.Has("prefer") { data.Set("prefer", "false") }
+			if !data.Has("iburst") { data.Set("iburst", "false") }
+			if !data.Has("association-type") { data.Set("association-type", "SERVER") }
+
+			err := numDB["host"].ModEntry(asTableSpec("NTP_SERVER"), asKey(addr), data)
+			if err != nil {
+				return resp, err
+			}
+		}
+
+		numDB["host"].PersistConfigData("host")
+	}
+
+	return resp, nil
 }
 
 func (app *SysApp) processDelete(d *db.DB) (SetResponse, error) {
 	var err error
 	var resp SetResponse
 
-	err = errors.New("Not implemented SysApp processDelete")
+	system := app.getAppRootObject()
+	if system != nil && system.Ntp != nil  && system.Ntp.Servers != nil {
+		for addr, _ := range system.Ntp.Servers.Server {
+			err = d.DeleteEntry(asTableSpec("NTP_SERVER"), asKey(addr))
+			if err != nil {
+				return resp, err
+			}
+		}
+	}
+	d.PersistConfigData("host")
+
 	return resp, err
 }
 
-type ProcessState struct {
-	Args              []string
-	CpuUsageSystem    uint64
-	CpuUsageUser      uint64
-	CpuUtilization    uint8
-	MemoryUsage       uint64
-	MemoryUtilization uint8
-	Name              string
-	Pid               uint64
-	StartTime         uint64
-	Uptime            uint64
-}
-
-func (app *SysApp) getSystemProcess(sysproc *ocbinds.OpenconfigSystem_System_Processes_Process, pid uint64) {
-
-	log.Info("getSystemProcess pid=", pid)
-
-	e := app.procTable[pid].entry
-
-	var procstate ProcessState
-
-	procstate.CpuUsageUser = 0
-	procstate.CpuUsageSystem = 0
-	procstate.MemoryUsage = 0
-	f, _ := strconv.ParseFloat(e.Get("%MEM"), 32)
-	procstate.MemoryUtilization = uint8(f)
-	f, _ = strconv.ParseFloat(e.Get("%CPU"), 32)
-	procstate.CpuUtilization = uint8(f)
-	procstate.Name = e.Get("CMD")
-	procstate.Pid = pid
-	procstate.StartTime = 0
-	procstate.Uptime = 0
-
-	targetUriPath, perr := getYangPathFromUri(app.path.Path)
-	if perr != nil {
-		log.Infof("getYangPathFromUri failed.")
-		return
-	}
-
-	ygot.BuildEmptyTree(sysproc)
-
-	switch targetUriPath {
-
-	case "/openconfig-system:system/processes/process/state/name":
-		sysproc.State.Name = &procstate.Name
-	case "/openconfig-system:system/processes/process/state/args":
-	case "/openconfig-system:system/processes/process/state/start-time":
-		sysproc.State.StartTime = &procstate.StartTime
-	case "/openconfig-system:system/processes/process/state/uptime":
-		sysproc.State.Uptime = &procstate.Uptime
-	case "/openconfig-system:system/processes/process/state/cpu-usage-user":
-		sysproc.State.CpuUsageUser = &procstate.CpuUsageUser
-	case "/openconfig-system:system/processes/process/state/cpu-usage-system":
-		sysproc.State.CpuUsageSystem = &procstate.CpuUsageSystem
-	case "/openconfig-system:system/processes/process/state/cpu-utilization":
-		sysproc.State.CpuUtilization = &procstate.CpuUtilization
-	case "/openconfig-system:system/processes/process/state/memory-usage":
-		sysproc.State.MemoryUsage = &procstate.MemoryUsage
-	case "/openconfig-system:system/processes/process/state/memory-utilization":
-		sysproc.State.MemoryUtilization = &procstate.MemoryUtilization
-	default:
-		sysproc.Pid = &procstate.Pid
-		sysproc.State.CpuUsageSystem = &procstate.CpuUsageSystem
-		sysproc.State.CpuUsageUser = &procstate.CpuUsageUser
-		sysproc.State.CpuUtilization = &procstate.CpuUtilization
-		sysproc.State.MemoryUsage = &procstate.MemoryUsage
-		sysproc.State.MemoryUtilization = &procstate.MemoryUtilization
-		sysproc.State.Name = &procstate.Name
-		sysproc.State.Pid = &procstate.Pid
-		sysproc.State.StartTime = &procstate.StartTime
-		sysproc.State.Uptime = &procstate.Uptime
-	}
-}
-
-func (app *SysApp) getSystemProcesses(sysprocs *ocbinds.OpenconfigSystem_System_Processes, ispid bool) {
-	log.Infof("getSystemProcesses Entry")
-
-	if ispid == true {
-		pid, _ := app.path.IntVar("pid")
-		sysproc := sysprocs.Process[uint64(pid)]
-
-		app.getSystemProcess(sysproc, uint64(pid))
-
-	} else {
-
-		for pid, _ := range app.procTable {
-			sysproc, err := sysprocs.NewProcess(pid)
-			if err != nil {
-				log.Infof("sysprocs.NewProcess failed")
-				return
-			}
-
-			app.getSystemProcess(sysproc, pid)
-		}
-	}
-	return
-}
-
 func (app *SysApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
-	log.Info("SysApp: processGet Path: ", app.path.Path)
-
-	stateDb := dbs[db.StateDB]
-
+	var err error
 	var payload []byte
-	empty_resp := GetResponse{Payload: payload}
+	err = errors.New("Not implemented SysApp processGet")
 
-	// Read docker info from DB
-
-	app.dockerTable = make(map[string]dbEntry)
-
-	tbl, err := stateDb.GetTable(app.dockerTs)
-	if err != nil {
-		log.Error("DOCKER_STATS table get failed!")
-		return empty_resp, err
-	}
-
-	keys, _ := tbl.GetKeys()
-	for _, key := range keys {
-		e, err := tbl.GetEntry(key)
-		if err != nil {
-			log.Error("DOCKER_STATS entry get failed!")
-			return empty_resp, err
-		}
-
-		app.dockerTable[key.Get(0)] = dbEntry{entry: e}
-	}
-
-	// Read process info from DB
-
-	app.procTable = make(map[uint64]dbEntry)
-
-	tbl, err = stateDb.GetTable(app.procTs)
-	if err != nil {
-		log.Error("PROCESS_STATS table get failed!")
-		return empty_resp, err
-	}
-
-	keys, _ = tbl.GetKeys()
-	for _, key := range keys {
-		e, err := tbl.GetEntry(key)
-		if err != nil {
-			log.Error("PROCESS_STATS entry get failed!")
-			return empty_resp, err
-		}
-
-		pid, _ := strconv.ParseUint(key.Get(0), 10, 64)
-		app.procTable[pid] = dbEntry{entry: e}
-	}
-
-	sysObj := app.getAppRootObject()
-
-	targetUriPath, perr := getYangPathFromUri(app.path.Path)
-	if perr != nil {
-		log.Infof("getYangPathFromUri failed.")
-		return GetResponse{Payload: payload}, perr
-	}
-
-	log.Info("targetUriPath : ", targetUriPath, "Args: ", app.path.Vars)
-
-	if isSubtreeRequest(targetUriPath, "/openconfig-system:system/processes") {
-		if targetUriPath == "/openconfig-system:system/processes" {
-			ygot.BuildEmptyTree(sysObj)
-			app.getSystemProcesses(sysObj.Processes, false)
-			payload, err = dumpIetfJson(sysObj, false)
-		} else if targetUriPath == "/openconfig-system:system/processes/process" {
-			pid, perr := app.path.IntVar("pid")
-			if perr == nil {
-				if pid == 0 {
-					ygot.BuildEmptyTree(sysObj)
-					app.getSystemProcesses(sysObj.Processes, false)
-					payload, err = dumpIetfJson(sysObj.Processes, false)
-				} else {
-					app.getSystemProcesses(sysObj.Processes, true)
-					payload, err = dumpIetfJson(sysObj.Processes, false)
-				}
-			}
-		} else if targetUriPath == "/openconfig-system:system/processes/process/state" {
-			pid, _ := app.path.IntVar("pid")
-			app.getSystemProcesses(sysObj.Processes, true)
-			payload, err = dumpIetfJson(sysObj.Processes.Process[uint64(pid)], true)
-		} else if isSubtreeRequest(targetUriPath, "/openconfig-system:system/processes/process/state") {
-			pid, _ := app.path.IntVar("pid")
-			app.getSystemProcesses(sysObj.Processes, true)
-			payload, err = dumpIetfJson(sysObj.Processes.Process[uint64(pid)].State, true)
-		}
-	} else {
-		return GetResponse{Payload: payload}, errors.New("Not implemented processGet, path: ")
-	}
 	return GetResponse{Payload: payload}, err
 }
 
-func (app *SysApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
-    var resp ActionResponse
-    err := errors.New("Not implemented")
+func (app *SysApp) processMDBGet(mdb db.MDB) (GetResponse, error) {
+	var err error
+	var payload []byte
+	glog.V(3).Info("SysApp: processMDBGet Path: ", app.path.Path)
 
-    return resp, err
+	sys := app.getAppRootObject()
+	err = app.buildSystem(mdb, sys)
+	if err != nil {
+		goto errRet
+	}
+
+	payload, err = generateGetResponsePayload(app.path.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+	if err != nil {
+		goto errRet
+	}
+
+	return GetResponse{Payload: payload}, err
+
+errRet:
+	glog.Errorf("SysApp processMDBGet failed: %v", err)
+	return GetResponse{Payload: payload, ErrSrc: AppErr}, err
 }
 
+func (app *SysApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
+	var err error
+	var payload []byte
+	var resp []GetResponseRegex
+	var pathWithKey []string
+	glog.V(3).Info("SysApp: processGetRegex Path: ", app.path.Path)
+
+	sys := app.getAppRootObject()
+	err = app.buildSystem(mdb, sys)
+	if err != nil {
+		return resp, err
+	}
+
+	// 需要将模糊匹配的xpath补上具体的key
+	if strings.Contains(app.path.Path, "/alarm/state") {
+		params := &regexPathKeyParams{
+			tableName:    currentAlarmTabPrefix,
+			listNodeName: []string{"alarm"},
+			keyName:      []string{"id"},
+			redisPrefix:  []string{""},
+		}
+		pathWithKey = constructRegexPathWithKey(mdb, db.StateDB, app.path.Path, params)
+	} else if strings.Contains(app.path.Path, "/cpu/state") {
+		keys, err := db.GetTableKeysByDbNum(mdb, asTableSpec("CPU"), db.CountersDB)
+		if err != nil {
+			goto errRet
+		}
+		keyMap := getCpuIndexWithPrefix(keys)
+		for k, _ := range keyMap {
+			indexStr := k[len("CPU-"):]
+			newStr := fmt.Sprintf("/cpu[index=%s]/", indexStr)
+			p := app.path.Path
+			p = strings.ReplaceAll(p, "/cpu/", newStr)
+			pathWithKey = append(pathWithKey, p)
+		}
+	} else {
+		pathWithKey = []string{app.path.Path}
+	}
+
+	for _, path := range pathWithKey {
+		payload, err = generateGetResponsePayload(path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
+		if err != nil {
+			goto errRet
+		}
+
+		resp = append(resp, GetResponseRegex{Payload: payload, Path: path})
+	}
+
+	return resp, err
+
+errRet:
+	glog.Errorf("SysApp process get regex failed: %v", err)
+	return []GetResponseRegex{{Payload: payload, ErrSrc: AppErr}}, err
+}
+
+func (app *SysApp) processAction(mdb db.MDB) (ActionResponse, error) {
+	return ActionResponse{}, nil
+}
+
+func publishRebootChannel(d *db.DB, slot string, method string) error {
+	channel := "LINECARD_NOTIFICATION"
+	cardName := "LINECARD-1-" + strings.Split(slot, "-")[1]
+	field := "reset"
+	message := fmt.Sprintf("[\"set\",\"%s\",\"%s\",\"%s\"]", cardName, field, method)
+	glog.Infof("publish %s %s", channel, message)
+	return d.Publish(channel, message)
+}
+
+func (app *SysApp) buildSystem(mdb db.MDB, system *ocbinds.OpenconfigSystem_System) error {
+	data := db.Value{Field: map[string]string{}}
+	var err error
+	var tmp string
+	metaTs := asTableSpec("DEVICE_METADATA")
+	metaKey := asKey("localhost")
+
+	defaultDb := mdb["host"]
+	tmp, err = getTableFieldStringValue(defaultDb[db.ConfigDB], metaTs, metaKey, "hostname")
+	if err != nil {
+		return err
+	}
+	data.Set("hostname", tmp)
+	data.Set("current-datetime", time.Now().Format("2006-01-02T15:04:05Z-07:00"))
+
+	tmp, err = getTableFieldStringValue(defaultDb[db.ConfigDB], metaTs, metaKey, "timezone")
+	if err != nil {
+		return err
+	}
+	data.Set("timezone-name", tmp)
+
+	ygot.BuildEmptyTree(system)
+	buildGoStruct(system.Config, data)
+	buildGoStruct(system.State, data)
+
+	ygot.BuildEmptyTree(system.Clock)
+	if needQuery(app.path.Path, system.Clock) {
+		buildGoStruct(system.Clock.Config, data)
+		buildGoStruct(system.Clock.State, data)
+	}
+
+	err = app.buildAlarms(mdb, system.Alarms)
+	if err != nil {
+		return err
+	}
+
+	err = app.buildCpus(mdb, system.Cpus)
+	if err != nil {
+		return err
+	}
+
+	err = app.buildNtp(mdb, system.Ntp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getResourceById(id string) string {
+	if !strings.Contains(id, "#") {
+		return id
+	}
+
+	resource := id[:strings.Index(id, "#")]
+
+	return resource
+}
+
+func (app *SysApp) buildAlarms(mdb db.MDB, alarms *ocbinds.OpenconfigSystem_System_Alarms) error {
+	var err error
+
+	if !needQuery(app.path.Path, alarms) {
+		return nil
+	}
+
+	ts := &db.TableSpec{Name: "CURALARM"}
+	inputKey := app.path.Var("id")
+	if alarms.Alarm != nil && len(inputKey) > 0 {
+		dbName := db.GetMDBNameFromEntity(getResourceById(inputKey))
+		dbs := mdb[dbName]
+		return buildAlarm(dbs, alarms.Alarm[inputKey], asKey(inputKey))
+	}
+
+	keys, _ := db.GetTableKeysByDbNum(mdb, ts, db.StateDB)
+	if len(keys) == 0 {
+		return nil
+	}
+
+	for _, tblKey := range keys {
+		id := tblKey.Get(0)
+		alarm, err := alarms.NewAlarm(id)
+		if err != nil {
+			return err
+		}
+
+		dbName := db.GetMDBNameFromEntity(getResourceById(id))
+		err = buildAlarm(mdb[dbName], alarm, asKey(id))
+		if err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+func buildAlarm(dbs [db.MaxDB]*db.DB, alarm *ocbinds.OpenconfigSystem_System_Alarms_Alarm, key db.Key) error {
+	stateDbCl := dbs[db.StateDB]
+	ts := asTableSpec(currentAlarmTabPrefix)
+
+	ygot.BuildEmptyTree(alarm)
+	data, err := getRedisData(stateDbCl, ts, key)
+	if err != nil {
+		return err
+	}
+	if len(data.Field) > 0 {
+		buildGoStruct(alarm.State, data)
+	}
+
+	typeId := data.Get("type-id")
+	if len(typeId) > 0 {
+		var val interface{}
+		tmp, err := strconv.ParseInt(typeId, 10, 64)
+		if err == nil {
+			enum := ocbinds.E_OpenconfigAlarmTypes_OPENCONFIG_ALARM_TYPE_ID(tmp)
+			lookup, ok := enum.ΛMap()[reflect.TypeOf(enum).Name()]
+			if !ok {
+				return tlerr.InvalidArgs("%s has invalid value %d", reflect.TypeOf(enum).Name(), tmp)
+			}
+			_, ok = lookup[tmp]
+			if !ok {
+				return tlerr.InvalidArgs("%s has invalid value %d", reflect.TypeOf(enum).Name(), tmp)
+			}
+			val = enum
+		} else {
+			val = typeId
+		}
+
+		alarm.State.TypeId, err = alarm.State.To_OpenconfigSystem_System_Alarms_Alarm_State_TypeId_Union(val)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func getCpuIndexWithPrefix(keys []db.Key) map[string]bool {
+	keyMap := make(map[string]bool)
+	for _, k := range keys {
+		fstKey := k.Get(0)
+		elmts := strings.Split(fstKey, "_")
+		indexWithPrefix := elmts[0]
+		keyMap[indexWithPrefix] = true
+	}
+
+	return keyMap
+}
+
+func (app *SysApp) buildCpus(mdb db.MDB, cpus *ocbinds.OpenconfigSystem_System_Cpus) error {
+	if !needQuery(app.path.Path, cpus) {
+		return nil
+	}
+
+	cpuTmp := &ocbinds.OpenconfigSystem_System_Cpus_Cpu{}
+	ts := asTableSpec("CPU")
+	keys, _ := db.GetTableKeysByDbNum(mdb, ts, db.CountersDB)
+	if len(keys) == 0 {
+		return nil
+	}
+	keyMap := getCpuIndexWithPrefix(keys)
+
+	inputKey := app.path.Var("index")
+	if cpus.Cpu != nil && len(inputKey) > 0 {
+		indexWithPrefix := "CPU-" + inputKey
+		if _, ok := keyMap[indexWithPrefix]; !ok {
+			return tlerr.NotFound("table %s with key %s does not exist in db %d", ts.Name, inputKey, db.CountersDB)
+		}
+		dbName := db.GetMDBNameFromEntity(inputKey)
+		for _, v := range cpus.Cpu {
+			return buildCpu(mdb[dbName], v, asKey(indexWithPrefix))
+		}
+	}
+
+	for k, _ := range keyMap {
+		tmp, err := getYangMdlKey("CPU-", k, reflect.TypeOf(uint32(0)))
+		if err != nil {
+			return err
+		}
+
+		indexUnion, _ := cpuTmp.To_OpenconfigSystem_System_Cpus_Cpu_State_Index_Union(tmp)
+		cpu, err := cpus.NewCpu(indexUnion)
+		if err != nil {
+			return err
+		}
+
+		dbName := db.GetMDBNameFromEntity(k)
+		err = buildCpu(mdb[dbName], cpu, asKey(k))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func buildCpu(dbs [db.MaxDB]*db.DB, cpu *ocbinds.OpenconfigSystem_System_Cpus_Cpu, key db.Key) error {
+	countersDbCl := dbs[db.CountersDB]
+	ts := asTableSpec("CPU")
+
+	ygot.BuildEmptyTree(cpu)
+	tmp, err := getYangMdlKey("CPU-", key.Get(0), reflect.TypeOf(uint32(0)))
+	if err != nil {
+		return err
+	}
+    indexUint32, _ := tmp.(uint32)
+	cpu.State.Index = &ocbinds.OpenconfigSystem_System_Cpus_Cpu_State_Index_Union_Uint32{Uint32: indexUint32}
+
+	ygot.BuildEmptyTree(cpu.State)
+	return buildEnclosedCountersNodes(cpu.State, countersDbCl, ts, key)
+}
+
+func (app *SysApp) buildNtp(mdb db.MDB, ntp *ocbinds.OpenconfigSystem_System_Ntp) error {
+
+	if !needQuery(app.path.Path, ntp) {
+		return nil
+	}
+
+	ts := asTableSpec("NTP")
+	key := asKey("global")
+
+	ygot.BuildEmptyTree(ntp)
+	if data, err := getRedisData(mdb["host"][db.ConfigDB], ts, key); err == nil {
+		buildGoStruct(ntp.Config, data)
+	}
+
+	if data, err := getRedisData(mdb["host"][db.StateDB], ts, key); err == nil {
+		buildGoStruct(ntp.State, data)
+	}
+
+	return app.buildNtpServers(mdb["host"], ntp.Servers)
+}
+
+func (app *SysApp) buildNtpServers(dbs [db.MaxDB]*db.DB, servers *ocbinds.OpenconfigSystem_System_Ntp_Servers) error {
+	ts := asTableSpec("NTP_SERVER")
+	inputKey := app.path.Var("address")
+	if servers.Server != nil && len(inputKey) > 0 {
+		return buildNtpServer(dbs, servers.Server[inputKey], asKey(inputKey))
+	}
+
+	keys, err := dbs[db.ConfigDB].GetKeys(ts)
+	if err != nil {
+		glog.Errorf("get table %s keys from %s failed as %v", ts.Name, dbs[db.ConfigDB].String(), err)
+		return err
+	}
+
+	for _, k := range keys {
+		addr := k.Get(0)
+		s, err1 := servers.NewServer(addr)
+		if err1 != nil {
+			return err1
+		}
+
+		err1 = buildNtpServer(dbs, s, k)
+		if err1 != nil {
+			return err1
+		}
+	}
+	return nil
+}
+
+func buildNtpServer(dbs [db.MaxDB]*db.DB, server *ocbinds.OpenconfigSystem_System_Ntp_Servers_Server, key db.Key) error {
+	ygot.BuildEmptyTree(server)
+	ts := asTableSpec("NTP_SERVER")
+	if data, err := getRedisData(dbs[db.ConfigDB], ts, key); err == nil {
+		buildGoStruct(server.Config, data)
+		buildGoStruct(server.State, data)
+	} else {
+		return err
+	}
+
+	if data, err := getRedisData(dbs[db.StateDB], ts, key); err == nil {
+		buildGoStruct(server.State, data)
+	}
+
+	return nil
+}
+
+func getEventPayload(d *db.DB, key db.Key, nInfo *notificationInfo) ([]byte, error) {
+	var payload []byte
+	ts := asTableSpec("HISEVENT")
+
+	device := &ocbinds.Device{System: &ocbinds.OpenconfigSystem_System{
+		Alarms: &ocbinds.OpenconfigSystem_System_Alarms{
+		},
+	}}
+
+	data, err := getRedisData(d, ts, key)
+	if err != nil {
+		return payload, err
+	}
+	id := data.Get("id")
+	if len(id) == 0 {
+		return payload, errors.New("the event data has no field named id")
+	}
+	alarm, _ := device.System.Alarms.NewAlarm(id)
+	ygot.BuildEmptyTree(alarm)
+	buildGoStruct(alarm.State, data)
+
+	nInfo.path = fmt.Sprintf("/openconfig-system:system/alarms/alarm[id=%s]/state", id)
+	payload, err = generateGetResponsePayload(nInfo.path, device, nil)
+	if err != nil {
+		glog.Errorf("encode event to json failed as %v", err)
+		return payload, err
+	}
+
+	return payload, nil
+}
+
+func GetSystemHostname() string {
+	var hostname string
+	metaTs := asTableSpec("DEVICE_METADATA")
+	metaKey := asKey("localhost")
+
+	d, err := db.NewDBForMultiAsic(db.GetDBOptions(db.ConfigDB, true), "host")
+	if err != nil {
+		goto error
+	}
+
+	hostname, err = getTableFieldStringValue(d, metaTs, metaKey, "hostname")
+	if err != nil {
+		goto error
+	}
+
+	return hostname
+
+error:
+	return "sonic"
+}

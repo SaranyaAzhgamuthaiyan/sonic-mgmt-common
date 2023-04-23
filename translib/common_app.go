@@ -48,6 +48,30 @@ type CommonApp struct {
 	appOptions
 }
 
+func (app *CommonApp) translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error) {
+	return nil, tlerr.NotSupported("Unsupported")
+}
+
+func (app *CommonApp) translateMDBGet(mdb db.MDB) error {
+	return tlerr.NotSupported("Unsupported")
+}
+
+func (app *CommonApp) translateGetRegex(mdb db.MDB) error {
+	return tlerr.NotSupported("Unsupported")
+}
+
+func (app *CommonApp) processMDBReplace(numDB db.NumberDB) (SetResponse, error) {
+	return SetResponse{}, tlerr.NotSupported("Unsupported")
+}
+
+func (app *CommonApp) processMDBGet(mdb db.MDB) (GetResponse, error) {
+	return GetResponse{}, tlerr.NotSupported("Unsupported")
+}
+
+func (app *CommonApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
+	return nil, tlerr.NotSupported("Unsupported")
+}
+
 var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
 	ygotRootType:  nil,
 	isNative:      false,

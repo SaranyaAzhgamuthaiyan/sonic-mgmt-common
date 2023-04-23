@@ -221,6 +221,10 @@ func asKey(parts ...string) db.Key {
 	return db.Key{Comp: parts}
 }
 
+func asTableSpec(name string) *db.TableSpec {
+	return &db.TableSpec{Name: name}
+}
+
 func createEmptyDbValue(fieldName string) db.Value {
 	return db.Value{Field: map[string]string{fieldName: ""}}
 }

@@ -31,11 +31,11 @@ package translib
 
 import (
 	"errors"
-	log "github.com/golang/glog"
+	"github.com/Azure/sonic-mgmt-common/translib/db"
+	"github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strings"
-	"github.com/Azure/sonic-mgmt-common/translib/db"
 )
 
 //Structure containing app module information
@@ -83,20 +83,26 @@ type appInterface interface {
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
-	translateAction(dbs [db.MaxDB]*db.DB) error
+	translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error)
+	translateMDBGet(mdb db.MDB) error
+	translateGetRegex(mdb db.MDB) error
+	translateAction(mdb db.MDB) error
 	translateSubscribe(dbs [db.MaxDB]*db.DB, path string) (*notificationOpts, *notificationInfo, error)
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)
 	processDelete(d *db.DB) (SetResponse, error)
 	processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
-	processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error)
+	processMDBReplace(numDB db.NumberDB) (SetResponse, error)
+	processMDBGet(mdb db.MDB) (GetResponse, error)
+	processGetRegex(mdb db.MDB) ([]GetResponseRegex, error)
+	processAction(mdb db.MDB) (ActionResponse, error)
 }
 
 //App modules will use this function to register with App interface during boot up
 func register(path string, info *appInfo) error {
 	var err error
-	log.Info("Registering for path =", path)
+	glog.Info("Registering for path =", path)
 
 	if appMap == nil {
 		appMap = make(map[string]*appInfo)
@@ -107,7 +113,7 @@ func register(path string, info *appInfo) error {
 		appMap[path] = info
 
 	} else {
-		log.Fatal("Duplicate path being registered. Path =", path)
+		glog.Fatal("Duplicate path being registered. Path =", path)
 		err = errors.New("Duplicate path")
 	}
 
@@ -120,26 +126,26 @@ func addModel(model *ModelData) error {
 
 	models = append(models, *model)
 
-	//log.Info("Models = ", models)
+	//glog.Info("Models = ", models)
 	return err
 }
 
 //Translib infra will use this function get the app info for a given path
 func getAppModuleInfo(path string) (*appInfo, error) {
-	log.Info("getAppModule called for path =", path)
+	glog.V(3).Info("getAppModule called for path =", path)
 
 	for pattern, app := range appMap {
 		if !strings.HasPrefix(path, pattern) {
 			continue
 		}
 
-		log.Info("found the entry in the map for path =", pattern)
+		glog.V(3).Info("found the entry in the map for path =", pattern)
 
 		return app, nil 
 	}
 
 	/* If no specific app registered fallback to default/common app */
-	log.Infof("No app module registered for path %s hence fallback to default/common app", path)
+	glog.Infof("No app module registered for path %s hence fallback to default/common app", path)
 	app := appMap["*"]
 
 	return app, nil 
@@ -159,9 +165,9 @@ func getAppInterface(appType reflect.Type) (appInterface, error) {
 
 	if !ok {
 		err = errors.New("Invalid appType")
-		log.Fatal("Appmodule does not confirm to appInterface method conventions for appType=", appType)
+		glog.Fatal("Appmodule does not confirm to appInterface method conventions for appType=", appType)
 	} else {
-		log.Info("cast to appInterface worked", app)
+		glog.V(3).Info("cast to appInterface worked", app)
 	}
 
 	return app, err

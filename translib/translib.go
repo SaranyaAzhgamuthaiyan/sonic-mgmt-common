@@ -35,10 +35,11 @@ package translib
 
 import (
 	"sync"
+	"strings"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
 	"github.com/Workiva/go-datastructures/queue"
-	log "github.com/golang/glog"
+	"github.com/golang/glog"
 )
 
 //Write lock for all write operations to be synchronized
@@ -46,7 +47,7 @@ var writeMutex = &sync.Mutex{}
 
 //Interval value for interval based subscription needs to be within the min and max
 //minimum global interval for interval based subscribe in secs
-var minSubsInterval = 20
+var minSubsInterval = 5
 //maximum global interval for interval based subscribe in secs
 var maxSubsInterval = 600
 
@@ -89,6 +90,12 @@ type GetRequest struct {
 
 type GetResponse struct {
 	Payload []byte
+	ErrSrc  ErrSource
+}
+
+type GetResponseRegex struct {
+	Payload []byte
+	Path string
 	ErrSrc  ErrSource
 }
 
@@ -137,6 +144,7 @@ type SubscribeResponse struct {
 	Timestamp    int64
 	SyncComplete bool
 	IsTerminated bool
+	IsDeleted    bool
 }
 
 type NotificationType int
@@ -175,7 +183,7 @@ type notificationOpts struct {
 
 //initializes logging and app modules
 func init() {
-	log.Flush()
+	glog.Flush()
 }
 
 //Create - Creates entries in the redis DB pertaining to the path and payload
@@ -191,8 +199,8 @@ func Create(req SetRequest) (SetResponse, error) {
 		}
 	}
 
-	log.Info("Create request received with path =", path)
-	log.Info("Create request received with payload =", string(payload))
+	glog.Info("Create request received with path =", path)
+	glog.Info("Create request received with payload =", string(payload))
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -212,7 +220,7 @@ func Create(req SetRequest) (SetResponse, error) {
 	defer writeMutex.Unlock()
 
 	isWriteDisabled := false
-	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+	d, err := db.NewDB(db.GetDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -266,8 +274,8 @@ func Update(req SetRequest) (SetResponse, error) {
 	}
 
 
-	log.Info("Update request received with path =", path)
-	log.Info("Update request received with payload =", string(payload))
+	glog.Info("Update request received with path =", path)
+	glog.Info("Update request received with payload =", string(payload))
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -287,7 +295,7 @@ func Update(req SetRequest) (SetResponse, error) {
 	defer writeMutex.Unlock()
 
 	isWriteDisabled := false
-	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+	d, err := db.NewDB(db.GetDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -341,8 +349,8 @@ func Replace(req SetRequest) (SetResponse, error) {
 		}
 	}
 
-	log.Info("Replace request received with path =", path)
-	log.Info("Replace request received with payload =", string(payload))
+	glog.V(2).Info("Replace request received with path =", path)
+	glog.V(2).Info("Replace request received with payload =", string(payload))
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -361,40 +369,37 @@ func Replace(req SetRequest) (SetResponse, error) {
 	writeMutex.Lock()
 	defer writeMutex.Unlock()
 
-	isWriteDisabled := false
-	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+	cfgDbs, err := db.NewNumberDB(db.ConfigDB, false)
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-	defer d.DeleteDB()
+	defer db.CloseNumberDB(cfgDbs)
 
-	keys, err = (*app).translateReplace(d)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	err = d.StartTx(keys, appInfo.tablesToWatch)
+	keys, err = (*app).translateMDBReplace(cfgDbs)
 
 	if err != nil {
 		resp.ErrSrc = AppErr
 		return resp, err
 	}
 
-	resp, err = (*app).processReplace(d)
-
+	err = db.StartNumberDBTx(cfgDbs, keys, appInfo.tablesToWatch)
 	if err != nil {
-		d.AbortTx()
 		resp.ErrSrc = AppErr
 		return resp, err
 	}
 
-	err = d.CommitTx()
+	resp, err = (*app).processMDBReplace(cfgDbs)
 
+	if err != nil {
+		db.AbortNumberDBTx(cfgDbs)
+		resp.ErrSrc = AppErr
+		return resp, err
+	}
+
+	err = db.CommitNumberDBTx(cfgDbs)
 	if err != nil {
 		resp.ErrSrc = AppErr
 	}
@@ -415,7 +420,7 @@ func Delete(req SetRequest) (SetResponse, error) {
 		}
 	}
 
-	log.Info("Delete request received with path =", path)
+	glog.Info("Delete request received with path =", path)
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -436,7 +441,7 @@ func Delete(req SetRequest) (SetResponse, error) {
 	defer writeMutex.Unlock()
 
 	isWriteDisabled := false
-	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+	d, err := db.NewDB(db.GetDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		resp.ErrSrc = ProtoErr
@@ -488,7 +493,7 @@ func Get(req GetRequest) (GetResponse, error) {
 		}
 	}
 
-	log.Info("Received Get request for path = ", path)
+	glog.V(2).Info("Received Get request for path = ", path)
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -505,26 +510,69 @@ func Get(req GetRequest) (GetResponse, error) {
 		return resp, err
 	}
 
-	isGetCase := true
-	dbs, err := getAllDbs(isGetCase)
+	mdb, err := db.GetMDBInstances(true)
 
 	if err != nil {
 		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
 		return resp, err
 	}
 
-	defer closeAllDbs(dbs[:])
+	defer db.CloseMDBInstances(mdb)
 
-	err = (*app).translateGet(dbs)
+	err = (*app).translateMDBGet(mdb)
 
 	if err != nil {
 		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
 		return resp, err
 	}
 
-	resp, err = (*app).processGet(dbs)
+	resp, err = (*app).processMDBGet(mdb)
 
 	return resp, err
+}
+
+func GetRegex(req GetRequest) ([]GetResponseRegex, error) {
+	var respRegex []GetResponseRegex
+	path := req.Path
+	if !isAuthorizedForGet(req) {
+		return respRegex, tlerr.AuthorizationError{
+			Format: "User is unauthorized for Get Operation",
+			Path: path,
+		}
+	}
+
+	glog.V(2).Info("Received Get request for path = ", path)
+
+	app, appInfo, err := getAppModule(path, req.ClientVersion)
+
+	if err != nil {
+		return respRegex, err
+	}
+
+	opts := appOptions{ depth: req.Depth }
+	err = appInitialize(app, appInfo, path, nil, &opts, GET)
+
+	if err != nil {
+		return respRegex, err
+	}
+
+	mdb, err := db.GetMDBInstances(true)
+
+	if err != nil {
+		return respRegex, err
+	}
+
+	defer db.CloseMDBInstances(mdb)
+
+	err = (*app).translateGetRegex(mdb)
+
+	if err != nil {
+		return respRegex, err
+	}
+
+	respRegex, err = (*app).processGetRegex(mdb)
+
+	return respRegex, err
 }
 
 func Action(req ActionRequest) (ActionResponse, error) {
@@ -539,7 +587,7 @@ func Action(req ActionRequest) (ActionResponse, error) {
 		}
 	}
 
-	log.Info("Received Action request for path = ", path)
+	glog.Info("Received Action request for path = ", path)
 
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
@@ -562,24 +610,22 @@ func Action(req ActionRequest) (ActionResponse, error) {
     writeMutex.Lock()
     defer writeMutex.Unlock()
 
-	isGetCase := false
-	dbs, err := getAllDbs(isGetCase)
-
+	mdb, err := db.GetMDBInstances(isActionWriteDisabled(req))
 	if err != nil {
 		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
 		return resp, err
 	}
 
-	defer closeAllDbs(dbs[:])
+	defer db.CloseMDBInstances(mdb)
 
-	err = (*app).translateAction(dbs)
+	err = (*app).translateAction(mdb)
 
 	if err != nil {
 		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
 		return resp, err
 	}
 
-	resp, err = (*app).processAction(dbs)
+	resp, err = (*app).processAction(mdb)
 
 	return resp, err
 }
@@ -610,7 +656,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 	defer writeMutex.Unlock()
 
 	isWriteDisabled := false
-	d, err := db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
+	d, err := db.NewDB(db.GetDBOptions(db.ConfigDB, isWriteDisabled))
 
 	if err != nil {
 		return resp, err
@@ -629,7 +675,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		path := req.DeleteRequest[i].Path
 		opts := appOptions{deleteEmptyEntry: req.DeleteRequest[i].DeleteEmptyEntry}
 
-		log.Info("Delete request received with path =", path)
+		glog.Info("Delete request received with path =", path)
 
 		app, appInfo, err := getAppModule(path, req.DeleteRequest[i].ClientVersion)
 
@@ -679,7 +725,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
         path := req.ReplaceRequest[i].Path
 		payload := req.ReplaceRequest[i].Payload
 
-        log.Info("Replace request received with path =", path)
+        glog.Info("Replace request received with path =", path)
 
         app, appInfo, err := getAppModule(path, req.ReplaceRequest[i].ClientVersion)
 
@@ -688,8 +734,8 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
             goto BulkReplaceError
         }
 
-		log.Info("Bulk replace request received with path =", path)
-		log.Info("Bulk replace request received with payload =", string(payload))
+		glog.Info("Bulk replace request received with path =", path)
+		glog.Info("Bulk replace request received with payload =", string(payload))
 
 		err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
 
@@ -732,7 +778,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		path := req.UpdateRequest[i].Path
 		payload := req.UpdateRequest[i].Payload
 
-		log.Info("Update request received with path =", path)
+		glog.Info("Update request received with path =", path)
 
 		app, appInfo, err := getAppModule(path, req.UpdateRequest[i].ClientVersion)
 
@@ -782,7 +828,7 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		path := req.CreateRequest[i].Path
 		payload := req.CreateRequest[i].Payload
 
-		log.Info("Create request received with path =", path)
+		glog.Info("Create request received with path =", path)
 
 		app, appInfo, err := getAppModule(path, req.CreateRequest[i].ClientVersion)
 
@@ -835,8 +881,11 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 
 //Subscribe - Subscribes to the paths requested and sends notifications when the data changes in DB
 func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
-	var err error
 	var sErr error
+
+	if !isAuthorizedForSubscribe(req) {
+		return nil, tlerr.AuthorizationError{Format: "User is unauthorized for Subscribe Operation"}
+	}
 
 	paths := req.Paths
 	q     := req.Q
@@ -846,88 +895,58 @@ func Subscribe(req SubscribeRequest) ([]*IsSubscribeResponse, error) {
 
 	resp := make([]*IsSubscribeResponse, len(paths))
 
-	for i := range resp {
-		resp[i] = &IsSubscribeResponse{Path: paths[i],
+	for i, path := range paths {
+		// init every path`s response
+		resp[i] = &IsSubscribeResponse{
+			Path:                path,
 			IsOnChangeSupported: false,
 			MinInterval:         minSubsInterval,
+			Err:                 nil,
 			PreferredType:       Sample,
-			Err:                 nil}
-	}
-
-    if (!isAuthorizedForSubscribe(req)) {
-		return resp, tlerr.AuthorizationError{
-			Format: "User is unauthorized for Action Operation",
 		}
-    }
-
-	isGetCase := true
-	dbs, err := getAllDbs(isGetCase)
-
-	if err != nil {
-		return resp, err
-	}
-
-	//Do NOT close the DBs here as we need to use them during subscribe notification
-
-	for i, path := range paths {
 
 		app, appInfo, err := getAppModule(path, req.ClientVersion)
-
 		if err != nil {
-
+			resp[i].Err = err
 			if sErr == nil {
 				sErr = err
 			}
-
-			resp[i].Err = err
 			continue
 		}
 
-		nOpts, nInfo, errApp := (*app).translateSubscribe(dbs, path)
-
-		if nOpts != nil {
-			if nOpts.mInterval != 0 {
-				if ((nOpts.mInterval >= minSubsInterval) && (nOpts.mInterval <= maxSubsInterval)) {
-					resp[i].MinInterval = nOpts.mInterval
-				} else if (nOpts.mInterval < minSubsInterval) {
-					resp[i].MinInterval = minSubsInterval
-				} else {
-					resp[i].MinInterval = maxSubsInterval
-				}
-			}
-
-			resp[i].IsOnChangeSupported = nOpts.isOnChangeSupported
-			resp[i].PreferredType = nOpts.pType
-		}
-
+		nOpts, nInfo, errApp := (*app).translateSubscribe([db.MaxDB]*db.DB{}, path)
 		if errApp != nil {
 			resp[i].Err = errApp
-
 			if sErr == nil {
 				sErr = errApp
 			}
-
 			continue
-		} else {
-
-			if nInfo == nil {
-				sErr = tlerr.NotSupportedError{
-					Format: "Subscribe not supported", Path: path}
-				resp[i].Err = sErr
-				continue
-			}
-
-			nInfo.path = path
-			nInfo.app = app
-			nInfo.appInfo = appInfo
-			nInfo.dbs = dbs
-
-			dbNotificationMap[nInfo.dbno] = append(dbNotificationMap[nInfo.dbno], nInfo)
 		}
 
-	}
+		// prepare the response: resp[i].MinInterval is useful ???
+		resp[i].IsOnChangeSupported = nOpts.isOnChangeSupported
+		resp[i].PreferredType = nOpts.pType
 
-	log.Info("map=", dbNotificationMap)
+		// prepare the notificationInfo
+		nInfo.path = path
+		nInfo.app = app
+		nInfo.appInfo = appInfo
+
+		dbNotificationMap[nInfo.dbno] = append(dbNotificationMap[nInfo.dbno], nInfo)
+		if path == "/openconfig-system:system/alarms/alarm/state" {
+			dbNotificationMap[db.HistoryDB] = append(dbNotificationMap[db.HistoryDB], &notificationInfo{
+				table:     *asTableSpec("HISEVENT"),
+				key:       asKey("*"),
+				dbno:      db.HistoryDB,
+				needCache: false,
+				path:      path,
+				app:       app,
+				appInfo:   appInfo,
+				caches:    nil,
+				sKey:      nil,
+			})
+		}
+	}
 
 	if sErr != nil {
 		return resp, sErr
@@ -962,15 +981,6 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 		}
     }
 
-	isGetCase := true
-	dbs, err := getAllDbs(isGetCase)
-
-	if err != nil {
-		return resp, err
-	}
-
-	defer closeAllDbs(dbs[:])
-
 	for i, path := range paths {
 
 		app, _, err := getAppModule(path, req.ClientVersion)
@@ -980,7 +990,7 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 			continue
 		}
 
-		nOpts, _, errApp := (*app).translateSubscribe(dbs, path)
+		nOpts, _, errApp := (*app).translateSubscribe([db.MaxDB]*db.DB{}, path)
 
         if nOpts != nil {
             if nOpts.mInterval != 0 {
@@ -1005,7 +1015,7 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 		}
 	}
 
-	return resp, err
+	return resp, nil
 }
 
 //GetModels - Gets all the models supported by Translib
@@ -1013,95 +1023,6 @@ func GetModels() ([]ModelData, error) {
 	var err error
 
 	return getModels(), err
-}
-
-//Creates connection will all the redis DBs. To be used for get request
-func getAllDbs(isGetCase bool) ([db.MaxDB]*db.DB, error) {
-	var dbs [db.MaxDB]*db.DB
-	var err error
-	var isWriteDisabled bool
-
-	if isGetCase {
-		isWriteDisabled = true
-	} else {
-		isWriteDisabled = false
-	}
-
-	//Create Application DB connection
-	dbs[db.ApplDB], err = db.NewDB(getDBOptions(db.ApplDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-	//Create ASIC DB connection
-	dbs[db.AsicDB], err = db.NewDB(getDBOptions(db.AsicDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-	//Create Counter DB connection
-	dbs[db.CountersDB], err = db.NewDB(getDBOptions(db.CountersDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-	//Create Log Level DB connection
-	dbs[db.LogLevelDB], err = db.NewDB(getDBOptions(db.LogLevelDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-    isWriteDisabled = true 
-
-	//Create Config DB connection
-	dbs[db.ConfigDB], err = db.NewDB(getDBOptions(db.ConfigDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-    if isGetCase {
-        isWriteDisabled = true 
-    } else {
-        isWriteDisabled = false
-    }
-
-	//Create Flex Counter DB connection
-	dbs[db.FlexCounterDB], err = db.NewDB(getDBOptions(db.FlexCounterDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-	//Create State DB connection
-	dbs[db.StateDB], err = db.NewDB(getDBOptions(db.StateDB, isWriteDisabled))
-
-	if err != nil {
-		closeAllDbs(dbs[:])
-		return dbs, err
-	}
-
-	return dbs, err
-}
-
-//Closes the dbs, and nils out the arr.
-func closeAllDbs(dbs []*db.DB) {
-	for dbsi, d := range dbs {
-		if d != nil {
-			d.DeleteDB()
-			dbs[dbsi] = nil
-		}
-	}
 }
 
 // Compare - Implement Compare method for priority queue for SubscribeResponse struct
@@ -1113,29 +1034,6 @@ func (val SubscribeResponse) Compare(other queue.Item) int {
 		return 0
 	}
 	return -1
-}
-
-func getDBOptions(dbNo db.DBNum, isWriteDisabled bool) db.Options {
-	var opt db.Options
-
-	switch dbNo {
-	case db.ApplDB, db.CountersDB, db.AsicDB:
-		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
-	case db.FlexCounterDB, db.LogLevelDB, db.ConfigDB, db.StateDB:
-		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|", isWriteDisabled)
-	}
-
-	return opt
-}
-
-func getDBOptionsWithSeparator(dbNo db.DBNum, initIndicator string, tableSeparator string, keySeparator string, isWriteDisabled bool) db.Options {
-	return (db.Options{
-		DBNo:               dbNo,
-		InitIndicator:      initIndicator,
-		TableNameSeparator: tableSeparator,
-		KeySeparator:       keySeparator,
-		IsWriteDisabled:    isWriteDisabled,
-	})
 }
 
 func getAppModule(path string, clientVer Version) (*appInterface, *appInfo, error) {
@@ -1169,14 +1067,14 @@ func appInitialize(app *appInterface, appInfo *appInfo, path string, payload *[]
 	}
 
 	if appInfo.isNative {
-		log.Info("Native MSFT format")
+		glog.Info("Native Alibaba format")
 		data := appData{path: path, payload: input}
 		data.setOptions(opts)
 		(*app).initialize(data)
 	} else {
 		ygotStruct, ygotTarget, err := getRequestBinder(&path, payload, opCode, &(appInfo.ygotRootType)).unMarshall()
 		if err != nil {
-			log.Info("Error in request binding: ", err)
+			glog.Error("Error in request binding: ", err)
 			return err
 		}
 
@@ -1192,4 +1090,12 @@ func (data *appData) setOptions(opts *appOptions) {
 	if opts != nil {
 		data.appOptions = *opts
 	}
+}
+
+func isActionWriteDisabled(req ActionRequest) bool {
+	if strings.HasSuffix(req.Path, "/openconfig-system:reboot") {
+		return false
+	}
+
+	return true
 }
