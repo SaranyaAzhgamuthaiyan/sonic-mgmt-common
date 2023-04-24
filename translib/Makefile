@@ -25,13 +25,13 @@ YANG_FILES = $(shell find $(TOPDIR)/models/yang -name '*.yang')
 YGOT_BINDS = ocbinds/ocbinds.go
 
 DEFAULT_TARGETS = $(YGOT_BINDS)
-ifeq ($(NO_TEST_BINS),)
-DEFAULT_TARGETS += $(TRANSLIB_TEST_BIN) $(TRANSL_DB_TEST_BIN)
+ifeq ($(SONIC_MGMT_FRAMEWORK_BUILD_TEST),y)
+DEFAULT_TARGETS += ALI_TEST
 endif
 
-default: $(DEFAULT_TARGETS)
+default: $(DEFAULT_TARGETS) 
 
-all: $(DEFAULT_TARGETS) $(TRANSLIB_PKG)
+all: $(DEFAULT_TARGETS) $(TRANSLIB_PKG) 
 
 $(TRANSLIB_PKG): $(TRANSLIB_MAIN_SRCS) $(YGOT_BINDS)
 	$(GO) build -mod=vendor -gcflags="all=-N -l" -v -o $@ ../translib
@@ -41,6 +41,10 @@ $(TRANSLIB_TEST_BIN): $(TRANSLIB_MAIN_SRCS) $(TRANSLIB_TEST_SRCS) $(YGOT_BINDS)
 
 $(TRANSL_DB_TEST_BIN) : $(TRANSL_DB_ALL_SRCS)
 	$(GO) test -mod=vendor -cover -c ../translib/db -o $@
+
+ALI_TEST: $(YGOT_BINDS)
+	$(GO) test -count=1 -v -mod=vendor -cover -coverprofile=/sonic/target/coverage/coverage.out -run TestApp_ ./
+	$(GO) tool cover -html=/sonic/target/coverage/coverage.out -o /sonic/target/coverage/coverage.html
 
 $(YGOT_BINDS): $(YANG_FILES)
 	$(RM) $@
