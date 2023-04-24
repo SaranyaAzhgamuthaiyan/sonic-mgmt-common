@@ -77,27 +77,21 @@ type HFunc func( *DB, *SKey, *Key, SEvent) (error)
 
 // SubscribeDB is the factory method to create a subscription to the DB.
 // The returned instance can only be used for Subscription.
-func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
-
-	if glog.V(3) {
-		glog.Info("SubscribeDB: Begin: opt: ", opt,
-			" skeys: ", skeys, " handler: ", handler)
-	}
+func SubscribeDB(db *DB, skeys []*SKey, handler HFunc) error {
+	glog.V(2).Info("SubscribeDB: Begin: db: ", db, " skeys: ", skeys, " handler: ", handler)
 
 	patterns := make([]string, 0, len(skeys))
 	patMap := make(map[string]([]int), len(skeys))
 	var s string
+	var e error
 
-	// NewDB
-	d , e := NewDB(opt)
-
-	if d.client == nil {
+	if db.client == nil {
 		goto SubscribeDBExit
 	}
 
 	// Make sure that the DB is configured for key space notifications
 	// Optimize with LUA scripts to atomically add "Kgshxe".
-	s, e = d.client.ConfigSet("notify-keyspace-events", "AKE").Result()
+	s, e = db.client.ConfigSet("notify-keyspace-events", "AKE").Result()
 
 	if e != nil {
 		glog.Error("SubscribeDB: ConfigSet(): e: ", e, " s: ", s)
@@ -105,27 +99,28 @@ func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 	}
 
 	for i := 0 ; i < len(skeys); i++ {
-		pattern := d.key2redisChannel(skeys[i].Ts, *(skeys[i].Key))
-		if _,present := patMap[pattern] ; ! present {
-			patMap[pattern] = make([]int,  0, 5)
-			patterns = append(patterns, pattern)
+		tmps := db.key2redisChannel(skeys[i].Ts, *(skeys[i].Key))
+		for _, pattern := range tmps {
+			if _, present := patMap[pattern]; !present {
+				patMap[pattern] = make([]int, 0, 5)
+				patterns = append(patterns, pattern)
+			}
+			patMap[pattern] = append(patMap[pattern], i)
 		}
-		patMap[pattern] = append(patMap[pattern], i)
-
 	}
 
-	glog.Info("SubscribeDB: patterns: ", patterns)
+	glog.Info("SubscribeDB:", db.client.Options().Addr, " patterns: ", patterns)
 
-	d.sPubSub = d.client.PSubscribe(patterns[:]...)
+	db.sPubSub = db.client.PSubscribe(patterns[:]...)
 
-	if d.sPubSub == nil {
+	if db.sPubSub == nil {
 		glog.Error("SubscribeDB: PSubscribe() nil: pats: ", patterns)
 		e = tlerr.TranslibDBSubscribeFail { }
 		goto SubscribeDBExit
 	}
 
 	// Wait for confirmation, of channel creation
-	_, e = d.sPubSub.Receive()
+	_, e = db.sPubSub.Receive()
 
 	if e != nil {
 		glog.Error("SubscribeDB: Receive() fails: e: ", e)
@@ -136,69 +131,57 @@ func SubscribeDB(opt Options, skeys []*SKey, handler HFunc) (*DB, error) {
 
 	// Start a goroutine to read messages and call handler.
 	go func() {
-		for msg := range d.sPubSub.Channel() {
-			if glog.V(4) {
-				glog.Info("SubscribeDB: msg: ", msg)
-			}
+		for msg := range db.sPubSub.Channel() {
+			glog.V(2).Info("SubscribeDB: msg: ", msg)
 
 			// Should this be a goroutine, in case each notification CB
 			// takes a long time to run ?
 			for _, skeyIndex := range patMap[msg.Pattern] {
 				skey := skeys[skeyIndex]
-				key := d.redisChannel2key(skey.Ts, msg.Channel)
-				sevent := d.redisPayload2sEvent(msg.Payload)
+				key := db.redisChannel2key(skey.Ts, msg.Channel)
+				sevent := db.redisPayload2sEvent(msg.Payload)
 
 				if len(skey.SEMap) == 0 || skey.SEMap[sevent] {
-
-					if glog.V(2) {
-						glog.Info("SubscribeDB: handler( ",
-							&d, ", ", skey, ", ", key, ", ", sevent, " )")
-					}
-
-					handler(d, skey, &key, sevent)
+					glog.V(2).Info("SubscribeDB: handler( ", &db, ", ", skey, ", ", key, ", ", sevent, " )")
+					handler(db, skey, &key, sevent)
 				}
 			}
 		}
 
 		// Send the Close|Err notification.
 		var sEvent = SEventClose
-		if !d.sCIP {
+		if !db.sCIP {
 			sEvent = SEventErr
 		}
 		glog.Info("SubscribeDB: SEventClose|Err: ", sEvent)
-		handler(d, & SKey{}, & Key {}, sEvent)
+		handler(db, &SKey{}, &Key{}, sEvent)
 	} ()
 
 
 SubscribeDBExit:
 
 	if e != nil {
-		if d.sPubSub != nil {
-			d.sPubSub.Close()
+		if db.sPubSub != nil {
+			db.sPubSub.Close()
 		}
 
-		if d.client != nil {
-			d.DeleteDB()
-			d.client = nil
+		if db.client != nil {
+			db.DeleteDB()
+			db.client = nil
 		}
-		d = nil
 	}
 
-	if glog.V(3) {
-		glog.Info("SubscribeDB: End: d: ", d, " e: ", e)
-	}
+	glog.V(2).Info("SubscribeDB: End: d: ", db, " e: ", e)
 
-	return d, e
+	return e
 }
 
 // UnsubscribeDB is used to close a DB subscription
 func (d * DB) UnsubscribeDB() error {
 
-	var e error = nil
+	var e error
 
-	if glog.V(3) {
-		glog.Info("UnsubscribeDB: d:", d)
-	}
+	glog.V(2).Info("UnsubscribeDB: d:", d)
 
 	if d.sCIP {
 		glog.Error("UnsubscribeDB: Close in Progress")
@@ -207,7 +190,7 @@ func (d * DB) UnsubscribeDB() error {
 	}
 
 	// Mark close in progress.
-	d.sCIP = true;
+	d.sCIP = true
 
 	// Do the close, ch gets closed too.
 	d.sPubSub.Close()
@@ -220,28 +203,32 @@ func (d * DB) UnsubscribeDB() error {
 
 UnsubscribeDBExit:
 
-	if glog.V(3) {
-		glog.Info("UnsubscribeDB: End: d: ", d, " e: ", e)
-	}
-
+	glog.V(2).Info("UnsubscribeDB: End: d: ", d, " e: ", e)
 	return e
 }
 
 
-func (d *DB) key2redisChannel(ts *TableSpec, key Key) string {
+func (d *DB) key2redisChannel(ts *TableSpec, key Key) []string {
+	var patterns []string
 
-	if glog.V(5) {
-		glog.Info("key2redisChannel: ", *ts, " key: " + key.String())
+	glog.V(2).Info("key2redisChannel: ", *ts, " key: " + key.String())
+
+	tblNames := strings.Split(ts.Name, ",")
+	for _, name := range tblNames {
+		eachTs := &TableSpec{
+			Name:     name,
+			CompCt:   ts.CompCt,
+			NoDelete: ts.NoDelete,
+		}
+		pattern := "__keyspace@" + (d.Opts.DBNo).String() + "__:" + d.key2redis(eachTs, key)
+		patterns = append(patterns, pattern)
 	}
 
-	return "__keyspace@" + (d.Opts.DBNo).String() + "__:" + d.key2redis(ts, key)
+	return patterns
 }
 
 func (d *DB) redisChannel2key(ts *TableSpec, redisChannel string) Key {
-
-	if glog.V(5) {
-		glog.Info("redisChannel2key: ", *ts, " redisChannel: " + redisChannel)
-	}
+	glog.V(2).Info("redisChannel2key: ", *ts, " redisChannel: " + redisChannel)
 
 	splitRedisKey := strings.SplitN(redisChannel, ":", 2)
 
@@ -255,10 +242,7 @@ func (d *DB) redisChannel2key(ts *TableSpec, redisChannel string) Key {
 }
 
 func (d *DB) redisPayload2sEvent(redisPayload string) SEvent {
-
-	if glog.V(5) {
-		glog.Info("redisPayload2sEvent: ", redisPayload)
-	}
+	glog.V(3).Info("redisPayload2sEvent: ", redisPayload)
 
 	sEvent := redisPayload2sEventMap[redisPayload]
 
@@ -266,9 +250,7 @@ func (d *DB) redisPayload2sEvent(redisPayload string) SEvent {
 		sEvent = SEventOther
 	}
 
-	if glog.V(3) {
-		glog.Info("redisPayload2sEvent: ", sEvent)
-	}
+	glog.V(2).Info("redisPayload2sEvent: ", sEvent)
 
     return sEvent
 }

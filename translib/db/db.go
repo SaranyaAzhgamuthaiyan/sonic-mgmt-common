@@ -105,27 +105,104 @@ Example:
 package db
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/gofrs/uuid"
+	io "io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	//	"reflect"
 	"errors"
 	"strings"
 
 	"github.com/Azure/sonic-mgmt-common/cvl"
-	"github.com/go-redis/redis/v7"
-	"github.com/golang/glog"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
+	"github.com/go-redis/redis"
+	"github.com/golang/glog"
 )
 
-const (
+var (
 	DefaultRedisUNIXSocket  string = "/var/run/redis/redis.sock"
 	DefaultRedisLocalTCPEP  string = "localhost:6379"
 	DefaultRedisRemoteTCPEP string = "127.0.0.1:6379"
+	DefaultAsicConfFilePath        = "/usr/share/sonic/platform/asic.conf"
+	DefaultGlobalDbFilePath        = "/var/run/redis/sonic-db/database_global.json"
+	NumAsic                        = 1
 )
 
+type DbGlobal struct {
+	Includes []DbInclude `json:"INCLUDES"`
+	Version  string      `json:"VERSION"`
+}
+
+type DbInclude struct {
+	Include   string `json:"include"`
+	Namespace string `json:"namespace"`
+}
+
 func init() {
-	dbConfigInit()
+	initAllDbs()
+	initRedisClients()
+	policySubscribe()
+}
+
+func initAllDbs() {
+	if os.Getenv("REDIS_LOCAL_TCP_EP") != "" {
+		DefaultRedisLocalTCPEP = os.Getenv("REDIS_LOCAL_TCP_EP")
+	}
+
+	dbConfigPath := "/var/run/redis/sonic-db/database_config.json"
+	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
+		dbConfigPath = path
+	}
+
+	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
+		DefaultAsicConfFilePath = path
+	}
+
+	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
+		DefaultGlobalDbFilePath = path
+	}
+
+	NumAsic = getNumAsic()
+
+	if !isMultiAsic() {
+		dbConfigInit(dbConfigPath, "host")
+	} else {
+		globalDbInfo := loadGlobalDatabase(DefaultGlobalDbFilePath)
+		for namespace, path := range globalDbInfo {
+			dbConfigInit(path, namespace)
+		}
+	}
+}
+
+func loadGlobalDatabase(globalDbFilePath string) map[string]string {
+	var globalDbCfg DbGlobal
+
+	data, err := io.ReadFile(globalDbFilePath)
+	if err != nil {
+		assert(err)
+	} else {
+		err = json.Unmarshal([]byte(data), &globalDbCfg)
+		if err != nil {
+			assert(err)
+		}
+	}
+
+	var dbConfigMap = make(map[string]string)
+	var pwd = filepath.Dir(globalDbFilePath) + "/"
+	for i := 0; i < len(globalDbCfg.Includes); i++ {
+		if i == 0 {
+			dbConfigMap["host"] = pwd + globalDbCfg.Includes[0].Include
+		} else {
+			include := globalDbCfg.Includes[i]
+			dbConfigMap[include.Namespace] = pwd + include.Include
+		}
+	}
+	return dbConfigMap
 }
 
 // DBNum type indicates the type of DB (Eg: ConfigDB, ApplDB, ...).
@@ -142,6 +219,7 @@ const (
 	SnmpDB                     // 7
 	ErrorDB                    // 8
 	UserDB                     // 9
+	HistoryDB                  // 10
 	// All DBs added above this line, please ----
 	MaxDB //  The Number of DBs
 )
@@ -156,7 +234,7 @@ type Options struct {
 	InitIndicator      string
 	TableNameSeparator string //Overriden by the DB config file's separator.
 	KeySeparator       string //Overriden by the DB config file's separator.
-	IsWriteDisabled    bool //Indicated if write is allowed
+	IsWriteDisabled    bool   //Indicated if write is allowed
 
 	DisableCVLCheck bool
 }
@@ -207,7 +285,7 @@ type TableSpec struct {
 	// can have TableSeparator as part of the key. Otherwise, we cannot
 	// tell where the key component begins.
 	CompCt int
-	// NoDelete flag (if it is set to true) is to skip the row entry deletion from 
+	// NoDelete flag (if it is set to true) is to skip the row entry deletion from
 	// the table when the "SetEntry" or "ModEntry" method is called with empty Value Field map.
 	NoDelete bool
 }
@@ -299,7 +377,7 @@ func (d DB) String() string {
 		d.client, d.Opts, d.txState, d.txCmds)
 }
 
-func getDBInstName (dbNo DBNum) string {
+func getDBInstName(dbNo DBNum) string {
 	switch dbNo {
 	case ApplDB:
 		return "APPL_DB"
@@ -321,94 +399,39 @@ func getDBInstName (dbNo DBNum) string {
 		return "ERROR_DB"
 	case UserDB:
 		return "USER_DB"
+	case HistoryDB:
+		return "HISTORY_DB"
 	}
 	return ""
 }
 
+func GetDBOptions(dbNo DBNum, isWriteDisabled bool) Options {
+	var opt Options
+
+	switch dbNo {
+	case ApplDB, CountersDB, AsicDB, HistoryDB:
+		opt = getDBOptionsWithSeparator(dbNo, "", ":", ":", isWriteDisabled)
+	case FlexCounterDB, LogLevelDB, ConfigDB, StateDB:
+		opt = getDBOptionsWithSeparator(dbNo, "", "|", "|", isWriteDisabled)
+	}
+
+	return opt
+}
+
+func getDBOptionsWithSeparator(dbNo DBNum, initIndicator string, tableSeparator string, keySeparator string, isWriteDisabled bool) Options {
+	return Options{
+		DBNo:               dbNo,
+		InitIndicator:      initIndicator,
+		TableNameSeparator: tableSeparator,
+		KeySeparator:       keySeparator,
+		IsWriteDisabled:    isWriteDisabled,
+		DisableCVLCheck:    true,
+	}
+}
+
 // NewDB is the factory method to create new DB's.
 func NewDB(opt Options) (*DB, error) {
-
-	var e error
-
-	if glog.V(3) {
-		glog.Info("NewDB: Begin: opt: ", opt)
-	}
-
-	ipAddr := DefaultRedisLocalTCPEP
-	dbId := int(opt.DBNo)
-	if dbInstName := getDBInstName(opt.DBNo); dbInstName != "" {
-		if isDbInstPresent(dbInstName) {
-			ipAddr = getDbTcpAddr(dbInstName)
-			dbId = getDbId(dbInstName)
-	        dbSepStr := getDbSeparator(dbInstName)
-			if len(dbSepStr) > 0 {
-				if len(opt.TableNameSeparator) > 0 && opt.TableNameSeparator != dbSepStr {
-					glog.Warning(fmt.Sprintf("TableNameSeparator '%v' in the Options is different from the" +
-						" one configured in the Db config. file for the Db name %v", opt.TableNameSeparator, dbInstName))
-				}
-				opt.KeySeparator = dbSepStr
-				opt.TableNameSeparator = dbSepStr
-			} else {
-				glog.Warning("Database Separator not present for the Db name: ", dbInstName)
-			}
-		} else {
-			glog.Warning("Database instance not present for the Db name: ", dbInstName)
-		}
-	} else {
-		glog.Error(fmt.Errorf("Invalid database number %d", dbId))
-	}
-	
-	d := DB{client: redis.NewClient(&redis.Options{
-		Network: "tcp",
-		Addr:    ipAddr,
-		//Addr:     DefaultRedisRemoteTCPEP,
-		Password: "", /* TBD */
-		// DB:       int(4), /* CONFIG_DB DB No. */
-		DB:          dbId,
-		DialTimeout: 0,
-		// For Transactions, limit the pool
-		PoolSize: 1,
-		// Each DB gets it own (single) connection.
-	}),
-		Opts:              &opt,
-		txState:           txStateNone,
-		txCmds:            make([]_txCmd, 0, InitialTxPipelineSize),
-		cvlEditConfigData: make([]cvl.CVLEditConfigData, 0, InitialTxPipelineSize),
-	}
-
-	if d.client == nil {
-		glog.Error("NewDB: Could not create redis client")
-		e = tlerr.TranslibDBCannotOpen{}
-		goto NewDBExit
-	}
-
-	if opt.DBNo != ConfigDB {
-		if glog.V(3) {
-			glog.Info("NewDB: ! ConfigDB. Skip init. check.")
-		}
-		goto NewDBSkipInitIndicatorCheck
-	}
-
-	if len(d.Opts.InitIndicator) == 0 {
-
-		glog.Info("NewDB: Init indication not requested")
-
-	} else if init, _ := d.client.Get(d.Opts.InitIndicator).Int(); init != 1 {
-
-		glog.Error("NewDB: Database not inited")
-		e = tlerr.TranslibDBNotInit{}
-		goto NewDBExit
-	}
-
-NewDBSkipInitIndicatorCheck:
-
-NewDBExit:
-
-	if glog.V(3) {
-		glog.Info("NewDB: End: d: ", d, " e: ", e)
-	}
-
-	return &d, e
+	return NewDBForMultiAsic(opt, "host")
 }
 
 // DeleteDB is the gentle way to close the DB connection.
@@ -419,10 +442,10 @@ func (d *DB) DeleteDB() error {
 	}
 
 	if d.txState != txStateNone {
-		glog.Warning("DeleteDB: not txStateNone, txState: ", d.txState)
+		glog.Warning(d.client.String(), "DeleteDB: not txStateNone, txState: ", d.txState)
 	}
 
-	return d.client.Close()
+	return nil
 }
 
 func (d *DB) key2redis(ts *TableSpec, key Key) string {
@@ -503,9 +526,22 @@ func (d *DB) GetEntry(ts *TableSpec, key Key) (Value, error) {
 	return value, e
 }
 
+func (d *DB) KeyExists(ts *TableSpec, key Key) bool {
+	v := d.client.Exists(d.key2redis(ts, key)).Val()
+	return v != 0
+}
+
+func (d *DB) KeyExpire(ts *TableSpec, key Key, expiration time.Duration) error {
+	_, e:= d.client.Expire(d.key2redis(ts, key), expiration).Result()
+	if e != nil {
+		return e
+	}
+	return nil
+}
+
 // GetKeys retrieves all entry/row keys.
 func (d *DB) GetKeys(ts *TableSpec) ([]Key, error) {
-	return d.GetKeysPattern(ts, Key{Comp: []string{"*"}});
+	return d.GetKeysPattern(ts, Key{Comp: []string{"*"}})
 }
 
 func (d *DB) GetKeysPattern(ts *TableSpec, pat Key) ([]Key, error) {
@@ -514,7 +550,7 @@ func (d *DB) GetKeysPattern(ts *TableSpec, pat Key) ([]Key, error) {
 		glog.Info("GetKeys: Begin: ", "ts: ", ts, "pat: ", pat)
 	}
 
-	redisKeys, e := d.client.Keys(d.key2redis(ts,pat)).Result()
+	redisKeys, e := d.client.Keys(d.key2redis(ts, pat)).Result()
 	if glog.V(4) {
 		glog.Info("GetKeys: redisKeys: ", redisKeys, " e: ", e)
 	}
@@ -611,7 +647,7 @@ func (d *DB) doCVL(ts *TableSpec, cvlOps []cvl.CVLOperation, key Key, vals []Val
 	for i := 0; i < len(cvlOps); i++ {
 
 		cvlEditConfigData := cvl.CVLEditConfigData{
-			VType: cvl.VALIDATE_ALL,
+			VType: cvl.VALIDATE_NONE,
 			VOp:   cvlOps[i],
 			Key:   d.key2redis(ts, key),
 		}
@@ -747,7 +783,7 @@ func (d *DB) doWrite(ts *TableSpec, op _txOp, key Key, val interface{}) error {
 
 	// Transaction case.
 
-	glog.Info("doWrite: op: ", op, "  ", d.key2redis(ts, key), " : ", value)
+	glog.V(1).Info("doWrite: op: ", op, "  ", d.key2redis(ts, key), " : ", value)
 
 	switch op {
 	case txOpHMSet, txOpHDel:
@@ -870,7 +906,7 @@ func (d *DB) Publish(channel string, message interface{}) error {
 }
 
 func (d *DB) RunScript(script *redis.Script, keys []string, args ...interface{}) *redis.Cmd {
-    return script.Run(d.client, keys, args...)
+	return script.Run(d.client, keys, args...)
 }
 
 // DeleteEntry deletes an entry(row) in the table.
@@ -909,7 +945,7 @@ func (d *DB) ModEntry(ts *TableSpec, key Key, value Value) error {
 		} else {
 			glog.Info("ModEntry: Mapping to DeleteEntry()")
 			e = d.DeleteEntry(ts, key)
-		}		
+		}
 		goto ModEntryExit
 	}
 
@@ -1032,7 +1068,7 @@ func (d *DB) DeleteTable(ts *TableSpec) error {
 	// For each key in Keys
 	// 	Delete the entry
 	for i := 0; i < len(keys); i++ {
-    // Don't define/declare a nested scope ``e''
+		// Don't define/declare a nested scope ``e''
 		e = d.DeleteEntry(ts, keys[i])
 		if e != nil {
 			glog.Warning("DeleteTable: DeleteEntry: " + e.Error())
@@ -1220,7 +1256,7 @@ func (d *DB) StartTx(w []WatchKeys, tss []*TableSpec) error {
 
 	// Validate State
 	if d.txState != txStateNone {
-		glog.Error("StartTx: Incorrect State, txState: ", d.txState)
+		glog.Error(d.client.String(), "StartTx: Incorrect State, txState: ", d.txState)
 		e = errors.New("Transaction already in progress")
 		goto StartTxExit
 	}
@@ -1296,7 +1332,7 @@ func (d *DB) performWatch(w []WatchKeys, tss []*TableSpec) error {
 	}
 
 	if len(args) == 1 {
-		glog.Warning("performWatch: Empty WatchKeys. Skipping WATCH")
+		glog.V(1).Info("performWatch: Empty WatchKeys. Skipping WATCH")
 		goto SkipWatch
 	}
 
@@ -1317,9 +1353,7 @@ SkipWatch:
 
 // CommitTx method is used by infra to commit a check-and-set Transaction.
 func (d *DB) CommitTx() error {
-	if glog.V(3) {
-		glog.Info("CommitTx: Begin:")
-	}
+	glog.V(2).Info("CommitTx: Begin:")
 
 	var e error = nil
 	var tsmap map[TableSpec]bool = make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
@@ -1344,6 +1378,7 @@ func (d *DB) CommitTx() error {
 	}
 
 	if e != nil {
+		glog.Warning(d.client.String(), "CommitTx: Do: EXEC e: ", e.Error())
 		goto CommitTxExit
 	}
 
@@ -1438,7 +1473,7 @@ func (d *DB) CommitTx() error {
 	_, e = d.client.Do("EXEC").Result()
 
 	if e != nil {
-		glog.Warning("CommitTx: Do: EXEC e: ", e.Error())
+		glog.Warning(d.client.String(), "CommitTx: Do: EXEC e: ", e.Error())
 		e = tlerr.TranslibTransactionFail{}
 	}
 
@@ -1514,4 +1549,141 @@ AbortTxExit:
 		glog.Info("AbortTx: End: e: ", e)
 	}
 	return e
+}
+
+func getConfigTimeout() int {
+	timeout := 20 // same as CLI config timeout
+
+	editRspTimeout := os.Getenv("EDIT_RSP_TIMEOUT")
+	if len(editRspTimeout) == 0 {
+		return timeout
+	}
+
+	v, err := strconv.ParseInt(editRspTimeout, 10, 64)
+	if err != nil {
+		glog.Error("get EDIT_RSP_TIMEOUT value failed")
+		return timeout
+	}
+	timeout = int(v)
+
+	return timeout
+}
+
+func getConfigResponse(payload string) (int, string, error) {
+	var errorCode int64
+	var err error
+	payload = strings.TrimLeft(payload, "[")
+	payload = strings.TrimRight(payload, "]")
+	elmts := strings.Split(payload, ",")
+	if len(elmts) != 2 {
+		glog.Errorf("invalid config response %s", elmts)
+		goto error
+	}
+
+	elmts[0] = strings.Trim(elmts[0], "\"")
+	elmts[1] = strings.Trim(elmts[1], "\"")
+
+	errorCode, err = strconv.ParseInt(elmts[0], 10, 64)
+	if err != nil {
+		glog.Errorf("decode error code failed as %v", err)
+		goto error
+	}
+
+	return int(errorCode), elmts[1], nil
+
+error:
+	err = tlerr.New("invalid config response")
+	return -1, "", err
+}
+
+func (d *DB) ConfigSubscribe(ch []string) error {
+	pubSub := d.client.PSubscribe(ch...)
+	if pubSub == nil {
+		glog.Error("SubscribeDB: PSubscribe() nil: pats: ", ch)
+		return tlerr.New("subscribe failed.")
+	}
+	glog.Infof("subscribed channel %v", ch)
+
+	defer pubSub.Close()
+
+	notifCh := pubSub.Channel()
+	rcvNum := 0
+	expNum := len(ch)
+	timeout := time.Duration(getConfigTimeout()) * time.Second
+
+	for {
+		select {
+		case msg := <-notifCh:
+			glog.Info("receive ", msg.Payload, " from ", msg.Channel)
+			errorCode, errorMessage, err := getConfigResponse(msg.Payload)
+			if err != nil {
+				return err
+			}
+
+			if errorCode != 0 {
+				return tlerr.New(errorMessage)
+			}
+
+			rcvNum++
+			if rcvNum == expNum {
+				return nil
+			}
+
+		case <-time.After(timeout):
+			glog.Errorf("subscribe message from channel %v timeout %vs", ch, timeout.Seconds())
+			return tlerr.New("operation timeout.")
+		}
+	}
+}
+
+func (d *DB) PersistConfigData(namespace string) {
+	data := Value{Field: map[string]string{}}
+	data.Set("namespace", namespace)
+	d.ModEntry(&TableSpec{Name: "SAVE_CONFIG"}, Key{Comp: []string{"save"}}, data)
+	// make sure that every successful configuration has been persisted
+	d.CommitTx()
+	d.StartTx(nil, nil)
+}
+
+func (d *DB) SynchronizedSave(table *TableSpec, key Key, data Value) error {
+	oldData, _ := d.GetEntry(table, key)
+
+	u2, err := uuid.NewV4()
+	if err != nil {
+		glog.Error("failed to generate UUID: ", err)
+		return err
+	}
+
+	var s []string
+	for k, _ := range data.Field {
+		s = append(s, k + "-" + u2.String())
+	}
+
+	data.Field["operation-id"] = u2.String()
+	err = d.ModEntry(table, key, data)
+	if err != nil {
+		return err
+	}
+
+	// commit here as the syncd could tell restconf whether the hardware accept this config or not
+	d.CommitTx()
+	d.StartTx(nil, nil)
+
+	err = d.ConfigSubscribe(s)
+	if err != nil {
+		glog.Info("rolling back old data ", oldData)
+		if oldData.IsPopulated() {
+			d.ModEntry(table, key, oldData)
+		} else {
+			d.DeleteEntry(table, key)
+		}
+
+		// commit here as rollback need return error to abort the whole configuration transaction
+		d.CommitTx()
+
+		glog.Error("Failed to config " + key.String() + " with error ", err)
+		return err
+	}
+
+	return nil
 }

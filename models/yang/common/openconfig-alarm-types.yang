@@ -107,6 +107,12 @@ module openconfig-alarm-types {
       This level SHOULD be avoided.";
   }
 
+  identity NOT_ALARMED {
+      base OPENCONFIG_ALARM_SEVERITY;
+      description
+        "Indicates the low level alarms";
+  }
+
   identity MINOR {
     base OPENCONFIG_ALARM_SEVERITY;
     description

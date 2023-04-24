@@ -62,12 +62,13 @@ func main() {
 		}})
 
 	fmt.Println("Creating the SubscribeDB ==============")
-	d,e := db.SubscribeDB(db.Options {
-	                DBNo              : db.ConfigDB,
-	                InitIndicator     : "CONFIG_DB_INITIALIZED",
-	                TableNameSeparator: "|",
-	                KeySeparator      : "|",
-                      }, skeys, handler)
+    d, _ := db.NewDB(db.Options {
+		DBNo              : db.ConfigDB,
+		InitIndicator     : "CONFIG_DB_INITIALIZED",
+		TableNameSeparator: "|",
+		KeySeparator      : "|",
+	})
+	e := db.SubscribeDB(d, skeys, handler)
 
 	if e != nil {
 		fmt.Println("Subscribe() returns error e: ", e)

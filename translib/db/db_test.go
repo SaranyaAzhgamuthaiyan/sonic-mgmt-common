@@ -178,6 +178,248 @@ TestMainRedo:
 	
 }
 
+func initMultiAsic() {
+	os.Setenv("ASIC_CONFIG_PATH", "data/asic_multi.conf")
+	defer os.Unsetenv("ASIC_CONFIG_PATH")
+	os.Setenv("DB_GLOBAL_CONFIG_PATH", "data/database_global.json")
+	defer os.Unsetenv("DB_GLOBAL_CONFIG_PATH")
+	initAllDbs()
+}
+
+func initNotMultiAsic() {
+	os.Setenv("ASIC_CONFIG_PATH", "data/asic.conf")
+	defer os.Unsetenv("ASIC_CONFIG_PATH")
+	os.Setenv("DB_CONFIG_PATH", "data/database_config.json")
+	defer os.Unsetenv("DB_CONFIG_PATH")
+	initAllDbs()
+}
+
+func TestIsMultiAsicFalse(t *testing.T) {
+	initNotMultiAsic()
+
+	if isMultiAsic() {
+		t.Errorf("expected is not multi asic but got ture")
+	}
+}
+
+func TestIsMultiAsicTrue(t *testing.T) {
+	initMultiAsic()
+
+	if !isMultiAsic() {
+		t.Errorf("expected is multi asic but got false")
+	}
+}
+
+func TestHostDbWhenIsNotMultiAsic(t *testing.T) {
+	initNotMultiAsic()
+
+	mDbs, err := GetMDBInstances(true)
+	if err != nil {
+		t.Errorf("failed to get all db instances")
+	}
+
+	if len(mDbs) != 1 {
+		t.Errorf("failed to get host db instance")
+	}
+
+	if mDbs["host"][ApplDB] == nil ||
+		mDbs["host"][StateDB] == nil ||
+		mDbs["host"][CountersDB] == nil {
+		t.Errorf("the host db instance is empty")
+	}
+
+	if mDbs["host"][ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("host db instance's address is wrong")
+	}
+}
+
+func TestGetAllDbInstancesWhenItsMultiAsic(t *testing.T) {
+	initMultiAsic()
+
+	mDbs, err := GetMDBInstances(true)
+	if err != nil {
+		t.Errorf("failed to get all db instances")
+	}
+
+	if len(mDbs) != 5 {
+		t.Errorf("failed to get host db instance")
+	}
+
+	if mDbs["host"][ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("host db instance's address is wrong")
+	}
+
+	if mDbs["asic0"][ApplDB].client.Options().Addr != "127.0.0.10:6379" {
+		t.Errorf("asic0 db instance's address is wrong")
+	}
+
+	if mDbs["asic1"][ApplDB].client.Options().Addr != "127.0.0.11:6379" {
+		t.Errorf("asic1 db instance's address is wrong")
+	}
+
+	if mDbs["asic2"][ApplDB].client.Options().Addr != "127.0.0.12:6379" {
+		t.Errorf("asic2 db instance's address is wrong")
+	}
+
+	if mDbs["asic3"][ApplDB].client.Options().Addr != "127.0.0.13:6379" {
+		t.Errorf("asic3 db instance's address is wrong")
+	}
+}
+
+func TestGetSlotDbWhenItsMultiAsic(t *testing.T) {
+	initMultiAsic()
+
+	mDbs, err := getAllDbsBySlot(5)
+	if err != nil {
+		t.Errorf("failed to get slot 5 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 5 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(0)
+	if err != nil {
+		t.Errorf("failed to get slot 0 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 0 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(4)
+	if err != nil {
+		t.Errorf("failed to get slot 4 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.13:6379" {
+		t.Errorf("slot 4 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(3)
+	if err != nil {
+		t.Errorf("failed to get slot 3 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.12:6379" {
+		t.Errorf("slot 3 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(2)
+	if err != nil {
+		t.Errorf("failed to get slot 2 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.11:6379" {
+		t.Errorf("slot 2 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(1)
+	if err != nil {
+		t.Errorf("failed to get slot 1 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.10:6379" {
+		t.Errorf("slot 1 is not host db instance")
+	}
+}
+
+func TestGetSlotDbWhenItsNotMultiAsic(t *testing.T) {
+	initNotMultiAsic()
+
+	mDbs, err := getAllDbsBySlot(5)
+	if err != nil {
+		t.Errorf("failed to get slot 5 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 5 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(0)
+	if err != nil {
+		t.Errorf("failed to get slot 0 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 0 is not host db instance")
+	}
+
+	mDbs, err = getAllDbsBySlot(1)
+	if err != nil {
+		t.Errorf("failed to get slot 1 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 1 is not host db instance")
+	}
+}
+
+func TestDeleteDbForASlot(t *testing.T) {
+	initNotMultiAsic()
+
+	mDbs, err := getAllDbsBySlot(0)
+	if err != nil {
+		t.Errorf("failed to get slot 0 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 0 is not host db instance")
+	}
+
+	CloseAllDbs(mDbs[:])
+	if mDbs[ApplDB] != nil {
+		t.Errorf("slot 0 db is not closed")
+	}
+
+	initMultiAsic()
+	mDbs, err = getAllDbsBySlot(0)
+	if err != nil {
+		t.Errorf("failed to get slot 0 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.1:6379" {
+		t.Errorf("slot 0 is not host db instance")
+	}
+
+	CloseAllDbs(mDbs[:])
+	if mDbs[ApplDB] != nil {
+		t.Errorf("slot 0 db is not closed")
+	}
+
+	mDbs, err = getAllDbsBySlot(4)
+	if err != nil {
+		t.Errorf("failed to get slot 4 db instances")
+	}
+
+	if mDbs[ApplDB].client.Options().Addr != "127.0.0.13:6379" {
+		t.Errorf("slot 4 is not host db instance")
+	}
+
+	CloseAllDbs(mDbs[:])
+	if mDbs[ApplDB] != nil {
+		t.Errorf("slot 4 db is not closed")
+	}
+}
+
+func TestDeleteDbsForAllSlots(t *testing.T) {
+	initMultiAsic()
+
+	mDbs, err := GetMDBInstances(true)
+	if err != nil {
+		t.Errorf("failed to get slot 1 db instances")
+	}
+
+	CloseMDBInstances(mDbs)
+	if mDbs == nil{
+		t.Errorf("failed to all db instances")
+	}
+}
+
+//func TestCloseDbsForASlot(t *testing.T) {
+//
+//}
+
 /*
 
 1.  Create, and close a DB connection. (NewDB(), DeleteDB())
@@ -670,24 +912,29 @@ func TestSubscribe(t * testing.T) {
 			SEventDel:	true,
 		}})
 
-	s,e := SubscribeDB(Options {
-	                DBNo              : ConfigDB,
-	                InitIndicator     : "CONFIG_DB_INITIALIZED",
-	                TableNameSeparator: "|",
-	                KeySeparator      : "|",
-                        DisableCVLCheck   : true,
-                      }, skeys, func (s *DB,
-				skey *SKey, key *Key,
-				event SEvent) error {
-			switch event {
-			case SEventHSet: hSetCalled = true
-			case SEventHDel: hDelCalled = true
-			case SEventDel: delCalled = true
-			default:
-			}
-			return nil })
+    dbCl, _ := NewDB(Options {
+		DBNo              : ConfigDB,
+		InitIndicator     : "CONFIG_DB_INITIALIZED",
+		TableNameSeparator: "|",
+		KeySeparator      : "|",
+		DisableCVLCheck   : true,
+	})
+	e = SubscribeDB(dbCl, skeys, func(s *DB,
+		skey *SKey, key *Key,
+		event SEvent) error {
+		switch event {
+		case SEventHSet:
+			hSetCalled = true
+		case SEventHDel:
+			hDelCalled = true
+		case SEventDel:
+			delCalled = true
+		default:
+		}
+		return nil
+	})
 
-	if (s == nil) || (e != nil) {
+	if e != nil {
 		t.Errorf("Subscribe() returns error e: %v", e)
 		return
 	}
@@ -703,7 +950,7 @@ func TestSubscribe(t * testing.T) {
 		return
 	}
 
-	s.UnsubscribeDB()
+	dbCl.UnsubscribeDB()
 
 	time.Sleep(2 * time.Second)
 
@@ -711,4 +958,3 @@ func TestSubscribe(t * testing.T) {
 		t.Errorf("DeleteDB() fails e = %v", e)
 	}
 }
-
