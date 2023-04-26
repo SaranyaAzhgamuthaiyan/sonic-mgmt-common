@@ -30,7 +30,6 @@ import (
 	"errors"
 	"strings"
 
-	// "github.com/go-redis/redis/v7"
 	"github.com/golang/glog"
 	// "github.com/Azure/sonic-mgmt-common/cvl"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
@@ -72,8 +71,7 @@ func init() {
 
 
 // HFunc gives the name of the table, and other per-table customizations.
-type HFunc func( *DB, *SKey, *Key, SEvent) (error)
-
+type HFunc func(*DB, *SKey, *Key, SEvent) error
 
 // SubscribeDB is the factory method to create a subscription to the DB.
 // The returned instance can only be used for Subscription.

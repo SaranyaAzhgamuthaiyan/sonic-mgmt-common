@@ -179,7 +179,7 @@ func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error)
 		Format:         ygot.RFC7951,
 		SkipValidation: skipValidation,
 		RFC7951Config: &ygot.RFC7951JSONConfig{
-			AppendModuleName: true,
+			AppendModuleName: false,
 		},
 	})
 	return []byte(jsonStr), err
