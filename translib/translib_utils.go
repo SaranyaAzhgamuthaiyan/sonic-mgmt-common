@@ -52,7 +52,7 @@ func transToUint64(value interface{}) (uint64, error) {
 		tmp, err := strconv.ParseInt(value.(string), 10, 64)
 		if err != nil {
 			glog.Errorf("body field is not uint type, err %v", err)
-			return 0,err
+			return 0, err
 		}
 		return uint64(tmp), nil
 	case float64:
@@ -233,7 +233,7 @@ func constructCountersTableKey(parentKey db.Key, suffix string, lastKey string) 
 	var keys []string
 	for i := 0; i < parentKey.Len(); i++ {
 		elmt := parentKey.Get(i)
-		if i + 1 == parentKey.Len() && len(suffix) != 0 {
+		if i+1 == parentKey.Len() && len(suffix) != 0 {
 			elmt += "_" + suffix
 		}
 		keys = append(keys, elmt)
@@ -263,7 +263,7 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 		fType := rt.Field(i)
 		fVal := rv.Field(i)
 
-		if _, ok := fVal.Interface().(ygot.GoEnum);  ok {
+		if _, ok := fVal.Interface().(ygot.GoEnum); ok {
 			continue
 		}
 
@@ -321,34 +321,47 @@ func requestBodyHasField(t reflect.Type, v reflect.Value) bool {
 }
 
 func convertRequestBodyToInternal(gs interface{}) db.Value {
-	rt := reflect.TypeOf(gs).Elem()
-	rv := reflect.ValueOf(gs).Elem()
+	rt := reflect.TypeOf(gs)
+	rv := reflect.ValueOf(gs)
 	data := db.Value{Field: map[string]string{}}
+	convert(rt, rv, &data)
+	return data
+}
 
-	for i := 0; i < rt.NumField(); i++ {
-		fType := rt.Field(i).Type
-		fVal := rv.Field(i)
-
-		if !requestBodyHasField(fType, fVal) {
-			continue
+func convert(rt reflect.Type, rv reflect.Value, data *db.Value) error {
+	var err error
+	if rt.Elem().Kind() == reflect.Struct {
+		for i := 0; i < rt.Elem().NumField(); i++ {
+			if !requestBodyHasField(rt.Elem().Field(i).Type, rv.Elem().Field(i)) {
+				continue
+			}
+			if rt.Elem().Field(i).Type.Elem().Kind() == reflect.Struct {
+				fType := rt.Elem().Field(i).Type
+				fVal := rv.Elem().Field(i)
+				err = convert(fType, fVal, data)
+			} else {
+				fType := rt.Elem().Field(i).Type.Elem()
+				fVal := rv.Elem().Field(i).Elem()
+				val, err := getFieldStringValue(fType, fVal)
+				if err != nil {
+					glog.Error(err)
+					continue
+				}
+				path := rt.Elem().Field(i).Tag.Get("path")
+				data.Field[path] = val
+			}
 		}
-
-		if fType.Kind() == reflect.Ptr {
-			fType = fType.Elem()
-			fVal = fVal.Elem()
-		}
-
+	} else {
+		fType := rt.Elem()
+		fVal := rv.Elem()
 		val, err := getFieldStringValue(fType, fVal)
 		if err != nil {
 			glog.Error(err)
-			continue
 		}
-
-		path := rt.Field(i).Tag.Get("path")
+		path := rt.Elem().Field(0).Tag.Get("path")
 		data.Field[path] = val
 	}
-
-	return data
+	return err
 }
 
 func createOrMergeToDb(gs interface{}, d *db.DB, ts *db.TableSpec, key db.Key) error {
@@ -480,7 +493,9 @@ func internalRecordExist(tblMap interface{}, keys db.Key) bool {
 	return true
 }
 
-/* Check if targetUriPath is child (subtree) of nodePath
+/*
+	Check if targetUriPath is child (subtree) of nodePath
+
 The return value can be used to decide if subtrees needs
 to visited to fill the data or not.
 */
@@ -634,15 +649,15 @@ func constructRouteByPath(path string) string {
 	var route string
 	pathElmts := strings.Split(path[1:], "/")
 	for i, elmt := range pathElmts {
-		if index := strings.Index(elmt, ":"); index > 0 {
+		if index := strings.Index(elmt, "["); index > 0 {
+			route += getFieldNameByNodeName(elmt[:index])
+		} else if index = strings.Index(elmt, ":"); index > 0 {
 			ns := elmt[:index]
-			node := elmt[index + 1 :]
+			node := elmt[index+1:]
 			if i == 0 {
 				route += getFieldNameByNodeName(ns)
 			}
 			route += getFieldNameByNodeName(node)
-		} else if index = strings.Index(elmt, "["); index > 0  {
-			route += getFieldNameByNodeName(elmt[:index])
 		} else {
 			route += getFieldNameByNodeName(elmt)
 		}
@@ -654,7 +669,7 @@ func constructRouteByPath(path string) string {
 func parentNeedQuery(parentRoute string, targetRoute string) bool {
 	// should query the list parent as the key node is necessary for the building of the target node.
 	// should not query the container parent，which is to be supported
-    // currently, ignore the type of parent and query parent always
+	// currently, ignore the type of parent and query parent always
 	return strings.HasPrefix(targetRoute, parentRoute)
 }
 
@@ -663,7 +678,7 @@ func childNeedQuery(childRoute string, targetRoute string) bool {
 }
 
 func siblingNeedQuery(siblingRoute string, targetRoute string) bool {
-    return siblingRoute == targetRoute
+	return siblingRoute == targetRoute
 }
 
 // /openconfig-platform:components/component/openconfig-platform-transceiver:transceiver/physical-channels/channel/state
