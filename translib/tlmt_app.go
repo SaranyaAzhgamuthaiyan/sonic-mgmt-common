@@ -1,24 +1,26 @@
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-//  Copyright (c) 2021 Alibaba Group                                          //
-//                                                                            //
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may   //
-//  not use this file except in compliance with the License. You may obtain   //
-//  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0       //
-//                                                                            //
-//  THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR          //
-//  CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT      //
-//  LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS         //
-//  FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.            //
-//                                                                            //
-//  See the Apache Version 2.0 License for specific language governing        //
-//  permissions and limitations under the License.                            //
-////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2019 Dell, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//////////////////////////////////////////////////////////////////////////
 
 package translib
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/Azure/sonic-mgmt-common/translib/ocbinds"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
@@ -28,6 +30,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -1059,4 +1062,150 @@ func syncSubscriptionDataToTelemetryClient(d *db.DB, sensorProfileKey db.Key) er
 	}
 
 	return err
+}
+
+func constructAlarmKey(resource string, typeId string, timestamp string) string {
+	var key string
+
+	if len(timestamp) == 0 {
+		key = fmt.Sprintf("%s#%s", resource, typeId)
+	} else {
+		key = fmt.Sprintf("%s#%s_%s", resource, typeId, timestamp)
+	}
+	return key
+}
+
+func CreateTelemetryNotReachAlarm(addr string) error {
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	d, err := db.NewDB(db.GetDBOptions(db.StateDB, false))
+	if err != nil {
+		return err
+	}
+	defer d.DeleteDB()
+
+	key := constructAlarmKey(addr, "TELEMETRY_NOT_REACH", "")
+	data := db.Value{Field: make(map[string]string)}
+	data.Set("id", key)
+	data.Set("time-created", strconv.FormatInt(time.Now().UnixNano(), 10))
+	data.Set("resource", addr)
+	data.Set("type-id", "TELEMETRY_NOT_REACH")
+	data.Set("text", "TELEMETRY TARGET SERVER UNREACHABLE")
+	data.Set("severity", "MAJOR")
+	data.Set("service-affect", "false")
+
+	if !d.KeyExists(asTableSpec(currentAlarmTabPrefix), asKey(key)) {
+		err = setRedisData(d, asTableSpec(currentAlarmTabPrefix), asKey(key), data)
+		if err != nil {
+			return err
+		}
+		glog.Infof("created %s alarm success", data.Get("id"))
+	}
+
+	return nil
+}
+
+func moveCurAlarmToHisAlarm(key db.Key) error {
+	writeMutex.Lock()
+	defer writeMutex.Unlock()
+
+	dbs, err := db.GetAllDbsByDbName("host", false)
+	if err != nil {
+		return err
+	}
+	defer db.CloseAllDbs(dbs[:])
+
+	d := dbs[db.StateDB]
+	ts := asTableSpec(currentAlarmTabPrefix)
+	data, err1 := getRedisData(d, ts, key)
+	if err1 != nil {
+		return nil
+	}
+
+	err = deleteRedisData(d, ts, key)
+	if err != nil {
+		return err
+	}
+
+	key = asKey(constructAlarmKey(data.Get("resource"), data.Get("type-id"), data.Get("time-created")))
+	data.Set("time-cleared", strconv.FormatInt(time.Now().UnixNano(), 10))
+
+	d = dbs[db.HistoryDB]
+	ts = asTableSpec("HISALARM")
+	err = setRedisData(d, ts, key, data)
+	if err != nil {
+		return err
+	}
+	err = d.KeyExpire(ts, key, time.Second * 3600 * 7)
+	if err != nil {
+		glog.Errorf("set table %s key %s expiration failed as %v", ts.Name, key.String(), err)
+	}
+
+	glog.Infof("cleared %s alarm success", data.Get("id"))
+
+	return nil
+}
+
+func ClearTelemetryNotReachAlarm(addr string) error {
+	key := asKey(constructAlarmKey(addr, "TELEMETRY_NOT_REACH", ""))
+	err := moveCurAlarmToHisAlarm(key)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ClearTelemetryNotReachAlarmAll() error {
+	d, err := db.NewDBForMultiAsic(db.GetDBOptions(db.StateDB, false), "host")
+	if err != nil {
+		return err
+	}
+	defer d.DeleteDB()
+
+	ts := asTableSpec(currentAlarmTabPrefix)
+	keys, err1 := d.GetKeysByPattern(ts, "*" + "TELEMETRY_NOT_REACH" + "*")
+	if err1 != nil {
+		return err1
+	}
+
+	for _, key := range keys {
+		err := moveCurAlarmToHisAlarm(key)
+		if err != nil {
+			glog.Errorf("move %s from current alarm to history alarm failed as %v", key.String(), err)
+			continue
+		}
+	}
+
+	return nil
+}
+
+func GetDestinations() []string {
+	var destinations []string
+	d, err := db.NewDBForMultiAsic(db.GetDBOptions(db.ConfigDB, true), "host")
+	if err != nil {
+		return destinations
+	}
+	defer d.DeleteDB()
+
+	ts := asTableSpec("TELEMETRY_CLIENT")
+	keys, err1 := d.GetKeysByPattern(ts, "DestinationGroup_*")
+	if err1 != nil {
+		return destinations
+	}
+	for _, key := range keys {
+		data, err2 := getRedisData(d, ts, key)
+		if err2 != nil {
+			return destinations
+		}
+		dstAddr := data.Get("dst_addr")
+		if len(dstAddr) == 0 {
+			return destinations
+		}
+		tmp := strings.Split(strings.TrimSpace(dstAddr), ",")
+		destinations = append(destinations, tmp...)
+	}
+
+	return destinations
 }

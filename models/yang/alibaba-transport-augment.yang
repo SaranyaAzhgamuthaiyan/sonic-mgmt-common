@@ -1,0 +1,495 @@
+module alibaba-transport-augment {
+
+  yang-version "1";
+
+  // namespace
+  namespace "http://alibaba-inc.com/yang/transport-augments";
+
+  prefix "oc-opt-aug";
+
+  import openconfig-terminal-device { prefix oc-opt-term; }
+  import openconfig-yang-types {prefix oc-yang; }
+  import openconfig-platform { prefix oc-platform; }
+  import openconfig-types { prefix oc-types; }
+  import openconfig-transport-types {prefix oc-opt-types; }
+
+  // meta
+  organization "Alibaba transport working group";
+
+  contact
+    "Alibaba transport working group";
+
+  description
+    "This model describes Alibaba transport augmentation.
+    It is an informal version, which is only 
+    available for alibaba internal discussion.";
+
+  revision "2022-05-04" {
+      description
+        "add descriptions to several line-side pms, which should
+        be replaced by latest standard openconfig model,
+        openconfig-terminal-devices v1.9.0";
+      reference "0.1.10";
+  }
+
+  revision "2022-04-20" {
+      description
+        "add link-up-delay-enable, link-up-delay and
+        link-up-delay-active-threshold to ethernet channel;
+        add link-down-delay-enable and link-down-delay
+        to ethernet channel";
+      reference "0.1.9";
+  }
+
+  revision "2021-12-14" {
+    description
+      "add one ETHERNET_PMD_TYPE: ETH_100GBASE_4WDM10";
+    reference "0.1.8";
+  }
+
+  revision "2021-12-06" {
+    description
+      "add far-end-als-delay for ALS scenario A:
+      far end client failure.";
+    reference "0.1.7";
+  }
+
+  revision "2021-11-23" {
+    description
+      "add 200G extension to ETHERNET_PMD_TYPE;
+       add QSFP112 to TRANSCEIVER_FORM_FACTOR_TYPE.";
+    reference "0.1.6";
+  }
+
+  revision "2021-09-13" {
+    description
+      "add actual-frequency-offset. ";
+    reference "0.1.5";
+  }
+
+  revision "2021-07-11" {
+    description
+      "add coherent signal input optical power;
+       add laser-age;
+       add coherent transceiver modulator bias parameters. ";
+    reference "0.1.4";
+  }
+
+  revision "2021-05-07" {
+    description
+      "add delay-measurement-mode";
+    reference "0.1.3";
+  }
+
+  revision "2020-07-20" {
+    description
+      "add SOP change rate and stokes vector s1/s2/s3";
+    reference "0.1.3";
+  }
+
+  revision "2020-06-19" {
+    description
+      "add OSNR";
+    reference "0.1.2";
+  }
+
+  revision "2020-06-11" {
+    description
+      "Add RPC delay-measure;
+       Add delay-measurement-enabled augmentation";
+    reference "0.1.1";
+  }
+
+  revision "2020-06-04" {
+    description
+      "Initial public release";
+    reference "0.1.0";
+  }
+
+  identity ETH_100GBASE_4WDM10 {
+    base oc-opt-types:ETHERNET_PMD_TYPE;
+    description "Ethernet compliance code: 100GBASE_4WDM10";
+  }
+
+  identity QSFP112 {
+    base oc-opt-types:TRANSCEIVER_FORM_FACTOR_TYPE;
+    description
+      "4 lanes 112G electrical serdes in QSFP form factor.";
+  }
+
+  identity ETH_200GBASE_SR4 {
+    base oc-opt-types:ETHERNET_PMD_TYPE;
+    description "Ethernet compliance code: 200GBASE_SR4";
+  }
+
+  identity ETH_200GBASE_DR4 {
+    base oc-opt-types:ETHERNET_PMD_TYPE;
+    description "Ethernet compliance code: 200GBASE_DR4";
+  }
+
+  identity ETH_200GBASE_FR4 {
+    base oc-opt-types:ETHERNET_PMD_TYPE;
+    description "Ethernet compliance code: 200GBASE_FR4";
+  }
+
+  identity ETH_200GBASE_EFR4 {
+    base oc-opt-types:ETHERNET_PMD_TYPE;
+    description "Ethernet compliance code: 200GBASE_EFR4";
+  }
+
+  grouping avg-min-max-instant-stats-uint32 {
+    description
+      "Common grouping for recording values with data type uint32. 
+      Values include the instantaneous, average,
+      minimum, and maximum statistics.  Statistics are computed
+      and reported based on a moving time interval (e.g., the last
+      30s).  If supported by the device, the time interval over which
+      the statistics are computed, and the times at which the minimum
+      and maximum values occurred, are also reported.";
+
+    leaf instant {
+      type uint32;
+      description
+        "The instantaneous value of the statistic.";
+    }
+
+    leaf avg {
+      type uint32;
+      description
+        "The arithmetic mean value of the statistic over the
+        time interval.";
+    }
+
+    leaf min {
+      type uint32;
+      description
+        "The minimum value of the statistic over the time interval.";
+    }
+
+    leaf max {
+      type uint32;
+      description
+        "The maximum value of the statistic over the time
+        interval.";
+    }
+
+    uses oc-types:stat-interval-state;
+    uses oc-types:min-max-time;
+  }
+
+  grouping terminal-ethernet-protocol-config-ext {
+    description
+      "Configuration data extension for logical channels with Ethernet
+      framing";
+    leaf far-end-als-delay {
+      type uint32;
+      units milliseconds;
+      default 0;
+      description
+        "The timer to delay the client-als actions on the client
+        port when a fault is detected on the far-end
+        client port. The delay will only be valid when the client-als is
+        set to LASER_SHUTDOWN and only applied to ALS scenario A: far end
+        client failure";
+    }
+
+    leaf link-up-delay-enable
+    {
+      type boolean;
+      default false;
+      description
+        "When enabled, the ethernet client will maintain local fault signal
+        for a while after line-side signal recovery.";
+    }
+
+    leaf link-up-delay
+    {
+      type uint32;
+      units seconds;
+      default 0;
+      description
+        "Number of seconds to hold ethernet signal recovery.";
+    }
+
+    leaf link-up-delay-active-threshold
+    {
+      type uint32;
+      units milliseconds;
+      default 50;
+      description
+        "Number of milliseconds to trigger link up delay
+        when signal recovers from fault state.";
+    }
+
+    leaf link-down-delay-enable
+    {
+      type boolean;
+      default false;
+      description
+        "When enabled, the ethernet client will send idle frame
+        instead of local fault for a while after line-side signal fail.";
+    }
+
+    leaf link-down-delay
+    {
+      type uint32;
+      units milliseconds;
+      default 0;
+      description
+        "Number of milliseconds to delay local fault
+        maintenance signal insertion.";
+    }
+  }
+
+  augment "/oc-platform:components/oc-platform:component/" +
+          "oc-opt-term:optical-channel/oc-opt-term:state" {
+    description
+      "add OSNR to optical channel;
+       add SOP change rate and SOP stokes vector";
+
+    container osnr {
+      description
+        "optical signal to noise ratio. If avg/min/max
+        statistics are not supported, the target is expected
+        to just supply the instant value. it should be replaced
+        by the item defined in openconfig-terminal-devices v1.9.0";
+    
+      uses oc-types:avg-min-max-instant-stats-precision2-dB;
+    }
+
+    container sop-change-rate {
+      description
+        "State of polarization change rate. unit: rads/s.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+
+      uses avg-min-max-instant-stats-uint32;
+    }
+
+    leaf sop-vector-s1 {
+      description
+        "State of polarization stokes vector S1. range -1~1";
+      type decimal64 {
+        fraction-digits 2;
+      }
+    } 
+
+    leaf sop-vector-s2 {
+      description
+        "State of polarization stokes vector S2. range -1~1";
+      type decimal64 {
+        fraction-digits 2;
+      }
+    }
+
+    leaf sop-vector-s3 {
+      description
+        "State of polarization stokes vector S3. range -1~1";
+      type decimal64 {
+        fraction-digits 2;
+      }
+    }
+
+    container signal-input-power {
+      description
+        "The coherent signal input optical power of this port in
+        units of 0.01dBm.
+        Values include the instantaneous, average, minimum, and
+        maximum statistics. If avg/min/max statistics are not
+        supported, the target is expected to just supply the
+        instant value";
+      uses oc-types:avg-min-max-instant-stats-precision2-dBm;
+    }
+
+    leaf tx-laser-age {
+      description
+        "the laser age value to be the percentage of End Of Life.
+        this value will be 0% at Beginning Of Life and will be
+        100% at End Of Life. unit: Percent";
+      type uint32;
+    }
+
+    container tx-mod-bias-x-i {
+      description
+        "The TX modulator Bias X/I.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    container tx-mod-bias-x-q {
+      description
+        "The TX modulator Bias X/Q.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    container tx-mod-bias-y-i {
+      description
+        "The TX modulator Bias Y/I.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    container tx-mod-bias-y-q {
+      description
+        "The TX modulator Bias Y/Q.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    container tx-mod-bias-x-ph {
+      description
+        "The TX modulator Bias X phase.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    container tx-mod-bias-y-ph {
+      description
+        "The TX modulator Bias Y phase.
+        A bias of 0.0% indicates the bias control is at or below its
+        minimum operating value; A bias of 100.0% indicates the bias
+        control is at or above the maximum operating value.
+        unit: Percent with 0.1 step.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      uses oc-types:avg-min-max-instant-stats-precision1;
+    }
+
+    leaf actual-frequency-offset {
+      description
+        "actual received frequency offset. unit: MHz.
+        it should be replaced by the item defined in
+        openconfig-terminal-devices v1.9.0";
+      type int32;
+    }
+  }
+
+  augment "/oc-opt-term:terminal-device/oc-opt-term:logical-channels/" + 
+          "oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state" {
+
+    description
+      "Adding a-z round-trip delay to otu/odu logical channel";
+
+    leaf delay {
+      type uint64;
+      description
+        "Round trip delay. unit: microseconds";
+    }
+
+    leaf delay-measurement-enabled {
+      type boolean;
+      default false;
+      description
+        "When it is enabled, this channel initiates a task to priodically 
+         measure the round-trip delay to the remote end. Otherwise disabled";
+    }
+
+    leaf delay-measurement-mode {
+      type enumeration {
+        enum LOOPBACK {
+          description "loopback mode";
+        }
+        enum MEASURE {
+          description "measure mode";
+        }
+      }
+      description 
+        "delay measurement mode is only available when delay-measurement-
+         enabled is True. It is an optional configuration for devices which 
+         lacks the negotiation capability between OCH two ends";
+    }
+  }
+
+  augment "/oc-opt-term:terminal-device/oc-opt-term:logical-channels/" + 
+          "oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:config" {
+
+    description
+      "Adding a-z round-trip delay to otu/odu logical channel";
+
+    leaf delay-measurement-enabled {
+      type boolean;
+      default false;
+      description
+        "When it is enabled, this channel initiates a task to priodically 
+         measure the round-trip delay to the remote end. Otherwise disabled";
+    }
+
+    leaf delay-measurement-mode {
+      type enumeration {
+        enum LOOPBACK {
+          description "loopback mode";
+        }
+        enum MEASURE {
+          description "measure mode";
+        }
+      }
+      description 
+        "delay measurement mode is only available when delay-measurement-
+         enabled is True. It is an optional configuration for devices which 
+         lacks the negotiation capability between OCH two ends";
+    }
+  }
+
+  augment "/oc-opt-term:terminal-device/oc-opt-term:logical-channels/" +
+            "oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config" {
+    uses terminal-ethernet-protocol-config-ext;
+  }
+
+  augment "/oc-opt-term:terminal-device/oc-opt-term:logical-channels/" +
+            "oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state" {
+    uses terminal-ethernet-protocol-config-ext;
+  }
+
+  rpc delay-measure {
+    description
+      "This RPC instantly triggers a ODU-level round-trip delay measurement, 
+       and return its result upon completion.";
+    input {
+      leaf channel-index {
+        type string;
+        description
+          "The index of the ODU logical channel";
+      }
+    }
+
+    output {
+      leaf message {
+        type string;
+        description
+          "Informational response for the delay measurement.";
+      }
+      
+      leaf delay {
+        type uint64;
+        description
+          "Round trip delay. unit: microseconds";
+      }
+    }
+  }
+}

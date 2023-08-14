@@ -1,20 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-//  Copyright (c) 2021 Alibaba Group                                          //
-//                                                                            //
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may   //
-//  not use this file except in compliance with the License. You may obtain   //
-//  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0       //
-//                                                                            //
-//  THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR          //
-//  CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT      //
-//  LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS         //
-//  FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.            //
-//                                                                            //
-//  See the Apache Version 2.0 License for specific language governing        //
-//  permissions and limitations under the License.                            //
-////////////////////////////////////////////////////////////////////////////////
-
 package translib
 
 import (
@@ -252,6 +235,7 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 		ygot.BuildEmptyTree(v)
 	}
 
+    // 统计值
 	dbKey := constructCountersTableKey(key, "", PMCurrent)
 	if data, err := getRedisData(dbCl, ts, dbKey); err == nil && data.IsPopulated() {
 		buildGoStruct(gs, data)
@@ -271,6 +255,7 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 		dbKey := constructCountersTableKey(key, fType.Name, PMCurrent15min)
 		if data, err := getRedisData(dbCl, ts, dbKey); err == nil {
 			if util.IsTypeStructPtr(fType.Type) {
+				// 模拟值 container
 				buildGoStruct(fVal.Interface(), data)
 			} else {
 				fieldVal := data.Get("instant")
@@ -278,7 +263,7 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 					glog.Errorf("get instant field from table %s failed as %s", ts.Name, err)
 					continue
 				}
-
+				// 模拟值 leaf
 				err = buildGoStructField(fType, fVal, fieldVal)
 				if err != nil {
 					glog.Errorf("build field %s failed as %v", fType.Name, err)
@@ -321,34 +306,46 @@ func requestBodyHasField(t reflect.Type, v reflect.Value) bool {
 }
 
 func convertRequestBodyToInternal(gs interface{}) db.Value {
-	rt := reflect.TypeOf(gs).Elem()
-	rv := reflect.ValueOf(gs).Elem()
+	rt := reflect.TypeOf(gs)
+	rv := reflect.ValueOf(gs)
 	data := db.Value{Field: map[string]string{}}
-
-	for i := 0; i < rt.NumField(); i++ {
-		fType := rt.Field(i).Type
-		fVal := rv.Field(i)
-
-		if !requestBodyHasField(fType, fVal) {
-			continue
+	convert(rt, rv, &data)
+	return data
+}
+func convert(rt reflect.Type, rv reflect.Value, data *db.Value) error {
+	var err error
+	if rt.Elem().Kind() == reflect.Struct {
+		for i := 0; i < rt.Elem().NumField(); i++ {
+			if !requestBodyHasField(rt.Elem().Field(i).Type, rv.Elem().Field(i)) {
+				continue
+			}
+			if rt.Elem().Field(i).Type.Elem().Kind() == reflect.Struct {
+				fType := rt.Elem().Field(i).Type
+				fVal := rv.Elem().Field(i)
+				err = convert(fType, fVal, data)
+			} else {
+				fType := rt.Elem().Field(i).Type.Elem()
+				fVal := rv.Elem().Field(i).Elem()
+				val, err := getFieldStringValue(fType, fVal)
+				if err != nil {
+					glog.Error(err)
+					continue
+				}
+				path := rt.Elem().Field(i).Tag.Get("path")
+				data.Field[path] = val
+			}
 		}
-
-		if fType.Kind() == reflect.Ptr {
-			fType = fType.Elem()
-			fVal = fVal.Elem()
-		}
-
+	} else {
+		fType := rt.Elem()
+		fVal := rv.Elem()
 		val, err := getFieldStringValue(fType, fVal)
 		if err != nil {
 			glog.Error(err)
-			continue
 		}
-
-		path := rt.Field(i).Tag.Get("path")
+		path := rt.Elem().Field(0).Tag.Get("path")
 		data.Field[path] = val
 	}
-
-	return data
+	return err
 }
 
 func createOrMergeToDb(gs interface{}, d *db.DB, ts *db.TableSpec, key db.Key) error {

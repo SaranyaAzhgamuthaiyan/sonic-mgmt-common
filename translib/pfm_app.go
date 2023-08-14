@@ -20,6 +20,7 @@ package translib
 
 import (
     "errors"
+    "fmt"
     "github.com/Azure/sonic-mgmt-common/translib/db"
     "github.com/Azure/sonic-mgmt-common/translib/ocbinds"
     "github.com/Azure/sonic-mgmt-common/translib/tlerr"
@@ -62,8 +63,7 @@ func init() {
         glog.Fatal("Adding model data to appinterface failed with error=", err)
     }
 
-    componentTypes = []string{"FAN", "PSU", "LINECARD", "CHASSIS", "TRANSCEIVER", "OCH",
-	                          "PORT", "CU", "APS", "AMPLIFIER", "ATTENUATOR", "OSC", "MUX"}
+    componentTypes = []string{"FAN", "PSU", "LINECARD", "CHASSIS", "TRANSCEIVER", "OCH", "PORT", "CU", "APS", "AMPLIFIER", "ATTENUATOR", "OSC", "MUX"}
 }
 
 func (app *PlatformApp) initialize(data appData) {
@@ -296,6 +296,62 @@ func (app *PlatformApp) processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error) {
     return GetResponse{}, errors.New("to be supported")
 }
 
+// hard-coding for trim PN/SN while the component is not presence
+func trimStateFields(mdb db.MDB, components *ocbinds.OpenconfigPlatform_Components) {
+    slotId := 0
+    linecardEmpty := false
+    for _, cpt := range components.Component {
+        if cpt.State == nil || cpt.State.Empty == nil {
+            continue
+        }
+        dbName := db.GetMDBNameFromEntity(*cpt.Name)
+        d := mdb[dbName][db.StateDB]
+        if dbName != "host" {
+            tmp, err := strconv.Atoi(strings.TrimLeft(dbName, "asic"))
+            if err != nil {
+                continue
+            }
+            slotId = tmp + 1
+
+            linecard := "LINECARD-1-" + strconv.Itoa(slotId)
+            empty, err1 := getTableFieldStringValue(d, asTableSpec("LINECARD"), asKey(linecard), "empty")
+            if err1 != nil {
+                empty = "false"
+            }
+
+            if empty == "true" {
+                linecardEmpty = true
+            }
+        }
+
+        if *cpt.State.Empty || linecardEmpty {
+            cpt.State.PartNo = nil
+            cpt.State.SerialNo = nil
+        }
+    }
+}
+
+func (app *PlatformApp) appendOSC(mdb db.MDB, components *ocbinds.OpenconfigPlatform_Components, key db.Key) error {
+    var err error
+    if key.Len() == 0 {
+        err = appendOSCAll(mdb, components)
+    } else {
+        name := key.Get(0)
+        dbs := mdb[db.GetMDBNameFromEntity(name)]
+        cpt := components.Component[name]
+        if v, ok := (*app.ygotTarget).(ygot.GoStruct); ok {
+            initYgotTargetNode(cpt, v)
+        }
+        err = appendOSCOne(dbs, cpt, key.Get(0))
+    }
+
+    if err != nil {
+        glog.Errorf("append osc subtree failed as %v", err)
+    }
+
+    return err
+}
+
 func initYgotTargetNode(src ygot.GoStruct, dest ygot.GoStruct) {
     rt := reflect.TypeOf(src).Elem()
     rv := reflect.ValueOf(src).Elem()
@@ -327,6 +383,186 @@ func initYgotTargetNode(src ygot.GoStruct, dest ygot.GoStruct) {
     return
 }
 
+func appendOSCAll(mdb db.MDB, components *ocbinds.OpenconfigPlatform_Components) error {
+    dbKeys, _ := db.GetTableKeysByDbNum(mdb, asTableSpec("OSC"), db.StateDB)
+    if len(dbKeys) == 0 {
+        return nil
+    }
+
+    for _, k := range dbKeys {
+        if k.Len() != 1 {
+            continue
+        }
+        osc := k.Get(0)
+        dbs := mdb[db.GetMDBNameFromEntity(osc)]
+        slotId := strings.Split(osc, "-")[2]
+        xcvr := fmt.Sprintf("TRANSCEIVER-1-%s-OSC", slotId)
+        cpt, err := components.NewComponent(xcvr)
+        if err != nil {
+            return err
+        }
+        ygot.BuildEmptyTree(cpt)
+        err = appendOSCTransceiver(dbs, cpt, xcvr)
+        if err != nil {
+            return err
+        }
+        aps := fmt.Sprintf("APS-1-%s-1", slotId)
+        ports := make([]string, 1)
+        if dbs[db.StateDB].KeyExists(asTableSpec("APS"), asKey(aps)) {
+            ports[0] = fmt.Sprintf("PORT-1-%s-OSCPIN", slotId)
+            ports = append(ports, fmt.Sprintf("PORT-1-%s-OSCPOUT", slotId))
+            ports = append(ports, fmt.Sprintf("PORT-1-%s-OSCSIN", slotId))
+            ports = append(ports, fmt.Sprintf("PORT-1-%s-OSCSOUT", slotId))
+        } else {
+            ports[0] = fmt.Sprintf("PORT-1-%s-OSCIN", slotId)
+            ports = append(ports, fmt.Sprintf("PORT-1-%s-OSCOUT", slotId))
+        }
+
+        for _, port := range ports {
+            cpt, err = components.NewComponent(port)
+            if err != nil {
+                return err
+            }
+            ygot.BuildEmptyTree(cpt)
+            err = appendOSCPort(dbs, cpt, port)
+            if err != nil {
+                return err
+            }
+        }
+    }
+
+    return nil
+}
+
+func appendOSCOne(dbs [db.MaxDB]*db.DB, cpt *ocbinds.OpenconfigPlatform_Components_Component, name string) error {
+    notFound := tlerr.NotFound("%s is not exist", name)
+
+    slotId := strings.Split(name, "-")[2]
+    osc := fmt.Sprintf("OSC-1-%s-1", slotId)
+    if !dbs[db.StateDB].KeyExists(asTableSpec("OSC"), asKey(osc)) {
+        return notFound
+    }
+
+    if strings.HasPrefix(name, "TRANSCEIVER") {
+        tgtXcvr := fmt.Sprintf("TRANSCEIVER-1-%s-OSC", slotId)
+        if name != tgtXcvr {
+            return notFound
+        }
+
+        err := appendOSCTransceiver(dbs, cpt, name)
+        if err != nil {
+            return err
+        }
+    } else if strings.HasPrefix(name, "PORT") {
+        aps := fmt.Sprintf("APS-1-%s-1", slotId)
+        if dbs[db.StateDB].KeyExists(asTableSpec("APS"), asKey(aps)) {
+            pattern := fmt.Sprintf("^PORT-1-%s-OSC(P|S)(IN|OUT)$", slotId)
+            if ok, _ := regexp.MatchString(pattern, name); !ok {
+                return notFound
+            }
+            err := appendOSCPort(dbs, cpt, name)
+            if err != nil {
+                return err
+            }
+        } else {
+            pattern := fmt.Sprintf("^PORT-1-%s-OSC(IN|OUT)$", slotId)
+            if ok, _ := regexp.MatchString(pattern, name); !ok {
+                return notFound
+            }
+            err := appendOSCPort(dbs, cpt, name)
+            if err != nil {
+                return err
+            }
+        }
+    }
+
+    return nil
+}
+
+func appendOSCTransceiver(dbs [db.MaxDB]*db.DB, cpt *ocbinds.OpenconfigPlatform_Components_Component, xcvr string) error {
+    slotId := strings.Split(xcvr, "-")[2]
+    osc := fmt.Sprintf("OSC-1-%s-1", slotId)
+
+    if cpt.State != nil {
+        tmp := false
+        cpt.State.Name = &xcvr
+        cpt.State.Empty = &tmp
+        cpt.State.Removable = &tmp
+        cpt.State.Parent = &osc
+    }
+
+    if cpt.Transceiver == nil || cpt.Transceiver.State == nil {
+        return nil
+    }
+
+    keyStr := osc + "_InputPower:15_pm_current"
+    if data, err := getRedisData(dbs[db.CountersDB], asTableSpec("OSC"), asKey(keyStr)); err == nil {
+        buildGoStruct(cpt.Transceiver.State.InputPower, data)
+    }
+
+    keyStr = osc + "_OutputPower:15_pm_current"
+    if data, err := getRedisData(dbs[db.CountersDB], asTableSpec("OSC"), asKey(keyStr)); err == nil {
+        buildGoStruct(cpt.Transceiver.State.OutputPower, data)
+    }
+
+    return nil
+}
+
+func appendOSCPort(dbs [db.MaxDB]*db.DB, cpt *ocbinds.OpenconfigPlatform_Components_Component, port string) error {
+    slotId := strings.Split(port, "-")[2]
+    osc := fmt.Sprintf("OSC-1-%s-1", slotId)
+
+    if cpt.State != nil {
+        tmp := false
+        cpt.State.Name = &port
+        cpt.State.Empty = &tmp
+        cpt.State.Removable = &tmp
+        cpt.State.Parent = &osc
+    }
+
+    if cpt.Port == nil || cpt.Port.OpticalPort == nil || cpt.Port.OpticalPort.State == nil {
+        return nil
+    }
+
+    powerType := ""
+    if strings.Contains(port, "OSCIN") || strings.Contains(port, "OSCPIN") {
+        powerType = "PanelInputPowerLinepRx"
+    } else if strings.Contains(port, "OSCOUT") || strings.Contains(port, "OSCPOUT") {
+        powerType = "PanelOutputPowerLinepTx"
+    } else if strings.Contains(port, "OSCSIN") {
+        powerType = "PanelInputPowerLinesRx"
+    } else if strings.Contains(port, "OSCSOUT") {
+        powerType = "PanelOutputPowerLinesTx"
+    }
+
+    key := osc + "_" + powerType + ":15_pm_current"
+    if data, err := getRedisData(dbs[db.CountersDB], asTableSpec("OSC"), asKey(key)); err == nil {
+        var pwrTgt interface{}
+        if strings.Contains(port, "IN") {
+            pwrTgt = cpt.Port.OpticalPort.State.InputPower
+        } else if strings.Contains(port, "OUT") {
+            pwrTgt = cpt.Port.OpticalPort.State.OutputPower
+        }
+        buildGoStruct(pwrTgt, data)
+    }
+
+    return nil
+}
+
+func needBuild(key db.Key) (bool, bool) {
+    // query all resources include osc
+    if key.Len() == 0 {
+        return true, true
+    }
+
+    // query osc resources only
+    cptName := key.Get(0)
+    if ok, _ := regexp.MatchString("^(TRANSCEIVER|PORT)-1-[1-4]-OSC(P|S)?(IN|OUT)?$", cptName); ok {
+        return true, false
+    }
+    return false, true
+}
+
 func (app *PlatformApp) processMDBGet(mdb db.MDB) (GetResponse, error)  {
     var err error
     var payload []byte
@@ -334,9 +570,20 @@ func (app *PlatformApp) processMDBGet(mdb db.MDB) (GetResponse, error)  {
 
     key := constructDbKey(app.path.Vars)
     components := app.getAppRootObject()
-    err = app.buildComponents(mdb, components, key)
-    if err != nil {
-        goto errRet
+    oscBuild, cptBuild := needBuild(key)
+    if cptBuild {
+        err = app.buildComponents(mdb, components, key)
+        if err != nil {
+            goto errRet
+        }
+        trimStateFields(mdb, components)
+    }
+
+    if oscBuild {
+        err = app.appendOSC(mdb, components, key)
+        if err != nil {
+            goto errRet
+        }
     }
 
     payload, err = generateGetResponsePayload(app.path.Path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
@@ -447,6 +694,7 @@ func (app *PlatformApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) 
        return resp, err
     }
 
+    // 需要将模糊匹配的xpath补上具体的key
     precisePaths = getComponentPrecisePaths(app.path.Path, mdb, prefix)
     for _, path := range precisePaths {
         payload, err = generateGetResponsePayload(path, (*app.ygotRoot).(*ocbinds.Device), app.ygotTarget)
@@ -556,6 +804,86 @@ func (app *PlatformApp) buildMux(mdb map[string][db.MaxDB]*db.DB, components *oc
     return nil
 }
 
+func buildLeds(leds *ocbinds.OpenconfigPlatform_Components_Component_State_Leds, dbs [db.MaxDB]*db.DB, key db.Key) error {
+    cptName := key.Get(0)
+    prefix := strings.Split(cptName, "-")[0]
+
+    if prefix == "LINECARD" || prefix == "PORT" {
+        return buildLaiLeds(leds, dbs, key)
+    }
+
+    return buildPmonLeds(leds, dbs, key)
+}
+
+func buildPmonLeds(leds *ocbinds.OpenconfigPlatform_Components_Component_State_Leds, dbs [db.MaxDB]*db.DB, key db.Key) error {
+    d := dbs[db.StateDB]
+    ts := asTableSpec("LED")
+
+    if leds.Led != nil && key.Len() == 2 {
+        if data, err := getRedisData(d, ts, key); err == nil {
+            buildGoStruct(leds.Led[key.Get(1)], data)
+            return nil
+        } else {
+            return err
+        }
+    }
+
+    if key.Len() != 1 {
+        return nil
+    }
+
+    keys, err := d.GetKeysByPattern(ts, key.Get(0) + "|" + "*")
+    if err != nil {
+        return err
+    }
+
+    for _, k := range keys {
+        led, err := leds.NewLed(k.Get(1))
+        if err != nil {
+            return err
+        }
+
+        data, _ := getRedisData(d, ts, k)
+        buildGoStruct(led, data)
+    }
+
+    return nil
+}
+
+func buildLaiLeds(leds *ocbinds.OpenconfigPlatform_Components_Component_State_Leds, dbs [db.MaxDB]*db.DB, key db.Key) error {
+    cptName := key.Get(0)
+    prefix := strings.Split(cptName, "-")[0]
+
+    ts := asTableSpec(prefix)
+    d := dbs[db.StateDB]
+    v, err := getTableFieldStringValue(d, ts, asKey(cptName), "led-color")
+    if err != nil {
+        return err
+    }
+
+    var led *ocbinds.OpenconfigPlatform_Components_Component_State_Leds_Led
+    if len(leds.Led) == 0 {
+        led, _ = leds.NewLed("LED1")
+    } else {
+        ledName := key.Get(1)
+        if ledName != "LED1" {
+            return tlerr.InvalidArgs("%s has no led named %s", cptName, ledName)
+        }
+        led = leds.Led[ledName]
+    }
+    lookup, _ := led.LedStatus.ΛMap()["E_OpenconfigPlatform_Components_Component_State_Leds_Led_LedStatus"]
+    for idx, ed := range lookup {
+        if ed.Name == v {
+            led.LedStatus = ocbinds.E_OpenconfigPlatform_Components_Component_State_Leds_Led_LedStatus(idx)
+        }
+    }
+
+    ledFunc := "GREEN:Normal RED:Critical Alarm YELLOW:Major or Minor Alarm"
+    led.LedFunction = &ledFunc
+
+    return nil
+}
+
 func (app *PlatformApp) buildComponentCommon(component *ocbinds.OpenconfigPlatform_Components_Component, dbs [db.MaxDB]*db.DB, ts *db.TableSpec, key db.Key) error {
     stateDbCl := dbs[db.StateDB]
     countersDbCl := dbs[db.CountersDB]
@@ -574,6 +902,14 @@ func (app *PlatformApp) buildComponentCommon(component *ocbinds.OpenconfigPlatfo
             buildGoStruct(component.State, data)
 
             buildDefaultFields(component.State, cptName)
+        }
+
+        ygot.BuildEmptyTree(component.State)
+        if needQuery(app.path.Path, component.State.Leds) {
+            err := buildLeds(component.State.Leds, dbs, key)
+            if err != nil {
+                return err
+            }
         }
 
         if needQuery(app.path.Path, component.Subcomponents) {
@@ -982,6 +1318,21 @@ func (app *PlatformApp) buildPhysicalChannel(ch *ocbinds.OpenconfigPlatform_Comp
     return buildEnclosedCountersNodes(ch.State, dbs[db.CountersDB], ts, key)
 }
 
+func isComponentActive(d *db.DB, name string) bool {
+    elmts := strings.Split(name, "-")
+    empty, err := getTableFieldStringValue(d, asTableSpec(elmts[0]), asKey(name), "empty")
+    if err != nil {
+        glog.Errorf("get %s empty failed as %v", name, err)
+        return false
+    }
+
+    if len(empty) != 0 && empty == "true" {
+        return false
+    }
+
+    return true
+}
+
 func (app *PlatformApp) buildComponentByPrefix(components *ocbinds.OpenconfigPlatform_Components, mdb db.MDB, prefix string, key db.Key) error {
     ts := &db.TableSpec{Name: prefix}
 
@@ -1001,7 +1352,7 @@ func (app *PlatformApp) buildComponentByPrefix(components *ocbinds.OpenconfigPla
             return err
         }
 
-        if app.queryMode == Telemetry {
+        if app.queryMode == Telemetry && !isComponentActive(dbs[db.StateDB], name) {
             return nil
         }
 

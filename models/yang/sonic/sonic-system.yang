@@ -1,0 +1,63 @@
+module sonic-system {
+	namespace "http://github.com/Azure/sonic-system";
+	prefix system;
+	yang-version 1.1;
+
+	import ietf-inet-types {
+		prefix inet;
+	}
+	import ietf-yang-types {
+		prefix ietf;
+	}
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC SYSTEM";
+
+	revision 2021-05-08 {
+		description
+			"Initial revision.";
+	}
+
+	container sonic-system {
+		
+		container DEVICE_METADATA {
+
+			list DEVICE_METADATA_LIST {
+				key "metadataname";
+
+				leaf metadataname {
+					type string;
+				}
+
+				leaf hostname {
+					type inet:domain-name;
+				}
+
+				leaf mac {
+					type ietf:mac-address;
+				}
+
+				leaf hwsku {
+					type string {
+						length 1..255;
+					}
+				}
+
+				leaf boottime {
+					type uint64;
+				}
+
+				leaf timezone {
+					type string;
+				}
+			}
+		}
+	}
+
+}

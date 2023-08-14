@@ -19,6 +19,8 @@
 package translib
 
 import (
+	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
@@ -26,6 +28,7 @@ import (
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
 	"github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -51,6 +54,14 @@ func init() {
 		glog.Fatal("SysApp:  Register openconfig-system:system with App Interface failed with error=", err)
 	}
 
+	err = register("/openconfig-system:reboot",
+		&appInfo{appType: reflect.TypeOf(SysApp{}),
+			ygotRootType: nil,
+			isNative:     false})
+	if err != nil {
+		glog.Fatal("SysApp:  Register openconfig-system:reboot with App Interface failed with error=", err)
+	}
+
 	err = addModel(&ModelData{Name: "openconfig-system",
 		Org: "OpenConfig working group",
 		Ver: "1.0.2"})
@@ -73,6 +84,10 @@ func (app *SysApp) getAppRootObject() *ocbinds.OpenconfigSystem_System {
 
 func (app *SysApp) translateAction(mdb db.MDB) error {
 	glog.V(3).Info("SysApp translateAction called")
+	if app.path.Path != "/openconfig-system:reboot" {
+		return tlerr.NotSupported("Unsupported")
+	}
+
 	return nil
 }
 
@@ -369,7 +384,48 @@ errRet:
 }
 
 func (app *SysApp) processAction(mdb db.MDB) (ActionResponse, error) {
-	return ActionResponse{}, nil
+	glog.V(3).Info("SysApp processAction called")
+
+	//var resp ActionResponse
+	body := make(map[string]interface{})
+	err := json.Unmarshal(app.reqData, &body)
+	if err != nil {
+		glog.Errorf("decode post body failed as %v", err)
+		return ActionResponse{ErrSrc: AppErr}, err
+	}
+
+	input := body["input"].(map[string]interface{})
+	entityName := input["entity-name"].(string)
+	method := input["method"].(string)
+
+	err = reboot(mdb, entityName, method)
+	if err != nil {
+		return ActionResponse{ErrSrc: AppErr}, err
+	}
+
+	message := entityName + " will be " + method + " reboot"
+
+	type Output struct {
+		Message string `json:"message"`
+	}
+
+	type rpcResponse struct {
+		Output Output `json:"output"`
+	}
+
+	result := rpcResponse {
+		Output: Output {
+			Message: message,
+		},
+	}
+
+	payload, err := json.Marshal(result)
+	if err != nil {
+		glog.Errorf("encode rpc response failed as %v", err)
+		return ActionResponse{ErrSrc: AppErr}, err
+	}
+
+	return ActionResponse{Payload: payload}, nil
 }
 
 func publishRebootChannel(d *db.DB, slot string, method string) error {
@@ -379,6 +435,72 @@ func publishRebootChannel(d *db.DB, slot string, method string) error {
 	message := fmt.Sprintf("[\"set\",\"%s\",\"%s\",\"%s\"]", cardName, field, method)
 	glog.Infof("publish %s %s", channel, message)
 	return d.Publish(channel, message)
+}
+
+func publishPeripheralRebootChannel(d *db.DB, obj string, rebootType string) error {
+	channel := "PERIPHERAL_REBOOT_CHANNEL"
+	message := fmt.Sprintf("%s, %s", obj, rebootType)
+	glog.Infof("publish %s %s", channel, message)
+	return d.Publish(channel, message)
+}
+
+func reboot(mdb db.MDB, entityName string, method string) error {
+	var d *db.DB
+
+	if strings.HasPrefix(entityName, "CU") {
+		d = mdb["host"][db.StateDB]
+		return publishPeripheralRebootChannel(d, entityName, method)
+	}
+
+	if strings.HasPrefix(entityName, "SLOT") {
+		dbName := db.GetMDBNameFromEntity(entityName)
+		if method == "COLD" {
+			d = mdb["host"][db.StateDB]
+			return publishPeripheralRebootChannel(d, entityName, method)
+		}
+		d = mdb[dbName][db.StateDB]
+		return publishRebootChannel(d, entityName, method)
+	}
+
+	if strings.HasPrefix(entityName, "CHASSIS") {
+		for num := 0; num < len(mdb) - 1; num++ {
+			slotName := "SLOT-" + strconv.Itoa(num + 1)
+			err := reboot(mdb, slotName, method)
+			if err != nil {
+				return err
+			}
+		}
+
+		return reboot(mdb, "CU-1", method)
+	}
+
+	return nil
+}
+
+func getBootTime() (string, error) {
+	var bootTime string
+	file, err := os.Open("/proc/uptime")
+	if err != nil {
+		return bootTime, err
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		text := scanner.Text()
+		textSlice := strings.Split(text, " ")
+		tmp, err := strconv.ParseFloat(textSlice[0], 64)
+		if err != nil {
+			return bootTime, err
+		}
+		timeUnixNano := float64(time.Now().UnixNano())
+		bootTimeFloat := timeUnixNano - tmp*1000*1000*1000
+		bootTime = strconv.FormatFloat(bootTimeFloat, 'f', -1, 64)
+	}
+	if err := scanner.Err(); err != nil {
+		return bootTime, err
+	}
+
+	return bootTime, nil
 }
 
 func (app *SysApp) buildSystem(mdb db.MDB, system *ocbinds.OpenconfigSystem_System) error {
@@ -395,6 +517,12 @@ func (app *SysApp) buildSystem(mdb db.MDB, system *ocbinds.OpenconfigSystem_Syst
 	}
 	data.Set("hostname", tmp)
 	data.Set("current-datetime", time.Now().Format("2006-01-02T15:04:05Z-07:00"))
+
+	tmp, err = getBootTime()
+	if err != nil {
+		return err
+	}
+	data.Set("boot-time", tmp)
 
 	tmp, err = getTableFieldStringValue(defaultDb[db.ConfigDB], metaTs, metaKey, "timezone")
 	if err != nil {
