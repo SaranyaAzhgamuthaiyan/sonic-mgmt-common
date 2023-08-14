@@ -1,20 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-//                                                                            //
-//  Copyright (c) 2021 Alibaba Group                                          //
-//                                                                            //
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may   //
-//  not use this file except in compliance with the License. You may obtain   //
-//  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0       //
-//                                                                            //
-//  THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR          //
-//  CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT      //
-//  LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS         //
-//  FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.            //
-//                                                                            //
-//  See the Apache Version 2.0 License for specific language governing        //
-//  permissions and limitations under the License.                            //
-////////////////////////////////////////////////////////////////////////////////
-
 package translib
 
 import (
@@ -219,6 +202,7 @@ func (app *OaApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
 		return resp, err
 	}
 
+	// 需要将模糊匹配的xpath补上具体的key
 	if strings.Contains(app.path.Path, "/amplifier/state") {
 		params := &regexPathKeyParams{
 			tableName:    "AMPLIFIER",

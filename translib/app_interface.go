@@ -31,11 +31,11 @@ package translib
 
 import (
 	"errors"
-	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
 	"reflect"
 	"strings"
+	"github.com/Azure/sonic-mgmt-common/translib/db"
 )
 
 //Structure containing app module information
@@ -81,9 +81,9 @@ type appInterface interface {
 	translateCreate(d *db.DB) ([]db.WatchKeys, error)
 	translateUpdate(d *db.DB) ([]db.WatchKeys, error)
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
+	translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
-	translateMDBReplace(numDB db.NumberDB) ([]db.WatchKeys, error)
 	translateMDBGet(mdb db.MDB) error
 	translateGetRegex(mdb db.MDB) error
 	translateAction(mdb db.MDB) error
@@ -91,9 +91,9 @@ type appInterface interface {
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)
+	processMDBReplace(numDB db.NumberDB) (SetResponse, error)
 	processDelete(d *db.DB) (SetResponse, error)
 	processGet(dbs [db.MaxDB]*db.DB) (GetResponse, error)
-	processMDBReplace(numDB db.NumberDB) (SetResponse, error)
 	processMDBGet(mdb db.MDB) (GetResponse, error)
 	processGetRegex(mdb db.MDB) ([]GetResponseRegex, error)
 	processAction(mdb db.MDB) (ActionResponse, error)

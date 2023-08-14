@@ -218,6 +218,7 @@ func (app *IntfApp) processGetRegex(mdb db.MDB) ([]GetResponseRegex, error) {
 		return resp, err
 	}
 
+	// 需要将模糊匹配的xpath补上具体的key
 	if strings.Contains(app.path.Path, "/interface/state") {
 		params := &regexPathKeyParams{
 			tableName:    "INTERFACE",

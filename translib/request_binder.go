@@ -24,7 +24,7 @@ import (
 	"reflect"
 	"strings"
 
-	log "github.com/golang/glog"
+	"github.com/golang/glog"
 	"github.com/openconfig/gnmi/proto/gnmi"
 	"github.com/openconfig/ygot/ygot"
 	"github.com/openconfig/ygot/ytypes"
@@ -49,7 +49,7 @@ func init() {
 }
 
 func initSchema() {
-	log.Flush()
+	glog.Flush()
 	var err error
 	if ygSchema, err = ocbinds.Schema(); err != nil {
 		panic("Error in getting the schema: " + err.Error())
@@ -75,19 +75,19 @@ func (binder *requestBinder) unMarshallPayload(workObj *interface{}) error {
 	targetObj, ok := (*workObj).(ygot.GoStruct)
 	if !ok {
 		err := errors.New("Error in casting the target object")
-		log.Error(err)
+		glog.Error(err)
 		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	if len(*binder.payload) == 0 {
 		err := errors.New("Request payload is empty")
-		log.Error(err)
+		glog.Error(err)
 		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
 	err := ocbinds.Unmarshal(*binder.payload, targetObj)
 	if err != nil {
-		log.Error(err)
+		glog.Error(err)
 		return tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 	}
 
@@ -105,17 +105,17 @@ func (binder *requestBinder) validateObjectType (errObj error) error {
 	if binder.opcode == GET || binder.isSonicModel {
 		tmpStr := strings.Replace(errStr, "ERROR_READONLY_OBJECT_FOUND", "", -1)
 		if len (tmpStr) > 0 {
-			log.Info("validateObjectType ==> GET == return err string ==> ", tmpStr)
+			glog.Info("validateObjectType ==> GET == return err string ==> ", tmpStr)
 			return errors.New(tmpStr)
 		} else {
 			return nil
 		}	
 	} else {
 		if strings.Contains(errStr, "ERROR_READONLY_OBJECT_FOUND") {
-			log.Info("validateObjectType ==> WRITE == return err string")
+			glog.Info("validateObjectType ==> WRITE == return err string")
 			return errors.New("SET operation not allowed on the read-only object")
 		} else {
-			log.Info("validateObjectType ==> WRITE == return err string")
+			glog.Info("validateObjectType ==> WRITE == return err string")
 			return errors.New(errStr)
 		}
 	}
@@ -125,7 +125,7 @@ func (binder *requestBinder) validateRequest(deviceObj *ocbinds.Device) error {
 
 	// Skipping the validation for the sonic yang model
 	if binder.isSonicModel {
-	  log.Warning("Translib: RequestBinder: Skipping the vaidatiion of the given sonic yang model request..")
+	  glog.Warning("Translib: RequestBinder: Skipping the vaidatiion of the given sonic yang model request..")
 		return nil
 	}
 	
@@ -173,7 +173,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 
 	workObj, err := binder.unMarshallUri(&deviceObj)
 	if err != nil {
-		log.Error("Error in creating the target object : ", err)
+		glog.Error("Error in creating the target object : ", err)
 		return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 404, ErrorStr: err}
 	}
 
@@ -258,7 +258,7 @@ func (binder *requestBinder) unMarshall() (*ygot.GoStruct, *interface{}, error) 
 					return nil, nil, tlerr.TranslibSyntaxValidationError{StatusCode: 400, ErrorStr: err}
 				}
 			} else {
-				log.Warning("Translib: Request binder: Valdation skipping for sonic yang model..")
+				glog.Warning("Translib: Request binder: Valdation skipping for sonic yang model..")
 			}
 		}
 
@@ -283,7 +283,7 @@ func (binder *requestBinder) getUriPath() (*gnmi.Path, error) {
 
 	path, err = ygot.StringToPath(*binder.uri, ygot.StructuredPath, ygot.StringSlicePath)
 	if err != nil {
-		log.Error("Error in uri to path conversion: ", err)
+		glog.Error("Error in uri to path conversion: ", err)
 		return nil, err
 	}
 
@@ -293,7 +293,7 @@ func (binder *requestBinder) getUriPath() (*gnmi.Path, error) {
 func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interface{}, error) {
 	if len(*binder.uri) == 0 {
 		errMsg := errors.New("Error: URI is empty")
-		log.Error(errMsg)
+		glog.Error(errMsg)
 		return nil, errMsg
 	}
 
@@ -315,7 +315,7 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 	ygNode, ygEntry, errYg := ytypes.GetOrCreateNode(ygSchema.RootSchema(), deviceObj, path)
 
 	if errYg != nil {
-		log.Error("Error in creating the target object: ", errYg)
+		glog.Error("Error in creating the target object: ", errYg)
 		return nil, errYg
 	}
 
@@ -335,7 +335,7 @@ func (binder *requestBinder) unMarshallUri(deviceObj *ocbinds.Device) (*interfac
 		binder.targetNodePath = &gnmi.Path{}
 		binder.targetNodePath.Elem = append(binder.targetNodePath.Elem, pathList[(len(pathList)-1)])
 
-		log.Info("requestBinder: modified path is: ", gpath)
+		glog.V(2).Info("requestBinder: modified path is: ", gpath)
 
 		binder.pathTmp = gpath
 	}

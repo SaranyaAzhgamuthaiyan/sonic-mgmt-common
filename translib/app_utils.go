@@ -179,7 +179,7 @@ func dumpIetfJson(s ygot.ValidatedGoStruct, skipValidation bool) ([]byte, error)
 		Format:         ygot.RFC7951,
 		SkipValidation: skipValidation,
 		RFC7951Config: &ygot.RFC7951JSONConfig{
-			AppendModuleName: true,
+			AppendModuleName: false,
 		},
 	})
 	return []byte(jsonStr), err
@@ -219,6 +219,12 @@ func isNotFoundError(err error) bool {
 // asKey cretaes a db.Key from given key components
 func asKey(parts ...string) db.Key {
 	return db.Key{Comp: parts}
+}
+
+func appendKey(key db.Key, parts... string) db.Key {
+	tmp := key.Comp
+	tmp = append(tmp, parts...)
+	return db.Key{Comp: tmp}
 }
 
 func asTableSpec(name string) *db.TableSpec {
