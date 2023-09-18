@@ -80,7 +80,7 @@ type Result struct {
 	ScanTime        string           `json:"scan-time,omitempty"`
 	ScanningProfile *ScanningProfile `json:"scanning-profile,omitempty"`
 	Events          *Events          `json:"events,omitempty"`
-	Trace           *Trace           `json:"Trace,omitempty"`
+	Trace           *Trace           `json:"trace,omitempty"`
 }
 
 type Output struct {
@@ -96,7 +96,7 @@ type updateBaselineOutput struct {
 	Message         string           `json:"message,omitempty"`
 	ScanningProfile *ScanningProfile `json:"scanning-profile,omitempty"`
 	Events          *Events          `json:"events,omitempty"`
-	Trace           *Trace           `json:"Trace,omitempty"`
+	Trace           *Trace           `json:"trace,omitempty"`
 }
 
 type rpcUpdateBaselineResponse struct {
@@ -313,6 +313,10 @@ func loadResults(mdb db.MDB, name string, startTime string, endTime string) (Act
 
 	keys, _ := d.GetKeys(asTableSpec("OTDR"))
 	for _, k := range keys {
+		temp := k.Get(0)
+		if temp != name {
+			continue
+		}
 		scanTime := k.Get(1)
 		scanTimestamp, err := strconv.ParseUint(scanTime, 10, 64)
 		if err != nil {
