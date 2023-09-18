@@ -11,14 +11,14 @@
 //                                                                            //
 //  Unless required by applicable law or agreed to in writing, software       //
 //  distributed under the License is distributed on an "AS IS" BASIS,         //
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  //  
 //  See the License for the specific language governing permissions and       //
 //  limitations under the License.                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-Package translib defines the functions to be used by the subscribe
+Package translib defines the functions to be used by the subscribe 
 
 handler to subscribe for a key space notification. It also has
 
@@ -31,40 +31,40 @@ call the appropriate app module to handle them.
 package translib
 
 import (
-	"bytes"
-	"errors"
-	"fmt"
-	"github.com/Azure/sonic-mgmt-common/translib/db"
-	"github.com/Workiva/go-datastructures/queue"
-	"github.com/golang/glog"
-	"reflect"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
+	"bytes"
+	"errors"
+	"strconv"
+	"fmt"
+	"strings"
+	"reflect"
+	"github.com/Azure/sonic-mgmt-common/translib/db"
+	"github.com/golang/glog"
+	"github.com/Workiva/go-datastructures/queue"
 )
 
-// Subscribe mutex for all the subscribe operations on the maps to be thread safe
+//Subscribe mutex for all the subscribe operations on the maps to be thread safe
 var sMutex = &sync.Mutex{}
 
-type notificationInfo struct {
-	table     db.TableSpec
-	key       db.Key
-	dbno      db.DBNum
-	needCache bool
-	path      string
-	app       *appInterface
-	appInfo   *appInfo
-	caches    map[string][]byte
-	sKey      *db.SKey
+type notificationInfo struct{
+	table               db.TableSpec
+	key					db.Key
+	dbno				db.DBNum
+	needCache			bool
+	path				string
+	app				    *appInterface
+	appInfo			    *appInfo
+	caches              map[string][]byte
+	sKey			    *db.SKey
 }
 
-type subscribeInfo struct {
-	syncDone bool
-	q        *queue.PriorityQueue
-	nInfoArr []*notificationInfo
-	stop     chan struct{}
-	sDBs     []*db.DB //Subscription DB should be used only for keyspace notification unsubscription
+type subscribeInfo struct{
+	syncDone			bool
+	q				   *queue.PriorityQueue
+	nInfoArr		 []*notificationInfo
+	stop				chan struct{}
+	sDBs			 []*db.DB //Subscription DB should be used only for keyspace notification unsubscription
 }
 
 var nMap map[*db.SKey]*notificationInfo
@@ -75,8 +75,8 @@ var cleanupMap map[*db.DB]*subscribeInfo
 func init() {
 	nMap = make(map[*db.SKey]*notificationInfo)
 	sMap = make(map[*notificationInfo]*subscribeInfo)
-	stopMap = make(map[chan struct{}]*subscribeInfo)
-	cleanupMap = make(map[*db.DB]*subscribeInfo)
+	stopMap	= make(map[chan struct{}]*subscribeInfo)
+	cleanupMap	= make(map[*db.DB]*subscribeInfo)
 }
 
 func runSubscribe(q *queue.PriorityQueue) error {
@@ -85,9 +85,9 @@ func runSubscribe(q *queue.PriorityQueue) error {
 	for i := 0; i < 10; i++ {
 		time.Sleep(2 * time.Second)
 		q.Put(&SubscribeResponse{
-			Path:      "/testPath",
-			Payload:   []byte("test payload"),
-			Timestamp: time.Now().UnixNano(),
+				Path:"/testPath",
+				Payload:[]byte("test payload"),
+				Timestamp:    time.Now().UnixNano(),
 		})
 
 	}
@@ -99,7 +99,7 @@ func startDBSubscribe(opt db.Options, nInfoList []*notificationInfo, sInfo *subs
 	var sKeyList []*db.SKey
 
 	for _, nInfo := range nInfoList {
-		sKey := &db.SKey{Ts: &nInfo.table, Key: &nInfo.key}
+		sKey := &db.SKey{ Ts: &nInfo.table, Key: &nInfo.key}
 		sKeyList = append(sKeyList, sKey)
 		nInfo.sKey = sKey
 		nMap[sKey] = nInfo
@@ -164,42 +164,35 @@ func getOnChangePrecisePath(subPath string, key *db.Key) string {
 
 	supportedNodes := []struct {
 		moduleName string
-		listName   []string
-		keyName    []string
-		prefix     []string
+		listName []string
+		keyName []string
+		prefix []string
 	}{
 		// system
 		{
 			moduleName: "openconfig-system",
-			listName:   []string{"alarm"},
-			keyName:    []string{"id"},
-			prefix:     []string{""},
+			listName: []string{"alarm"},
+			keyName:  []string{"id"},
+			prefix:   []string{""},
 		},
 		// terminal-device
 		{
 			moduleName: "openconfig-terminal-device",
-			listName:   []string{"channel", "neighbor"},
-			keyName:    []string{"index", "id"},
-			prefix:     []string{"CH", ""},
+			listName: []string{"channel", "neighbor"},
+			keyName:  []string{"index", "id"},
+			prefix:   []string{"CH", ""},
 		},
 		// platform
 		{
 			moduleName: "openconfig-platform",
-			listName:   []string{"component", "channel"},
-			keyName:    []string{"name", "index"},
-			prefix:     []string{"", "CH-"},
-		},
-		// ocm
-		{
-			moduleName: "openconfig-channel-monitor",
-			listName:   []string{"channel-monitor"},
-			keyName:    []string{"name"},
-			prefix:     []string{""},
+			listName: []string{"component", "channel"},
+			keyName:  []string{"name", "index"},
+			prefix:   []string{"", "CH-"},
 		},
 	}
 
 	for _, node := range supportedNodes {
-		if !strings.HasPrefix(subPath, "/"+node.moduleName) {
+		if !strings.HasPrefix(subPath, "/" + node.moduleName) {
 			continue
 		}
 		for i, _ := range node.listName {
@@ -251,7 +244,7 @@ func processOnChangePayload(nInfo *notificationInfo, precisePath string) ([]byte
 }
 
 func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) error {
-	glog.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key, " event: ", event)
+    glog.Info("notificationHandler: d: ", d, " sKey: ", *sKey, " key: ", *key, " event: ", event)
 
 	sInfo, nInfo, err := getSubRelatedInfo(sKey)
 	if err != nil {
@@ -298,31 +291,31 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 		}
 	}
 
-	return nil
+    return nil
 }
 
 func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*notificationInfo) error {
 	var err error
 
-	sMutex.Lock()
+    sMutex.Lock()
 	defer sMutex.Unlock()
 
 	stopMap[sInfo.stop] = sInfo
 
-	for dbno, nInfoArr := range dbNotificationMap {
+    for dbno, nInfoArr := range dbNotificationMap {
 		isWriteDisabled := true
-		opt := db.GetDBOptions(dbno, isWriteDisabled)
-		err = startDBSubscribe(opt, nInfoArr, sInfo)
+        opt := db.GetDBOptions(dbno, isWriteDisabled)
+        err = startDBSubscribe(opt, nInfoArr, sInfo)
 
 		if err != nil {
-			cleanup(sInfo.stop)
+			cleanup (sInfo.stop)
 			return err
 		}
 
-		sInfo.nInfoArr = append(sInfo.nInfoArr, nInfoArr...)
-	}
+        sInfo.nInfoArr = append(sInfo.nInfoArr, nInfoArr...)
+    }
 
-	for i, nInfo := range sInfo.nInfoArr {
+    for i, nInfo := range sInfo.nInfoArr {
 		if i == len(sInfo.nInfoArr)-1 {
 			sInfo.syncDone = true
 		}
@@ -333,7 +326,7 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 
 		regexResp, err := getPayloadRegex(nInfo)
 		if err != nil {
-			cleanup(sInfo.stop)
+			cleanup (sInfo.stop)
 			return err
 		}
 
@@ -345,7 +338,7 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 		}
 
 		onChangeQueuePushAll(sInfo, nInfo.caches)
-	}
+    }
 	//printAllMaps()
 
 	go stophandler(sInfo.stop)
@@ -353,18 +346,18 @@ func startSubscribe(sInfo *subscribeInfo, dbNotificationMap map[db.DBNum][]*noti
 	return err
 }
 
-func getJson(nInfo *notificationInfo) ([]byte, error) {
-	var payload []byte
+func getJson (nInfo *notificationInfo) ([]byte, error) {
+    var payload []byte
 
 	app := nInfo.app
 	path := nInfo.path
 	appInfo := nInfo.appInfo
 
-	err := appInitialize(app, appInfo, path, nil, nil, GET)
+    err := appInitialize(app, appInfo, path, nil, nil, GET)
 
-	if err != nil {
-		return payload, err
-	}
+    if  err != nil {
+        return payload, err
+    }
 
 	mdb, err := db.GetMDBInstances(true)
 	if err != nil {
@@ -372,19 +365,19 @@ func getJson(nInfo *notificationInfo) ([]byte, error) {
 	}
 	defer db.CloseMDBInstances(mdb)
 
-	err = (*app).translateMDBGet(mdb)
+    err = (*app).translateMDBGet(mdb)
 
-	if err != nil {
-		return payload, err
-	}
+    if err != nil {
+        return payload, err
+    }
 
-	resp, err := (*app).processMDBGet(mdb)
+    resp, err := (*app).processMDBGet(mdb)
 
-	if err == nil {
-		payload = resp.Payload
-	}
+    if err == nil {
+       payload = resp.Payload
+    }
 
-	return payload, err
+    return payload, err
 }
 
 func getPayloadRegex(nInfo *notificationInfo) ([]GetResponseRegex, error) {
@@ -396,7 +389,7 @@ func getPayloadRegex(nInfo *notificationInfo) ([]GetResponseRegex, error) {
 
 	err := appInitialize(app, appInfo, path, nil, nil, GET)
 
-	if err != nil {
+	if  err != nil {
 		return resp, err
 	}
 
@@ -420,7 +413,7 @@ func getPayloadRegex(nInfo *notificationInfo) ([]GetResponseRegex, error) {
 func FormatPayloadForGnmi(payload []byte) []byte {
 	//input: {"state":{"id":"PORT-1-1-C12#XCVRMISSING",...,"type-id":"XCVRMISSING"}}
 	//output: {"id":"PORT-1-1-C12#XCVRMISSING",...,"type-id":"XCVRMISSING"}
-
+	
 	if payload == nil {
 		return nil
 	}
@@ -433,7 +426,7 @@ func FormatPayloadForGnmi(payload []byte) []byte {
 	return []byte(tmp)
 }
 
-func onChangeQueuePushSingle(sInfo *subscribeInfo, path string, payload []byte, isTerminated bool, isDel bool) {
+func onChangeQueuePushSingle(sInfo *subscribeInfo, path string, payload []byte, isTerminated bool, isDel bool){
 	gnmiPayload := FormatPayloadForGnmi(payload)
 	glog.Infof("push notification for path = %s, isTerminated = %s  isDel = %s",
 		path, strconv.FormatBool(isTerminated), strconv.FormatBool(isDel))
@@ -458,10 +451,10 @@ func stophandler(stop chan struct{}) {
 		select {
 		case <-stop:
 			glog.Info("stop channel signalled")
-			sMutex.Lock()
+		    sMutex.Lock()
 			defer sMutex.Unlock()
 
-			cleanup(stop)
+			cleanup (stop)
 
 			return
 		}
@@ -471,7 +464,7 @@ func stophandler(stop chan struct{}) {
 }
 
 func cleanup(stop chan struct{}) {
-	if sInfo, ok := stopMap[stop]; ok {
+	if sInfo,ok := stopMap[stop]; ok {
 
 		for _, sDB := range sInfo.sDBs {
 			sDB.UnsubscribeDB()
@@ -492,7 +485,7 @@ func cleanup(stop chan struct{}) {
 	//printAllMaps()
 }
 
-// Debugging functions
+//Debugging functions
 func printnMap() {
 	glog.Info("Printing the contents of nMap")
 	for sKey, nInfo := range nMap {

@@ -1,3 +1,20 @@
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//  Copyright (c) 2021 Alibaba Group                                          //
+//                                                                            //
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may   //
+//  not use this file except in compliance with the License. You may obtain   //
+//  a copy of the License at http://www.apache.org/licenses/LICENSE-2.0       //
+//                                                                            //
+//  THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR          //
+//  CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT      //
+//  LIMITATION ANY IMPLIED WARRANTIES OR CONDITIONS OF TITLE, FITNESS         //
+//  FOR A PARTICULAR PURPOSE, MERCHANTABILITY OR NON-INFRINGEMENT.            //
+//                                                                            //
+//  See the Apache Version 2.0 License for specific language governing        //
+//  permissions and limitations under the License.                            //
+////////////////////////////////////////////////////////////////////////////////
+
 package translib
 
 import (
@@ -23,13 +40,6 @@ type regexPathKeyParams struct {
 	listNodeName []string
 	keyName      []string
 	redisPrefix  []string
-}
-
-type regexPathKeyParamsForMultipleKeyCase struct {
-	tableName    string
-	listNodeName []string
-	keyName      [][]string
-	redisPrefix  [][]string
 }
 
 /*
@@ -242,7 +252,6 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 		ygot.BuildEmptyTree(v)
 	}
 
-	// 统计值
 	dbKey := constructCountersTableKey(key, "", PMCurrent)
 	if data, err := getRedisData(dbCl, ts, dbKey); err == nil && data.IsPopulated() {
 		buildGoStruct(gs, data)
@@ -262,7 +271,6 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 		dbKey := constructCountersTableKey(key, fType.Name, PMCurrent15min)
 		if data, err := getRedisData(dbCl, ts, dbKey); err == nil {
 			if util.IsTypeStructPtr(fType.Type) {
-				// 模拟值 container
 				buildGoStruct(fVal.Interface(), data)
 			} else {
 				fieldVal := data.Get("instant")
@@ -270,7 +278,7 @@ func buildEnclosedCountersNodes(gs interface{}, dbCl *db.DB, ts *db.TableSpec, k
 					glog.Errorf("get instant field from table %s failed as %s", ts.Name, err)
 					continue
 				}
-				// 模拟值 leaf
+
 				err = buildGoStructField(fType, fVal, fieldVal)
 				if err != nil {
 					glog.Errorf("build field %s failed as %v", fType.Name, err)
@@ -322,11 +330,11 @@ func convertRequestBodyToInternal(gs interface{}) db.Value {
 
 func convert(rt reflect.Type, rv reflect.Value, data *db.Value) error {
 	var err error
-	for i := 0; i < rt.Elem().NumField(); i++ {
-		if !requestBodyHasField(rt.Elem().Field(i).Type, rv.Elem().Field(i)) {
-			continue
-		}
-		if rt.Elem().Field(i).Type.Kind() == reflect.Ptr {
+	if rt.Elem().Kind() == reflect.Struct {
+		for i := 0; i < rt.Elem().NumField(); i++ {
+			if !requestBodyHasField(rt.Elem().Field(i).Type, rv.Elem().Field(i)) {
+				continue
+			}
 			if rt.Elem().Field(i).Type.Elem().Kind() == reflect.Struct {
 				fType := rt.Elem().Field(i).Type
 				fVal := rv.Elem().Field(i)
@@ -342,17 +350,16 @@ func convert(rt reflect.Type, rv reflect.Value, data *db.Value) error {
 				path := rt.Elem().Field(i).Tag.Get("path")
 				data.Field[path] = val
 			}
-		} else {
-			fType := rt.Elem().Field(i).Type
-			fVal := rv.Elem().Field(i)
-			val, err := getFieldStringValue(fType, fVal)
-			if err != nil {
-				glog.Error(err)
-				continue
-			}
-			path := rt.Elem().Field(i).Tag.Get("path")
-			data.Field[path] = val
 		}
+	} else {
+		fType := rt.Elem()
+		fVal := rv.Elem()
+		val, err := getFieldStringValue(fType, fVal)
+		if err != nil {
+			glog.Error(err)
+		}
+		path := rt.Elem().Field(0).Tag.Get("path")
+		data.Field[path] = val
 	}
 	return err
 }
@@ -618,52 +625,6 @@ func constructRegexPathWithKey(mdb db.MDB, num db.DBNum, path string, params *re
 		}
 	}
 
-	return pathWithKey
-}
-
-func constructRegexPathWithKeyForMultipleKeyCase(mdb db.MDB, num db.DBNum, path string, params *regexPathKeyParamsForMultipleKeyCase) []string {
-	var pathWithKey []string
-
-	for _, dbs := range mdb {
-		dbCl := dbs[num]
-
-		keys, _ := dbCl.GetKeys(asTableSpec(params.tableName))
-		if len(keys) == 0 {
-			continue
-		}
-
-		for _, key := range keys {
-			var totalNameLength = 0
-			for _, name := range params.keyName {
-				totalNameLength += len(name)
-			}
-			if key.Len() != totalNameLength {
-				continue
-			}
-			p := path
-
-			var curKeyFlag = 0
-			for i, eachNode := range params.listNodeName {
-				oldStr := fmt.Sprintf("/%s/", eachNode)
-
-				for j, curKeyName := range params.keyName[i] {
-					curKey := key.Comp[curKeyFlag]
-					mdlKey, err := getYangMdlKey(params.redisPrefix[i][j], curKey, reflect.TypeOf(""))
-					if err != nil {
-						glog.Error("construct path with key failed")
-						return nil
-					}
-					mdlKeyStr, _ := mdlKey.(string)
-					newStr := fmt.Sprintf("%s[%s=%s]/", strings.TrimRight(oldStr, "/"), curKeyName, mdlKeyStr)
-					p = strings.ReplaceAll(p, oldStr, newStr)
-					oldStr = newStr
-					curKeyFlag++
-				}
-			}
-			pathWithKey = append(pathWithKey, p)
-		}
-
-	}
 	return pathWithKey
 }
 
