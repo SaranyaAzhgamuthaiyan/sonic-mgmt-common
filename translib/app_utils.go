@@ -221,6 +221,12 @@ func asKey(parts ...string) db.Key {
 	return db.Key{Comp: parts}
 }
 
+func appendKey(key db.Key, parts... string) db.Key {
+	tmp := key.Comp
+	tmp = append(tmp, parts...)
+	return db.Key{Comp: tmp}
+}
+
 func asTableSpec(name string) *db.TableSpec {
 	return &db.TableSpec{Name: name}
 }
