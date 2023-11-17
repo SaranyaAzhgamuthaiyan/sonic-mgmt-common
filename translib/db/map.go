@@ -30,7 +30,6 @@ import (
 	// "errors"
 	// "strings"
 
-	// "github.com/go-redis/redis/v7"
 	"github.com/golang/glog"
 	// "github.com/Azure/sonic-mgmt-common/cvl"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"

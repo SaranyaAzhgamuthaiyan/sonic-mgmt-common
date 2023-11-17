@@ -504,7 +504,22 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  
  		if err != nil {
  			errs.Add(err)
-@@ -1086,7 +1113,7 @@
+@@ -1058,8 +1085,12 @@
+ // and float64 values are represented as strings.
+ func writeIETFScalarJSON(i interface{}) interface{} {
+ 	switch reflect.ValueOf(i).Kind() {
+-	case reflect.Uint64, reflect.Int64, reflect.Float64:
+-		return fmt.Sprintf("%v", i)
++	case reflect.Uint64:
++		return i.(uint64)
++	case reflect.Int64:
++		return i.(int64)
++	case reflect.Float64:
++		return i.(float64)
+ 	}
+ 	return i
+ }
+@@ -1086,7 +1117,7 @@
  // constructs the representation for JSON marshalling that corresponds to it.
  // The module within which the map is defined is specified by the parentMod
  // argument.
@@ -513,7 +528,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  	var errs errlist.List
  	mapKeyMap := map[string]reflect.Value{}
  	// Order of elements determines the order in which keys will be processed.
-@@ -1155,6 +1182,7 @@
+@@ -1155,6 +1186,7 @@
  	default:
  		return nil, fmt.Errorf("invalid JSON format specified: %v", args.jType)
  	}
@@ -521,7 +536,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  	for _, kn := range mapKeys {
  		k := mapKeyMap[kn]
  		goStruct, ok := field.MapIndex(k).Interface().(GoStruct)
-@@ -1163,7 +1191,7 @@
+@@ -1163,7 +1195,7 @@
  			continue
  		}
  
@@ -530,7 +545,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  		if err != nil {
  			errs.Add(err)
  			continue
-@@ -1191,7 +1219,7 @@
+@@ -1191,7 +1223,7 @@
  // The module within which the value is defined is specified by the parentMod string,
  // and the type of JSON to be rendered controlled by the value of the jsonOutputConfig
  // provided. Returns an error if one occurs during the mapping process.
@@ -539,7 +554,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  	var value interface{}
  	var errs errlist.List
  
-@@ -1210,7 +1238,7 @@
+@@ -1210,7 +1242,7 @@
  	switch field.Kind() {
  	case reflect.Map:
  		var err error
@@ -548,7 +563,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  		if err != nil {
  			errs.Add(err)
  		}
-@@ -1223,7 +1251,7 @@
+@@ -1223,7 +1255,7 @@
  			}
  
  			var err error
@@ -557,7 +572,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  			if err != nil {
  				errs.Add(err)
  			}
-@@ -1235,7 +1263,7 @@
+@@ -1235,7 +1267,7 @@
  		}
  	case reflect.Slice:
  		var err error
@@ -566,7 +581,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  		if err != nil {
  			return nil, err
  		}
-@@ -1289,7 +1317,7 @@
+@@ -1289,7 +1321,7 @@
  // GoStruct, a slice may be a binary field, leaf-list or an unkeyed list. The
  // parentMod is used to track the name of the parent module in the case that
  // module names should be appended.
@@ -575,7 +590,7 @@ diff -ruN ygot-dir-orig/ygot/ygot/render.go ygot-dir/ygot/ygot/render.go
  	if field.Type().Name() == BinaryTypeName {
  		// Handle the case that that we have a Binary ([]byte) value,
  		// which must be returned as a JSON string.
-@@ -1305,7 +1333,7 @@
+@@ -1305,7 +1337,7 @@
  			if !ok {
  				return nil, fmt.Errorf("invalid member of a slice, %s was not a valid GoStruct", c.Name())
  			}
@@ -1007,7 +1022,41 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  
  	return enumTypesMap[absoluteSchemaDataPath(schema)], nil
  }
-@@ -770,6 +790,65 @@
+@@ -723,30 +743,16 @@
+ 		return value.(string), nil
+ 
+ 	case yang.Ydecimal64:
+-		floatV, err := strconv.ParseFloat(value.(string), 64)
+-		if err != nil {
+-			return nil, fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+-		}
+-
+-		return floatV, nil
++		return value.(float64), nil
+ 
+ 	case yang.Yenum, yang.Yidentityref:
+ 		return enumStringToValue(parent, fieldName, value.(string))
+ 
+ 	case yang.Yint64:
+-		// TODO(b/64812268): value types are different for internal style JSON.
+-		intV, err := strconv.ParseInt(value.(string), 10, 64)
+-		if err != nil {
+-			return nil, fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+-		}
+-		return intV, nil
++		return int64(value.(float64)), nil
+ 
+ 	case yang.Yuint64:
+-		uintV, err := strconv.ParseUint(value.(string), 10, 64)
+-		if err != nil {
+-			return nil, fmt.Errorf("error parsing %v for schema %s: %v", value, schema.Name, err)
+-		}
+-		return uintV, nil
++		return uint64(value.(float64)), nil
+ 
+ 	case yang.Yint8, yang.Yint16, yang.Yint32:
+ 		pv, err := yangFloatIntToGoType(ykind, value.(float64))
+@@ -770,6 +776,65 @@
  	return nil, fmt.Errorf("unmarshalScalar: unsupported type %v in schema node %s", ykind, schema.Name)
  }
  
@@ -1073,7 +1122,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  // sanitizeGNMI decodes the GNMI TypedValue encoded value into a field of the
  // corresponding type in GoStruct. Parent is the parent struct containing the
  // field being unmarshaled. schema is *yang.Entry corresponding to the field.
-@@ -780,6 +859,18 @@
+@@ -780,6 +845,18 @@
  func sanitizeGNMI(parent interface{}, schema *yang.Entry, fieldName string, tv *gpb.TypedValue, jsonTolerance bool) (interface{}, error) {
  	ykind := schema.Type.Kind
  
@@ -1092,7 +1141,7 @@ diff -ruN ygot-dir-orig/ygot/ytypes/leaf.go ygot-dir/ygot/ytypes/leaf.go
  	var ok bool
  	if ok = gNMIToYANGTypeMatches(ykind, tv, jsonTolerance); !ok {
  		return nil, fmt.Errorf("failed to unmarshal %v into %v", tv.GetValue(), yang.TypeKindToName[ykind])
-@@ -875,4 +966,4 @@
+@@ -875,4 +952,4 @@
  	v = v.Elem()
  
  	return v.Kind() == reflect.Int64
@@ -1497,6 +1546,51 @@ diff -ruN ygot-dir-orig/ygot/ytypes/unmarshal.go ygot-dir/ygot/ytypes/unmarshal.
 +	}
 +	return false
 +}
+diff -ruN ygot-dir-orig/ygot/ytypes/util_types.go ygot-dir/ygot/ytypes/util_types.go
+--- ygot-dir-orig/ygot/ytypes/util_types.go	2021-10-15 11:41:34.316324535 +0800
++++ ygot-dir/ygot/ytypes/util_types.go	2021-10-15 16:50:32.919287077 +0800
+@@ -175,23 +175,24 @@
+ // yangToJSONType returns the Go type that json.Unmarshal would render a value
+ // into for the given YANG leaf node schema type.
+ func yangToJSONType(t yang.TypeKind) reflect.Type {
+-	switch t {
+-	case yang.Yint8, yang.Yint16, yang.Yint32,
+-		yang.Yuint8, yang.Yuint16, yang.Yuint32:
+-		return reflect.TypeOf(float64(0))
+-	case yang.Ybinary, yang.Ydecimal64, yang.Yenum, yang.Yidentityref, yang.Yint64, yang.Yuint64, yang.Ystring:
+-		return reflect.TypeOf(string(""))
+-	case yang.Ybool:
+-		return reflect.TypeOf(bool(false))
+-	case yang.Yempty:
+-		return reflect.TypeOf([]interface{}{})
+-	case yang.Yunion:
+-		return reflect.TypeOf(nil)
+-	default:
+-		// TODO(mostrowski): handle bitset.
+-		log.Errorf("unexpected type %v in yangToJSONType", t)
+-	}
+-	return reflect.TypeOf(nil)
++    switch t {
++    case yang.Yint8, yang.Yint16, yang.Yint32,
++         yang.Yuint8, yang.Yuint16, yang.Yuint32,
++	 yang.Yint64, yang.Yuint64, yang.Ydecimal64:
++        return reflect.TypeOf(float64(0))
++    case yang.Ybinary, yang.Yenum, yang.Yidentityref, yang.Ystring:
++        return reflect.TypeOf(string(""))
++    case yang.Ybool:
++        return reflect.TypeOf(bool(false))
++    case yang.Yempty:
++        return reflect.TypeOf([]interface{}{})
++    case yang.Yunion:
++        return reflect.TypeOf(nil)
++    default:
++        // TODO(mostrowski): handle bitset.
++        log.Errorf("unexpected type %v in yangToJSONType", t)
++    }
++    return reflect.TypeOf(nil)
+ }
+
+ // yangFloatIntToGoType the appropriate int type for YANG type t, set with value
 diff -ruN ygot-dir-orig/ygot/ytypes/validate.go ygot-dir/ygot/ytypes/validate.go
 --- ygot-dir-orig/ygot/ytypes/validate.go	2020-10-07 14:33:58.340787000 -0700
 +++ ygot-dir/ygot/ytypes/validate.go	2020-10-27 16:02:47.656540000 -0700
