@@ -77,7 +77,7 @@ func setGoRedisOpts(optsString string) {
 // adjustRedisOpts() gets the redis.Options to be set based on command line
 // options, values passed via db Options, and TRANSLIB_DB|default settings.
 // Additionally it also adjusts the passed dbOpts for separator.
-func adjustRedisOpts(dbOpt *Options) *redis.Options {
+func adjustRedisOpts(dbOpt *Options, multiDbName string) *redis.Options {
 	dbRedisOptsConfig.reconfigure()
 	mutexRedisOptsConfig.Lock()
 	redisOpts := dbRedisOptsConfig.opts
@@ -89,17 +89,17 @@ func adjustRedisOpts(dbOpt *Options) *redis.Options {
 	dbId := int(dbOpt.DBNo)
 	dbPassword := ""
 	if dbInstName := getDBInstName(dbOpt.DBNo); dbInstName != "" {
-		if isDbInstPresent(dbInstName) {
-			if dbSock = getDbSock(dbInstName); dbSock != "" {
+		if isDbInstPresent(dbInstName, multiDbName) {
+			if dbSock = getDbSock(dbInstName, multiDbName); dbSock != "" {
 				dbNetwork = DefaultRedisUNIXNetwork
 				addr = dbSock
 			} else {
 				dbNetwork = DefaultRedisTCPNetwork
-				addr = getDbTcpAddr(dbInstName)
+				addr = getDbTcpAddr(dbInstName, multiDbName)
 			}
-			dbId = getDbId(dbInstName)
-			dbSepStr := getDbSeparator(dbInstName)
-			dbPassword = getDbPassword(dbInstName)
+			dbId = getDbId(dbInstName, multiDbName)
+			dbSepStr := getDbSeparator(dbInstName, multiDbName)
+			dbPassword = getDbPassword(dbInstName, multiDbName)
 			if len(dbSepStr) > 0 {
 				if len(dbOpt.TableNameSeparator) > 0 &&
 					dbOpt.TableNameSeparator != dbSepStr {
@@ -197,7 +197,7 @@ func (config *_DBRedisOptsConfig) handleReconfigureSignal() error {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (config *_DBRedisOptsConfig) readFromDB() error {
-	fields, e := readRedis("TRANSLIB_DB|default")
+	fields, e := readRedis("TRANSLIB_DB|default", "host")
 	if e == nil {
 		if optsString, ok := fields["go_redis_opts"]; ok {
 			// Parse optsString into config.opts

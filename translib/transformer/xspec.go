@@ -55,6 +55,7 @@ type yangXpathInfo struct {
 	xfmrFunc           string
 	xfmrField          string
 	validateFunc       string
+	namespaceFunc      string
 	xfmrKey            string
 	keyName            *string
 	dbIndex            db.DBNum
@@ -346,6 +347,10 @@ func yangToDbMapFill(keyLevel uint8, xYangSpecMap map[string]*yangXpathInfo, ent
 
 		if ok && len(parentXpathData.validateFunc) > 0 {
 			xpathData.validateFunc = parentXpathData.validateFunc
+		}
+
+		if ok && len(parentXpathData.namespaceFunc) > 0 {
+			xpathData.namespaceFunc = parentXpathData.namespaceFunc
 		}
 
 		if ok && len(parentXpathData.xfmrFunc) > 0 && len(xpathData.xfmrFunc) == 0 {
@@ -926,6 +931,8 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				xYangModSpecMap[xpath].xfmrPre = ext.NName()
 			case "get-validate":
 				xpathData.validateFunc = ext.NName()
+			case "get-namespace":
+				xpathData.namespaceFunc = ext.NName()
 			case "rpc-callback":
 				xYangRpcSpecMap[xpath] = ext.NName()
 				xpathData.yangType = YANG_RPC
@@ -1221,6 +1228,7 @@ func mapPrint(fileName string) {
 		fmt.Fprintf(fp, "\r\n    xfmrField :%v", d.xfmrField)
 		fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
 		fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
+		fmt.Fprintf(fp, "\r\n    namespaceFunc  : %v", d.namespaceFunc)
 		fmt.Fprintf(fp, "\r\n    yangEntry: ")
 		if d.yangEntry != nil {
 			fmt.Fprintf(fp, "%v", *d.yangEntry)

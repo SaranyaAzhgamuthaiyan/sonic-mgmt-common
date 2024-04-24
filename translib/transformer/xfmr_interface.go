@@ -205,6 +205,10 @@ type PostXfmrFunc func(inParams XfmrParams) (map[string]map[string]db.Value, err
 // Return: List of table names, error
 type TableXfmrFunc func(inParams XfmrParams) ([]string, error)
 
+// GetNamespaceFunc type is defined to use for dynamic derviation of DB namespaces.
+// Return: List of DB namespace, error
+type GetNamespaceFunc func(inParams XfmrParams) ([]string, error)
+
 // ValueXfmrFunc type is defined to use for conversion of DB field value from one forma to another
 // Transformer function definition.
 // Param: XfmrDbParams structure having Database info, operation, db-number, table, key, field, value
@@ -258,6 +262,9 @@ func (SubTreeXfmrSubscribe) xfmrInterfaceValiidate() {
 }
 func (TableXfmrFunc) xfmrInterfaceValiidate() {
 	xfmrLogInfo("xfmrInterfaceValiidate for TableXfmrFunc")
+}
+func (GetNamespaceFunc) xfmrInterfaceValiidate() {
+	xfmrLogInfo("xfmrInterfaceValiidate for GetNamespaceFunc")
 }
 func (SonicKeyXfmrDbToYang) xfmrInterfaceValiidate() {
 	xfmrLogInfo("xfmrInterfaceValiidate for SonicKeyXfmrDbToYang")

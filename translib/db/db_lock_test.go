@@ -32,6 +32,7 @@ var fTs *TableSpec = &TableSpec{Name: lockTable}
 var fKey Key = Key{Comp: []string{lockKey}}
 
 var stateDB *DB
+var multiDbName string = "host"
 
 func setupKey(t *testing.T, ts *TableSpec, key Key, val Value) {
 	var err error
@@ -63,7 +64,7 @@ func testLock(lockToken string, expError tlerr.DBLockType) func(*testing.T) {
 		setupKey(t, fTs, fKey, fVal)
 
 		err := (&LockStruct{Name: configDBLock, Id: testSTok,
-			lockStruct: lockStruct{comm: execName}}).tryLock()
+			lockStruct: lockStruct{comm: execName}}).tryLock("host")
 
 		if e, ok := err.(tlerr.TranslibDBLock); !ok || e.Type != expError {
 			exp := tlerr.TranslibDBLock{Type: expError}
@@ -86,40 +87,40 @@ func TestLockUnlock(t *testing.T) {
 	// Lock it
 	ls := &LockStruct{Name: configDBLock, Id: testSTok,
 		lockStruct: lockStruct{comm: execName}}
-	err = ls.tryLock()
+	err = ls.tryLock(multiDbName)
 	if err != nil {
 		t.Errorf("tryLock: Expecting nil: Received %v", err)
 	}
 
 	// Lock it Again! -- Should fail with Not Supported
-	err = ls.tryLock()
+	err = ls.tryLock(multiDbName)
 	if _, ok := err.(tlerr.TranslibDBNotSupported); !ok {
 		t.Errorf("Expecting %v: Received %v", tlerr.TranslibDBNotSupported{},
 			err)
 	}
 
 	// Unlock it.
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
 
 	// Unlock it Again! -- Should fail with Not Supported
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if _, ok := err.(tlerr.TranslibDBNotSupported); !ok {
 		t.Errorf("unlock: Expecting %v: Received %v",
 			tlerr.TranslibDBNotSupported{}, err)
 	}
 
 	// Lock it Yet Again! -- Should succeed
-	err = ls.tryLock()
+	err = ls.tryLock(multiDbName)
 	if err != nil {
 		t.Errorf("tryLock 2: Expecting nil: Received %v", err)
 	}
 
 	// Let's be nice, and clean it up.
 	// Unlock it.
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
@@ -139,7 +140,7 @@ func TestLockUnlockNonExisting(t *testing.T) {
 	// Unlock it. -- Should Fail.
 	ls := &LockStruct{Name: configDBLock, Id: testSTok,
 		lockStruct: lockStruct{comm: execName}}
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if _, ok := err.(tlerr.TranslibDBNotSupported); !ok {
 		t.Errorf("Expecting %v: Received %v", tlerr.TranslibDBNotSupported{},
 			err)
@@ -159,7 +160,7 @@ func TestLockNotOurLockUnlock(t *testing.T) {
 	// Unlock it. -- Should Fail.
 	ls := &LockStruct{Name: configDBLock, Id: testSTok,
 		lockStruct: lockStruct{comm: execName}}
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if _, ok := err.(tlerr.TranslibDBNotSupported); !ok {
 		t.Errorf("Expecting %v: Received %v", tlerr.TranslibDBNotSupported{},
 			err)
@@ -167,7 +168,7 @@ func TestLockNotOurLockUnlock(t *testing.T) {
 
 	// Unlock it faking locked field in LockStruct{} -- Fail with different err.
 	ls.locked = true
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if _, ok := err.(tlerr.TranslibDBLock); !ok {
 		t.Errorf("Expecting %v: Received %v", tlerr.TranslibDBLock{},
 			err)
@@ -187,21 +188,21 @@ func TestLockClearLock(t *testing.T) {
 	// Clear it. -- Should Work.
 	ls := &LockStruct{Name: configDBLock, Id: "*",
 		lockStruct: lockStruct{comm: execName, locked: true}}
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
 
 	// Lock it -- Should succeed
 	ls.Id = testSTok
-	err = ls.tryLock()
+	err = ls.tryLock(multiDbName)
 	if err != nil {
 		t.Errorf("tryLock: Expecting nil: Received %v", err)
 	}
 
 	// Let's be nice, and clean it up.
 	// Unlock it.
-	err = ls.unlock()
+	err = ls.unlock(multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
@@ -219,40 +220,40 @@ func TestLockConfigDB(t *testing.T) {
 	t.Cleanup(func() { stateDB.DeleteEntry(fTs, fKey); cdbLock = nil })
 
 	// Lock it
-	err = ConfigDBTryLock(testSTok)
+	err = ConfigDBTryLock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("ConfigDBTryLock: Expecting nil: Received %v", err)
 	}
 
 	// Lock it Again! -- Should fail with Lock Error
-	err = ConfigDBTryLock(testSTok)
+	err = ConfigDBTryLock(testSTok, multiDbName)
 	if _, ok := err.(tlerr.TranslibDBLock); !ok {
 		t.Errorf("Expecting %v: Received %v", tlerr.TranslibDBLock{},
 			err)
 	}
 
 	// Unlock it.
-	err = ConfigDBUnlock(testSTok)
+	err = ConfigDBUnlock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("ConfigDBUnlock: Expecting nil: Received %v", err)
 	}
 
 	// Unlock it Again! -- Should fail with Lock Error
-	err = ConfigDBUnlock(testSTok)
+	err = ConfigDBUnlock(testSTok, multiDbName)
 	if _, ok := err.(tlerr.TranslibDBLock); !ok {
 		t.Errorf("ConfigDBUnlock: Expecting %v: Received %v",
 			tlerr.TranslibDBLock{}, err)
 	}
 
 	// Lock it Yet Again! -- Should succeed
-	err = ConfigDBTryLock(testSTok)
+	err = ConfigDBTryLock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("ConfigDBTryLock 2: Expecting nil: Received %v", err)
 	}
 
 	// Let's be nice, and clean it up.
 	// Unlock it.
-	err = ConfigDBUnlock(testSTok)
+	err = ConfigDBUnlock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
@@ -276,14 +277,14 @@ func TestLockConfigDBClearLock(t *testing.T) {
 	}
 
 	// Lock it
-	err = ConfigDBTryLock(testSTok)
+	err = ConfigDBTryLock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("ConfigDBTryLock: Expecting nil: Received %v", err)
 	}
 
 	// Let's be nice, and clean it up.
 	// Unlock it.
-	err = ConfigDBUnlock(testSTok)
+	err = ConfigDBUnlock(testSTok, multiDbName)
 	if err != nil {
 		t.Errorf("unlock: Expecting nil: Received %v", err)
 	}
@@ -301,7 +302,7 @@ func TestLockConfigDBDeleteEntryFields(t *testing.T) {
 	t.Cleanup(func() { stateDB.DeleteEntry(fTs, fKey); cdbLock = nil })
 
 	// Lock it
-	err = ConfigDBTryLock(testSTok)
+	err = ConfigDBTryLock(testSTok, multiDbName)
 	if err != nil {
 		t.Fatalf("ConfigDBTryLock: Expecting nil: Received %v", err)
 	}

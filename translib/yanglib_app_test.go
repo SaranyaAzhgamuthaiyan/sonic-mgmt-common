@@ -137,7 +137,7 @@ func getYanglibData(name, rev, attr string) (map[string]interface{}, error) {
 	data := make(map[string]interface{})
 	response, err := Get(GetRequest{Path: u})
 	if err == nil {
-		err = json.Unmarshal(response.Payload, &data)
+		err = json.Unmarshal(response[0].Payload, &data)
 	}
 
 	return data, err

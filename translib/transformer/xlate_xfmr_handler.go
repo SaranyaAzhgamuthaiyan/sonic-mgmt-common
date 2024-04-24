@@ -144,6 +144,22 @@ func validateHandlerFunc(inParams XfmrParams, validateFuncNm string) bool {
 	return result
 }
 
+func namespaceHandlerFunc(namespaceFuncNm string, uri string) ([]string, error) {
+	var retTblLst []string
+	var inParams XfmrParams
+	inParams.uri = uri
+	xfmrLogDebug("Before calling namespace xfmr %v, inParams %v", namespaceFuncNm, inParams)
+	ret, err := XlateFuncCall(namespaceFuncNm, inParams)
+	xfmrLogDebug("After calling namespace xfmr %v, inParams %v", namespaceFuncNm, inParams)
+
+	if ret[0].Interface() != nil {
+		retTblLst = ret[0].Interface().([]string)
+	}
+	xfmrLogDebug("Namespace transformer returned %v", retTblLst)
+
+	return retTblLst, err
+}
+
 func xfmrTblHandlerFunc(xfmrTblFunc string, inParams XfmrParams, xfmrTblKeyCache map[string]tblKeyCache) ([]string, error) {
 	const (
 		TBL_XFMR_RET_ARGS     = 2

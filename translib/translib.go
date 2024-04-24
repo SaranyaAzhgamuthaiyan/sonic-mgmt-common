@@ -35,6 +35,7 @@ package translib
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	"github.com/Azure/sonic-mgmt-common/translib/db"
@@ -165,52 +166,66 @@ func Create(req SetRequest) (SetResponse, error) {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
-
-	err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
+	// Only one namespace will be returned for Set requests
+	// since key will be provided as part of set request xpath
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-	defer d.DeleteDB()
-
-	keys, err = (*app).translateCreate(d)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
+	if dbNames == nil {
+		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
+	for _, dbName := range dbNames {
 
-	err = d.StartTx(keys, appInfo.tablesToWatch)
+		err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
 
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
 
-	resp, err = (*app).processCreate(d)
+		writeMutex.Lock()
+		defer writeMutex.Unlock()
 
-	if err != nil {
-		d.AbortTx()
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		d, err := db.NewMDB(getDBOptions(db.ConfigDB), dbName)
 
-	err = d.CommitTx()
+		if err != nil {
+			resp.ErrSrc = ProtoErr
+			return resp, err
+		}
 
-	if err != nil {
-		resp.ErrSrc = AppErr
+		defer d.DeleteDB()
+
+		keys, err = (*app).translateCreate(d)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.StartTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		resp, err = (*app).processCreate(d)
+
+		if err != nil {
+			d.AbortTx()
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.CommitTx()
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+		}
 	}
 
 	return resp, err
@@ -238,54 +253,66 @@ func Update(req SetRequest) (SetResponse, error) {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
-
-	err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
+	// Only one namespace will be returned for Set requests
+	// since key will be provided as part of set request xpath
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-	defer d.DeleteDB()
-
-	keys, err = (*app).translateUpdate(d)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
+	if dbNames == nil {
+		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
+	for _, dbName := range dbNames {
+		err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
 
-	err = d.StartTx(keys, appInfo.tablesToWatch)
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
 
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
+		writeMutex.Lock()
+		defer writeMutex.Unlock()
+
+		d, err := db.NewMDB(getDBOptions(db.ConfigDB), dbName)
+
+		if err != nil {
+			resp.ErrSrc = ProtoErr
+			return resp, err
+		}
+
+		defer d.DeleteDB()
+
+		keys, err = (*app).translateUpdate(d)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.StartTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		resp, err = (*app).processUpdate(d)
+
+		if err != nil {
+			d.AbortTx()
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.CommitTx()
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+		}
 	}
-
-	resp, err = (*app).processUpdate(d)
-
-	if err != nil {
-		d.AbortTx()
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	err = d.CommitTx()
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-	}
-
 	return resp, err
 }
 
@@ -313,51 +340,66 @@ func Replace(req SetRequest) (SetResponse, error) {
 		return resp, err
 	}
 
-	err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
+	// Only one namespace will be returned for Set requests
+	// since key will be provided as part of set request xpath
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-	defer d.DeleteDB()
-
-	keys, err = (*app).translateReplace(d)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
+	if dbNames == nil {
+		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
+	for _, dbName := range dbNames {
 
-	err = d.StartTx(keys, appInfo.tablesToWatch)
+		err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
 
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
 
-	resp, err = (*app).processReplace(d)
+		writeMutex.Lock()
+		defer writeMutex.Unlock()
 
-	if err != nil {
-		d.AbortTx()
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		d, err := db.NewMDB(getDBOptions(db.ConfigDB), dbName)
 
-	err = d.CommitTx()
+		if err != nil {
+			resp.ErrSrc = ProtoErr
+			return resp, err
+		}
 
-	if err != nil {
-		resp.ErrSrc = AppErr
+		defer d.DeleteDB()
+
+		keys, err = (*app).translateReplace(d)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.StartTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		resp, err = (*app).processReplace(d)
+
+		if err != nil {
+			d.AbortTx()
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.CommitTx()
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+		}
 	}
 
 	return resp, err
@@ -384,65 +426,80 @@ func Delete(req SetRequest) (SetResponse, error) {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
-
-	opts := appOptions{deleteEmptyEntry: req.DeleteEmptyEntry}
-	err = appInitialize(app, appInfo, path, nil, &opts, DELETE)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
-
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
+	// Only one namespace will be returned for Set requests
+	// since key will be provided as part of set request xpath
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
 		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
 
-	defer d.DeleteDB()
-
-	keys, err = (*app).translateDelete(d)
-
-	if err != nil {
-		resp.ErrSrc = AppErr
+	if dbNames == nil {
+		resp.ErrSrc = ProtoErr
 		return resp, err
 	}
+	for _, dbName := range dbNames {
 
-	err = d.StartTx(keys, appInfo.tablesToWatch)
+		opts := appOptions{deleteEmptyEntry: req.DeleteEmptyEntry}
+		err = appInitialize(app, appInfo, path, nil, &opts, DELETE)
 
-	if err != nil {
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
 
-	resp, err = (*app).processDelete(d)
+		writeMutex.Lock()
+		defer writeMutex.Unlock()
 
-	if err != nil {
-		d.AbortTx()
-		resp.ErrSrc = AppErr
-		return resp, err
-	}
+		d, err := db.NewMDB(getDBOptions(db.ConfigDB), dbName)
 
-	err = d.CommitTx()
+		if err != nil {
+			resp.ErrSrc = ProtoErr
+			return resp, err
+		}
 
-	if err != nil {
-		resp.ErrSrc = AppErr
+		defer d.DeleteDB()
+
+		keys, err = (*app).translateDelete(d)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.StartTx(keys, appInfo.tablesToWatch)
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		resp, err = (*app).processDelete(d)
+
+		if err != nil {
+			d.AbortTx()
+			resp.ErrSrc = AppErr
+			return resp, err
+		}
+
+		err = d.CommitTx()
+
+		if err != nil {
+			resp.ErrSrc = AppErr
+		}
 	}
 
 	return resp, err
 }
 
 // Get - Gets data from the redis DB and converts it to northbound format
-func Get(req GetRequest) (GetResponse, error) {
+func Get(req GetRequest) ([]GetResponse, error) {
 	var payload []byte
+	var allResp []GetResponse
 	var resp GetResponse
 	path := req.Path
 	if !isAuthorizedForGet(req) {
-		return resp, tlerr.AuthorizationError{
+		return allResp, tlerr.AuthorizationError{
 			Format: "User is unauthorized for Get Operation",
 			Path:   path,
 		}
@@ -453,46 +510,71 @@ func Get(req GetRequest) (GetResponse, error) {
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
 	if err != nil {
-		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-		return resp, err
+		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
 	}
-
-	opts := appOptions{depth: req.QueryParams.Depth, content: req.QueryParams.Content, fields: req.QueryParams.Fields, ctxt: req.Ctxt}
-	err = appInitialize(app, appInfo, path, nil, &opts, GET)
-
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
-		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
-		return resp, err
+		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
 	}
 
-	dbs, err := getAllDbs(withWriteDisable)
-
-	if err != nil {
-		resp = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-		return resp, err
+	// Fetching the DBNames to iterate if getNamespace returned *
+	// if keys is not present in xpath of GetRequest.
+	if len(dbNames) == 1 && dbNames[0] == "*" {
+		dbNames = db.GetMultiDbNames()
 	}
 
-	defer closeAllDbs(dbs[:])
-
-	err = (*app).translateGet(dbs)
-
-	if err != nil {
-		resp = GetResponse{Payload: payload, ErrSrc: AppErr}
-		return resp, err
+	if dbNames == nil {
+		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
 	}
+	for i, dbName := range dbNames {
 
-	resp, err = (*app).processGet(dbs, req.FmtType)
+		opts := appOptions{depth: req.QueryParams.Depth, content: req.QueryParams.Content, fields: req.QueryParams.Fields, ctxt: req.Ctxt}
+		err = appInitialize(app, appInfo, path, nil, &opts, GET)
 
-	return resp, err
+		if err != nil {
+			allResp[i] = GetResponse{Payload: payload, ErrSrc: AppErr}
+			return allResp, err
+		}
+
+		mdb, err := getAllMdbs(withWriteDisable)
+
+		if err != nil {
+			allResp[i] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
+			return allResp, err
+		}
+
+		defer closeAllMdbs(mdb)
+
+		err = (*app).translateGet(mdb[dbName])
+
+		if err != nil {
+			allResp[i] = GetResponse{Payload: payload, ErrSrc: AppErr}
+			return allResp, err
+		}
+
+		resp, err = (*app).processGet(mdb[dbName], req.FmtType)
+		if len(resp.Payload) > 0 && err == nil {
+			allResp = append(allResp, GetResponse{
+				Payload: resp.Payload,
+				ErrSrc:  resp.ErrSrc,
+			})
+		}
+
+	}
+	return allResp, err
 }
 
-func Action(req ActionRequest) (ActionResponse, error) {
+func Action(req ActionRequest) ([]ActionResponse, error) {
 	var payload []byte
+	var allResp []ActionResponse
 	var resp ActionResponse
 	path := req.Path
 
 	if !isAuthorizedForAction(req) {
-		return resp, tlerr.AuthorizationError{
+		return allResp, tlerr.AuthorizationError{
 			Format: "User is unauthorized for Action Operation",
 			Path:   path,
 		}
@@ -503,49 +585,77 @@ func Action(req ActionRequest) (ActionResponse, error) {
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
 	if err != nil {
-		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-		return resp, err
+		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
 	}
-
-	aInfo := *appInfo
-
-	aInfo.isNative = true
-
-	err = appInitialize(app, &aInfo, path, &req.Payload, nil, GET)
-
+	dbNames, err := (*app).getNamespace(path)
 	if err != nil {
-		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
-		return resp, err
+		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
 	}
 
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	dbs, err := getAllDbs()
-
-	if err != nil {
-		resp = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-		return resp, err
+	// Fetching the DBNames to iterate if getNamespace returned *
+	// if keys is not present in xpath of GetRequest.
+	if len(dbNames) == 1 && dbNames[0] == "*" {
+		dbNames = db.GetMultiDbNames()
 	}
 
-	defer closeAllDbs(dbs[:])
+	if dbNames == nil {
+		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+		return allResp, err
+	}
+	for i, dbName := range dbNames {
 
-	err = (*app).translateAction(dbs)
+		aInfo := *appInfo
 
-	if err != nil {
-		resp = ActionResponse{Payload: payload, ErrSrc: AppErr}
-		return resp, err
+		aInfo.isNative = true
+
+		err = appInitialize(app, &aInfo, path, &req.Payload, nil, GET)
+
+		if err != nil {
+			allResp[i] = ActionResponse{Payload: payload, ErrSrc: AppErr}
+			return allResp, err
+		}
+
+		writeMutex.Lock()
+		defer writeMutex.Unlock()
+
+		mdb, err := getAllMdbs()
+
+		if err != nil {
+			allResp[i] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
+			return allResp, err
+		}
+
+		defer closeAllMdbs(mdb)
+
+		err = (*app).translateAction(mdb[dbName])
+
+		if err != nil {
+			allResp[i] = ActionResponse{Payload: payload, ErrSrc: AppErr}
+			return allResp, err
+		}
+
+		resp, err = (*app).processAction(mdb[dbName])
+
+		if len(resp.Payload) > 0 && err == nil {
+			allResp = append(allResp, ActionResponse{
+				Payload: resp.Payload,
+				ErrSrc:  resp.ErrSrc,
+			})
+		}
+
 	}
 
-	resp, err = (*app).processAction(dbs)
-
-	return resp, err
+	return allResp, err
 }
 
 func Bulk(req BulkRequest) (BulkResponse, error) {
 	var err error
 	var keys []db.WatchKeys
 	var errSrc ErrSource
+	var dbNames []string
+	var d *db.DB
 
 	delResp := make([]SetResponse, len(req.DeleteRequest))
 	replaceResp := make([]SetResponse, len(req.ReplaceRequest))
@@ -562,25 +672,6 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			Format: "User is unauthorized for Action Operation",
 		}
 	}
-
-	writeMutex.Lock()
-	defer writeMutex.Unlock()
-
-	d, err := db.NewDB(getDBOptions(db.ConfigDB))
-
-	if err != nil {
-		return resp, err
-	}
-
-	defer d.DeleteDB()
-
-	//Start the transaction without any keys or tables to watch will be added later using AppendWatchTx
-	err = d.StartTx(nil, nil)
-
-	if err != nil {
-		return resp, err
-	}
-
 	for i := range req.DeleteRequest {
 		path := req.DeleteRequest[i].Path
 		opts := appOptions{deleteEmptyEntry: req.DeleteRequest[i].DeleteEmptyEntry}
@@ -593,34 +684,58 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			errSrc = ProtoErr
 			goto BulkDeleteError
 		}
-
-		err = appInitialize(app, appInfo, path, nil, &opts, DELETE)
-
+		// Only one namespace will be returned for Set requests
+		// since key will be provided as part of set request xpath
+		dbNames, err = (*app).getNamespace(path)
 		if err != nil {
-			errSrc = AppErr
+			errSrc = ProtoErr
 			goto BulkDeleteError
 		}
 
-		keys, err = (*app).translateDelete(d)
-
-		if err != nil {
-			errSrc = AppErr
+		if dbNames == nil {
+			errSrc = ProtoErr
 			goto BulkDeleteError
 		}
+		for _, dbName := range dbNames {
 
-		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+			err = appInitialize(app, appInfo, path, nil, &opts, DELETE)
 
-		if err != nil {
-			errSrc = AppErr
-			goto BulkDeleteError
+			if err != nil {
+				errSrc = AppErr
+				goto BulkDeleteError
+			}
+			writeMutex.Lock()
+			defer writeMutex.Unlock()
+
+			d, err = db.NewMDB(getDBOptions(db.ConfigDB), dbName)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkDeleteError
+			}
+
+			defer d.DeleteDB()
+
+			keys, err = (*app).translateDelete(d)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkDeleteError
+			}
+			err = d.StartTx(keys, appInfo.tablesToWatch)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkDeleteError
+			}
+
+			resp.DeleteResponse[i], err = (*app).processDelete(d)
+
+			if err != nil {
+				d.AbortTx()
+				errSrc = AppErr
+			}
 		}
-
-		resp.DeleteResponse[i], err = (*app).processDelete(d)
-
-		if err != nil {
-			errSrc = AppErr
-		}
-
 	BulkDeleteError:
 
 		if err != nil {
@@ -647,33 +762,59 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 		log.Info("Bulk replace request received with path =", path)
 		log.Info("Bulk replace request received with payload =", string(payload))
 
-		err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
-
+		// Only one namespace will be returned for Set requests
+		// since key will be provided as part of set request xpath
+		dbNames, err = (*app).getNamespace(path)
 		if err != nil {
-			errSrc = AppErr
+			errSrc = ProtoErr
 			goto BulkReplaceError
 		}
 
-		keys, err = (*app).translateReplace(d)
-
-		if err != nil {
-			errSrc = AppErr
+		if dbNames == nil {
+			errSrc = ProtoErr
 			goto BulkReplaceError
 		}
+		for _, dbName := range dbNames {
+			err = appInitialize(app, appInfo, path, &payload, nil, REPLACE)
 
-		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+			if err != nil {
+				errSrc = AppErr
+				goto BulkReplaceError
+			}
+			writeMutex.Lock()
+			defer writeMutex.Unlock()
 
-		if err != nil {
-			errSrc = AppErr
-			goto BulkReplaceError
+			d, err = db.NewMDB(getDBOptions(db.ConfigDB), dbName)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkReplaceError
+			}
+
+			defer d.DeleteDB()
+
+			keys, err = (*app).translateReplace(d)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkReplaceError
+			}
+
+			err = d.StartTx(keys, appInfo.tablesToWatch)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkReplaceError
+			}
+
+			resp.ReplaceResponse[i], err = (*app).processReplace(d)
+
+			if err != nil {
+				d.AbortTx()
+				errSrc = AppErr
+			}
+
 		}
-
-		resp.ReplaceResponse[i], err = (*app).processReplace(d)
-
-		if err != nil {
-			errSrc = AppErr
-		}
-
 	BulkReplaceError:
 
 		if err != nil {
@@ -696,32 +837,58 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			errSrc = ProtoErr
 			goto BulkUpdateError
 		}
-
-		err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
-
+		// Only one namespace will be returned for Set requests
+		// since key will be provided as part of set request xpath
+		dbNames, err = (*app).getNamespace(path)
 		if err != nil {
-			errSrc = AppErr
+			errSrc = ProtoErr
 			goto BulkUpdateError
 		}
 
-		keys, err = (*app).translateUpdate(d)
-
-		if err != nil {
-			errSrc = AppErr
+		if dbNames == nil {
+			errSrc = ProtoErr
 			goto BulkUpdateError
 		}
+		for _, dbName := range dbNames {
 
-		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+			err = appInitialize(app, appInfo, path, &payload, nil, UPDATE)
 
-		if err != nil {
-			errSrc = AppErr
-			goto BulkUpdateError
-		}
+			if err != nil {
+				errSrc = AppErr
+				goto BulkUpdateError
+			}
+			writeMutex.Lock()
+			defer writeMutex.Unlock()
 
-		resp.UpdateResponse[i], err = (*app).processUpdate(d)
+			d, err = db.NewMDB(getDBOptions(db.ConfigDB), dbName)
 
-		if err != nil {
-			errSrc = AppErr
+			if err != nil {
+				errSrc = AppErr
+				goto BulkUpdateError
+			}
+
+			defer d.DeleteDB()
+
+			keys, err = (*app).translateUpdate(d)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkUpdateError
+			}
+
+			err = d.StartTx(keys, appInfo.tablesToWatch)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkUpdateError
+			}
+
+			resp.UpdateResponse[i], err = (*app).processUpdate(d)
+
+			if err != nil {
+				d.AbortTx()
+				errSrc = AppErr
+			}
 		}
 
 	BulkUpdateError:
@@ -746,32 +913,58 @@ func Bulk(req BulkRequest) (BulkResponse, error) {
 			errSrc = ProtoErr
 			goto BulkCreateError
 		}
-
-		err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
-
+		// Only one namespace will be returned for Set requests
+		// since key will be provided as part of set request xpath
+		dbNames, err = (*app).getNamespace(path)
 		if err != nil {
-			errSrc = AppErr
+			errSrc = ProtoErr
 			goto BulkCreateError
 		}
 
-		keys, err = (*app).translateCreate(d)
-
-		if err != nil {
-			errSrc = AppErr
+		if dbNames == nil {
+			errSrc = ProtoErr
 			goto BulkCreateError
 		}
+		for _, dbName := range dbNames {
 
-		err = d.AppendWatchTx(keys, appInfo.tablesToWatch)
+			err = appInitialize(app, appInfo, path, &payload, nil, CREATE)
 
-		if err != nil {
-			errSrc = AppErr
-			goto BulkCreateError
-		}
+			if err != nil {
+				errSrc = AppErr
+				goto BulkCreateError
+			}
+			writeMutex.Lock()
+			defer writeMutex.Unlock()
 
-		resp.CreateResponse[i], err = (*app).processCreate(d)
+			d, err = db.NewMDB(getDBOptions(db.ConfigDB), dbName)
 
-		if err != nil {
-			errSrc = AppErr
+			if err != nil {
+				errSrc = AppErr
+				goto BulkCreateError
+			}
+
+			defer d.DeleteDB()
+
+			keys, err = (*app).translateCreate(d)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkCreateError
+			}
+
+			err = d.StartTx(keys, appInfo.tablesToWatch)
+
+			if err != nil {
+				errSrc = AppErr
+				goto BulkCreateError
+			}
+
+			resp.CreateResponse[i], err = (*app).processCreate(d)
+
+			if err != nil {
+				d.AbortTx()
+				errSrc = AppErr
+			}
 		}
 
 	BulkCreateError:
@@ -797,21 +990,30 @@ func GetModels() ([]ModelData, error) {
 }
 
 // Creates connection will all the redis DBs. To be used for get request
-func getAllDbs(opts ...func(*db.Options)) ([db.MaxDB]*db.DB, error) {
+func getAllMdbs(opts ...func(*db.Options)) (map[string][db.MaxDB]*db.DB, error) {
 	var dbs [db.MaxDB]*db.DB
 	var err error
-	for dbNum := db.DBNum(0); dbNum < db.MaxDB; dbNum++ {
-		if len(dbNum.Name()) == 0 {
-			continue
-		}
-		dbs[dbNum], err = db.NewDB(getDBOptions(dbNum, opts...))
-		if err != nil {
-			closeAllDbs(dbs[:])
-			break
-		}
+	dbNames := db.GetMultiDbNames()
+	if len(dbNames) == 0 {
+		return nil, errors.New("get all db names failed")
 	}
 
-	return dbs, err
+	mdb := make(map[string][db.MaxDB]*db.DB)
+	for _, name := range dbNames {
+
+		for dbNum := db.DBNum(0); dbNum < db.MaxDB; dbNum++ {
+			if len(dbNum.Name()) == 0 {
+				continue
+			}
+			dbs[dbNum], err = db.NewMDB(getDBOptions(dbNum, opts...), name)
+			if err != nil {
+				closeAllDbs(dbs[:])
+				break
+			}
+		}
+		mdb[name] = dbs
+	}
+	return mdb, err
 }
 
 // Closes the dbs, and nils out the arr.
@@ -821,6 +1023,16 @@ func closeAllDbs(dbs []*db.DB) {
 			d.DeleteDB()
 			dbs[dbsi] = nil
 		}
+	}
+}
+
+//Closes the multiple dbs for multi_asic, and nils out the arr.
+func closeAllMdbs(mdb map[string][db.MaxDB]*db.DB) {
+	for name, db := range mdb {
+		if db[:] != nil {
+			closeAllDbs(db[:])
+		}
+		delete(mdb, name)
 	}
 }
 

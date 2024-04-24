@@ -27,7 +27,7 @@ Example:
 
   - Initialization:
 
-    d, _ := db.NewDB(db.Options {
+    d, _ := db.NewMDB(db.Options {
     DBNo              : db.ConfigDB,
     InitIndicator     : "CONFIG_DB_INITIALIZED",
     TableNameSeparator: "|",
@@ -102,7 +102,11 @@ Example:
 package db
 
 import (
+	"encoding/json"
 	"fmt"
+	io "io/ioutil"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	//	"reflect"
@@ -117,16 +121,85 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
+var (
 	DefaultRedisUNIXSocket  string = "/var/run/redis/redis.sock"
 	DefaultRedisLocalTCPEP  string = "localhost:6379"
 	DefaultRedisRemoteTCPEP string = "127.0.0.1:6379"
 	DefaultRedisUNIXNetwork string = "unix"
 	DefaultRedisTCPNetwork  string = "tcp"
+	DefaultAsicConfFilePath        = "/usr/share/sonic/platform/asic.conf"
+	DefaultGlobalDbFilePath        = "/var/run/redis/sonic-db/database_global.json"
+	NumAsic                        = 1
 )
 
+type DbGlobal struct {
+	Includes []DbInclude `json:"INCLUDES"`
+	Version  string      `json:"VERSION"`
+}
+
+type DbInclude struct {
+	Include   string `json:"include"`
+	Namespace string `json:"namespace"`
+}
+
 func init() {
-	dbConfigInit()
+	initAllDbs()
+}
+
+func initAllDbs() {
+	if os.Getenv("REDIS_LOCAL_TCP_EP") != "" {
+		DefaultRedisLocalTCPEP = os.Getenv("REDIS_LOCAL_TCP_EP")
+	}
+
+	dbConfigPath := "/var/run/redis/sonic-db/database_config.json"
+	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
+		dbConfigPath = path
+	}
+
+	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
+		DefaultAsicConfFilePath = path
+	}
+
+	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
+		DefaultGlobalDbFilePath = path
+	}
+
+	NumAsic = getNumAsic()
+
+	if !isMultiAsic() {
+		dbConfigInit(dbConfigPath, "host")
+	} else {
+		globalDbInfo := loadGlobalDatabase(DefaultGlobalDbFilePath)
+		for namespace, path := range globalDbInfo {
+			dbConfigInit(path, namespace)
+		}
+	}
+}
+
+func loadGlobalDatabase(globalDbFilePath string) map[string]string {
+	var globalDbCfg DbGlobal
+
+	data, err := io.ReadFile(globalDbFilePath)
+	if err != nil {
+		assert(err)
+	} else {
+		err = json.Unmarshal([]byte(data), &globalDbCfg)
+		if err != nil {
+			assert(err)
+		}
+	}
+
+	var dbConfigMap = make(map[string]string)
+	var pwd = filepath.Dir(globalDbFilePath) + "/"
+	for i := 0; i < len(globalDbCfg.Includes); i++ {
+		if i == 0 {
+			dbConfigMap["host"] = pwd + globalDbCfg.Includes[0].Include
+		} else {
+			include := globalDbCfg.Includes[i]
+			dbConfigMap[include.Namespace] = pwd + include.Include
+		}
+	}
+	return dbConfigMap
 }
 
 // DBNum type indicates the type of DB (Eg: ConfigDB, ApplDB, ...).
@@ -157,7 +230,7 @@ func (dbNo DBNum) ID() int {
 	if len(name) == 0 {
 		panic("Invalid DBNum " + fmt.Sprintf("%d", dbNo))
 	}
-	return getDbId(name)
+	return getDbId(name, "host")
 }
 
 // Options gives parameters for opening the redis client.
@@ -386,11 +459,16 @@ func GetdbNameToIndex(dbName string) DBNum {
 
 // NewDB is the factory method to create new DB's.
 func NewDB(opt Options) (*DB, error) {
+	return NewMDB(opt, "host")
+}
+
+// NewDB for Multi Asic
+func NewMDB(opt Options, multiDbName string) (*DB, error) {
 
 	var e error
 
 	if glog.V(3) {
-		glog.Info("NewDB: Begin: opt: ", opt)
+		glog.Info("NewMDB: Begin: opt: ", opt)
 	}
 
 	// Time Start
@@ -398,7 +476,7 @@ func NewDB(opt Options) (*DB, error) {
 	var dur time.Duration
 	now = time.Now()
 
-	d := DB{client: redis.NewClient(adjustRedisOpts(&opt)),
+	d := DB{client: redis.NewClient(adjustRedisOpts(&opt, multiDbName)),
 		Opts:              &opt,
 		txState:           txStateNone,
 		txCmds:            make([]_txCmd, 0, InitialTxPipelineSize),
@@ -410,7 +488,7 @@ func NewDB(opt Options) (*DB, error) {
 	}
 
 	if d.client == nil {
-		glog.Error("NewDB: Could not create redis client: ", d.Name())
+		glog.Error("NewMDB: Could not create redis client: ", d.Name())
 		e = tlerr.TranslibDBCannotOpen{}
 		goto NewDBExit
 	}
@@ -422,34 +500,34 @@ func NewDB(opt Options) (*DB, error) {
 	}
 
 	if opt.IsOnChangeEnabled && !opt.IsWriteDisabled {
-		glog.Errorf("NewDB: IsEnableOnChange cannot be set on write enabled DB")
+		glog.Errorf("NewMDB: IsEnableOnChange cannot be set on write enabled DB")
 		e = tlerr.TranslibDBCannotOpen{}
 		goto NewDBExit
 	}
 
 	if !d.Opts.IsWriteDisabled {
 		if d.dbCacheConfig.PerConnection {
-			glog.Info("NewDB: IsWriteDisabled false. Disable Cache")
+			glog.Info("NewMDB: IsWriteDisabled false. Disable Cache")
 		}
 		d.dbCacheConfig.PerConnection = false
 	}
 
 	if !d.Opts.IsCacheEnabled {
 		if d.dbCacheConfig.PerConnection {
-			glog.Info("NewDB: IsCacheEnabled false. Disable Cache")
+			glog.Info("NewMDB: IsCacheEnabled false. Disable Cache")
 		}
 		d.dbCacheConfig.PerConnection = false
 	}
 
 	if opt.IsSession && d.dbCacheConfig.PerConnection {
 		if d.dbCacheConfig.PerConnection {
-			glog.Info("NewDB: IsSession true. Disable Cache")
+			glog.Info("NewMDB: IsSession true. Disable Cache")
 		}
 		d.dbCacheConfig.PerConnection = false
 	}
 
 	if opt.IsSession && opt.IsOnChangeEnabled {
-		glog.Error("NewDB: Subscription on Config Session not supported : ",
+		glog.Error("NewMDB: Subscription on Config Session not supported : ",
 			d.Name())
 		d.client.Close()
 		e = tlerr.TranslibDBNotSupported{
@@ -458,7 +536,7 @@ func NewDB(opt Options) (*DB, error) {
 	}
 
 	if opt.IsSession && opt.DBNo != ConfigDB {
-		glog.Error("NewDB: Non-Config DB on Config Session not supported : ",
+		glog.Error("NewMDB: Non-Config DB on Config Session not supported : ",
 			d.Name())
 		d.client.Close()
 		e = tlerr.TranslibDBNotSupported{
@@ -472,7 +550,7 @@ func NewDB(opt Options) (*DB, error) {
 
 	if opt.DBNo != ConfigDB {
 		if glog.V(3) {
-			glog.Info("NewDB: ! ConfigDB. Skip init. check.")
+			glog.Info("NewMDB: ! ConfigDB. Skip init. check.")
 		}
 		goto NewDBSkipInitIndicatorCheck
 	}
@@ -480,18 +558,18 @@ func NewDB(opt Options) (*DB, error) {
 	if len(d.Opts.InitIndicator) == 0 {
 
 		if glog.V(3) {
-			glog.Info("NewDB: Init indication not requested")
+			glog.Info("NewMDB: Init indication not requested")
 		}
 
 	} else {
-		glog.V(3).Info("NewDB: RedisCmd: ", d.Name(), ": ", "GET ",
+		glog.V(3).Info("NewMDB: RedisCmd: ", d.Name(), ": ", "GET ",
 			d.Opts.InitIndicator)
 		if init, err := d.client.Get(d.Opts.InitIndicator).Int(); init != 1 {
 
-			glog.Error("NewDB: Database not inited: ", d.Name(), ": GET ",
+			glog.Error("NewMDB: Database not inited: ", d.Name(), ": GET ",
 				d.Opts.InitIndicator)
 			if err != nil {
-				glog.Error("NewDB: Database not inited: ", d.Name(), ": GET ",
+				glog.Error("NewMDB: Database not inited: ", d.Name(), ": GET ",
 					d.Opts.InitIndicator, " returns err: ", err)
 			}
 			d.client.Close()
@@ -506,8 +584,8 @@ func NewDB(opt Options) (*DB, error) {
 	if opt.DBNo == ConfigDB && !opt.IsSession &&
 		!opt.IsWriteDisabled && !opt.ConfigDBLazyLock {
 
-		if e = ConfigDBTryLock(noSessionToken); e != nil {
-			glog.Errorf("NewDB: ConfigDB possibly locked: %s", e)
+		if e = ConfigDBTryLock(noSessionToken, multiDbName); e != nil {
+			glog.Errorf("NewMDB: ConfigDB possibly locked: %s", e)
 			d.client.Close()
 			goto NewDBExit
 		}
@@ -530,7 +608,7 @@ NewDBExit:
 	dbGlobalStats.updateStats(d.Opts.DBNo, true, dur, &(d.stats))
 
 	if glog.V(3) {
-		glog.Info("NewDB: End: d: ", d, " e: ", e)
+		glog.Info("NewMDB: End: d: ", d, " e: ", e)
 	}
 
 	return &d, e
@@ -545,9 +623,9 @@ func (d *DB) DeleteDB() error {
 		glog.Info("DeleteDB: Begin: d: ", d)
 	}
 
-	// Release the ConfigDB Lock if we placed on in NewDB()
+	// Release the ConfigDB Lock if we placed on in NewMDB()
 	if d.configDBLocked {
-		ConfigDBUnlock(noSessionToken)
+		ConfigDBUnlock(noSessionToken, "host")
 		d.configDBLocked = false
 	}
 
@@ -1082,7 +1160,7 @@ func (d *DB) doWrite(ts *TableSpec, op _txOp, k Key, val interface{}) error {
 	}
 
 	if d.Opts.DBNo == ConfigDB && !d.Opts.IsSession && !d.configDBLocked {
-		if e = ConfigDBTryLock(noSessionToken); e != nil {
+		if e = ConfigDBTryLock(noSessionToken, "host"); e != nil {
 			glog.Errorf("doWrite: ConfigDB possibly locked: %s", e)
 			goto doWriteExit
 		}

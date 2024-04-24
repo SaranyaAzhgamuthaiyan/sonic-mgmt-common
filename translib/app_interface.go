@@ -100,6 +100,7 @@ type appInterface interface {
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
+	getNamespace(path string) ([]string, error)
 	translateAction(dbs [db.MaxDB]*db.DB) error
 	translateSubscribe(req translateSubRequest) (translateSubResponse, error)
 	processCreate(d *db.DB) (SetResponse, error)

@@ -896,3 +896,10 @@ func SortSncTableDbKeys(tableName string, dbKeyMap map[string]db.Value) []string
 
 	return ordDbKey
 }
+
+func GetNamespace(uri string) ([]string, error) {
+	var err error
+	xpath, _, _ := XfmrRemoveXPATHPredicates(uri)
+	res, err := namespaceHandlerFunc(xYangSpecMap[xpath].namespaceFunc, uri)
+	return res, err
+}

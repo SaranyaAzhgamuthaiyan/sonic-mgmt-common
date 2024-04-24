@@ -31,20 +31,20 @@ import (
 )
 
 var (
-	roDBs [db.MaxDB]*db.DB
+	roDBs map[string][db.MaxDB]*db.DB
 )
 
-func getReadOnlyDB() [db.MaxDB]*db.DB {
-	if roDBs[0] == nil {
-		roDBs, _ = getAllDbs(withWriteDisable)
+func getReadOnlyDB() map[string][db.MaxDB]*db.DB {
+	if roDBs == nil {
+		roDBs, _ = getAllMdbs(withWriteDisable)
 		addCleanupFunc("roDBs", closeAllTestDB)
 	}
 	return roDBs
 }
 
 func closeAllTestDB() error {
-	if roDBs[0] != nil {
-		closeAllDbs(roDBs[:])
+	if roDBs != nil {
+		closeAllMdbs(roDBs)
 	}
 	return nil
 }
@@ -197,9 +197,10 @@ func testTranslateSubscribeForMode(t *testing.T, path string, mode NotificationT
 		path: path,
 		mode: mode,
 	}
+	dbs := getReadOnlyDB()
 	sc := subscribeContext{
 		id:      fmt.Sprintf("test%d", subscribeCounter.Next()),
-		dbs:     getReadOnlyDB(),
+		dbs:     dbs["jost"],
 		recurse: true,
 	}
 	pInfo, err := sc.translateSubscribe(path, mode)

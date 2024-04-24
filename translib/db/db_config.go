@@ -31,12 +31,10 @@ import (
 
 var dbConfigMap = make(map[string]interface{})
 
-func dbConfigInit() {
-	dbConfigPath := "/var/run/redis/sonic-db/database_config.json"
-	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
-		dbConfigPath = path
-	}
+var multiDbsConfigMap = make(map[string]map[string]interface{})
 
+func dbConfigInit(dbConfigPath string, multiDbName string) {
+	var dbConfigMap = make(map[string]interface{})
 	// If the path does not exist, it could be a go lang jenkins test with
 	// an uninitialized/missing DB_CONFIG_PATH. Use the path
 	// ${PWD}/../../../tools/test/database_config.json if it exists
@@ -57,13 +55,15 @@ func dbConfigInit() {
 			assert(err)
 		}
 	}
+	multiDbsConfigMap[multiDbName] = dbConfigMap
 }
 
 func assert(msg error) {
 	panic(msg)
 }
 
-func getDbList() map[string]interface{} {
+func getDbList(multiDbName string) map[string]interface{} {
+	var dbConfigMap = multiDbsConfigMap[multiDbName]
 	dbEntries, ok := dbConfigMap["DATABASES"].(map[string]interface{})
 	if !ok {
 		assert(fmt.Errorf("DATABASES is invalid key."))
@@ -71,12 +71,13 @@ func getDbList() map[string]interface{} {
 	return dbEntries
 }
 
-func isDbInstPresent(dbName string) bool {
-	_, ok := getDbList()[dbName]
+func isDbInstPresent(dbName string, multiDbName string) bool {
+	_, ok := getDbList(multiDbName)[dbName]
 	return ok
 }
 
-func getDbInst(dbName string) map[string]interface{} {
+func getDbInst(dbName string, multiDbName string) map[string]interface{} {
+	var dbConfigMap = multiDbsConfigMap[multiDbName]
 	db, ok := dbConfigMap["DATABASES"].(map[string]interface{})[dbName]
 	if !ok {
 		assert(fmt.Errorf("database name '%v' is not found", dbName))
@@ -92,8 +93,8 @@ func getDbInst(dbName string) map[string]interface{} {
 	return inst.(map[string]interface{})
 }
 
-func getDbSeparator(dbName string) string {
-	dbEntries := getDbList()
+func getDbSeparator(dbName string, multiDbName string) string {
+	dbEntries := getDbList(multiDbName)
 	separator, ok := dbEntries[dbName].(map[string]interface{})["separator"]
 	if !ok {
 		assert(fmt.Errorf("'separator' is not a valid field"))
@@ -101,8 +102,8 @@ func getDbSeparator(dbName string) string {
 	return separator.(string)
 }
 
-func getDbId(dbName string) int {
-	dbEntries := getDbList()
+func getDbId(dbName string, multiDbName string) int {
+	dbEntries := getDbList(multiDbName)
 	id, ok := dbEntries[dbName].(map[string]interface{})["id"]
 	if !ok {
 		assert(fmt.Errorf("'id' is not a valid field"))
@@ -110,8 +111,8 @@ func getDbId(dbName string) int {
 	return int(id.(float64))
 }
 
-func getDbHostName(dbName string) string {
-	inst := getDbInst(dbName)
+func getDbHostName(dbName string, multiDbName string) string {
+	inst := getDbInst(dbName, multiDbName)
 	hostname, ok := inst["hostname"]
 	if !ok {
 		assert(fmt.Errorf("'hostname' is not a valid field"))
@@ -119,8 +120,8 @@ func getDbHostName(dbName string) string {
 	return hostname.(string)
 }
 
-func getDbPort(dbName string) int {
-	inst := getDbInst(dbName)
+func getDbPort(dbName string, multiDbName string) int {
+	inst := getDbInst(dbName, multiDbName)
 	port, ok := inst["port"]
 	if !ok {
 		assert(fmt.Errorf("'port' is not a valid field"))
@@ -128,14 +129,14 @@ func getDbPort(dbName string) int {
 	return int(port.(float64))
 }
 
-func getDbTcpAddr(dbName string) string {
-	hostname := getDbHostName(dbName)
-	port := getDbPort(dbName)
+func getDbTcpAddr(dbName string, multiDbName string) string {
+	hostname := getDbHostName(dbName, multiDbName)
+	port := getDbPort(dbName, multiDbName)
 	return hostname + ":" + strconv.Itoa(port)
 }
 
-func getDbSock(dbName string) string {
-	inst := getDbInst(dbName)
+func getDbSock(dbName string, multiDbName string) string {
+	inst := getDbInst(dbName, multiDbName)
 	if unix_socket_path, ok := inst["unix_socket_path"]; ok {
 		return unix_socket_path.(string)
 	} else {
@@ -144,8 +145,8 @@ func getDbSock(dbName string) string {
 	}
 }
 
-func getDbPassword(dbName string) string {
-	inst := getDbInst(dbName)
+func getDbPassword(dbName string, multiDbName string) string {
+	inst := getDbInst(dbName, multiDbName)
 	password := ""
 	password_path, ok := inst["password_path"]
 	if !ok {
