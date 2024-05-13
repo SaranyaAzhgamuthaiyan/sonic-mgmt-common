@@ -1403,3 +1403,8 @@ func (app *IntfApp) processCommon(d *db.DB) (SetResponse, error) {
 	}
 	return resp, err
 }
+
+func (app *IntfApp) getNamespace(path string) ([]string, error) {
+	var res []string
+	return res, tlerr.NotSupported("not supported")
+}

@@ -1,0 +1,657 @@
+module openconfig-optical-time-domain-reflectometer-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/oc-otdr-annot";
+    prefix "oc-otdr-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-yang-types { prefix oc-yang; }
+    import openconfig-transport-types { prefix oc-opt-types; }
+    import openconfig-platform { prefix oc-platform; }
+    import openconfig-platform-types { prefix oc-platform-types; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-optical-time-domain-reflectometer { prefix oc-otdr; }
+
+    deviation /oc-otdr:otdrs {
+      deviate add {
+        sonic-ext:table-name "OTDR";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr {
+      deviate add {
+        sonic-ext:key-transformer "otdr_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:repetition {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:repetition/oc-otdr:start-time {
+      deviate add {
+        sonic-ext:field-name "start-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:repetition/oc-otdr:period {
+      deviate add {
+        sonic-ext:field-name "period";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:repetition/oc-otdr:enable {
+      deviate add {
+        sonic-ext:field-name "period";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:name {
+      deviate add {
+        sonic-ext:field-name "enable";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:parent-port {
+      deviate add {
+        sonic-ext:field-name "parent-port";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile/oc-otdr:refractive-index {
+      deviate add {
+        sonic-ext:field-name "refractive-index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile/oc-otdr:backscatter-index {
+      deviate add {
+        sonic-ext:field-name "backscatter-index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile/oc-otdr:reflection-threshold {
+      deviate add {
+        sonic-ext:field-name "reflection-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile/oc-otdr:splice-loss-threshold {
+      deviate add {
+        sonic-ext:field-name "splice-loss-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:fiber-profile/oc-otdr:end-of-fiber-threshold {
+      deviate add {
+        sonic-ext:field-name "end-of-fiber-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:scanning-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:scanning-profile/oc-otdr:pulse-width {
+      deviate add {
+        sonic-ext:field-name "pulse-width";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:scanning-profile/oc-otdr:average-time {
+      deviate add {
+        sonic-ext:field-name "average-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:scanning-profile/oc-otdr:output-frequency {
+      deviate add {
+        sonic-ext:field-name "output-frequency";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:scanning-profile/oc-otdr:distance-range {
+      deviate add {
+        sonic-ext:field-name "distance-range";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR";
+        sonic-ext:key-transformer "otdr_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:name {
+      deviate add {
+        sonic-ext:field-name "name";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:parent-port {
+      deviate add {
+        sonic-ext:field-name "parent-port";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification/oc-otdr:loss-dead-zone {
+      deviate add {
+        sonic-ext:field-name "loss-dead-zone";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification/oc-otdr:reflection-dead-zone {
+      deviate add {
+        sonic-ext:field-name "reflection-dead-zone";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification/oc-otdr:dynamic-range {
+      deviate add {
+        sonic-ext:field-name "dynamic-range";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification/oc-otdr:distance-accuracy {
+      deviate add {
+        sonic-ext:field-name "distance-accuracy";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:specification/oc-otdr:sampling-resolution {
+      deviate add {
+        sonic-ext:field-name "sampling-resolution";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-status {
+      deviate add {
+        sonic-ext:field-name "scanning-status";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile/oc-otdr:reflection-threshold {
+      deviate add {
+        sonic-ext:field-name "reflection-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile/oc-otdr:splice-loss-threshold {
+      deviate add {
+        sonic-ext:field-name "splice-loss-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile/oc-otdr:end-of-fiber-threshold {
+      deviate add {
+        sonic-ext:field-name "end-of-fiber-threshold";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile/oc-otdr:refractive-index {
+      deviate add {
+        sonic-ext:field-name "refractive-index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:fiber-profile/oc-otdr:backscatter-index {
+      deviate add {
+        sonic-ext:field-name "backscatter-index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-profile/oc-otdr:average-time {
+      deviate add {
+        sonic-ext:field-name "average-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-profile/oc-otdr:output-frequency {
+      deviate add {
+        sonic-ext:field-name "output-frequency";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-profile/oc-otdr:distance-range {
+      deviate add {
+        sonic-ext:field-name "distance-range";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:scanning-profile/oc-otdr:pulse-width {
+      deviate add {
+        sonic-ext:field-name "pulse-width";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:repetition {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:repetition/oc-otdr:start-time {
+      deviate add {
+        sonic-ext:field-name "start-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:repetition/oc-otdr:period {
+      deviate add {
+        sonic-ext:field-name "period";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:repetition/oc-otdr:enable {
+      deviate add {
+        sonic-ext:field-name "enable";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:key-transformer "otdr_baseline_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:scanning-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:scanning-profile/oc-otdr:distance-range {
+      deviate add {
+        sonic-ext:field-name "distance-range";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:scanning-profile/oc-otdr:pulse-width {
+      deviate add {
+        sonic-ext:field-name "pulse-width";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:scanning-profile/oc-otdr:average-time {
+      deviate add {
+        sonic-ext:field-name "average-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:scanning-profile/oc-otdr:output-frequency {
+      deviate add {
+        sonic-ext:field-name "output-frequency";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:span-loss {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR_EVENT";
+        sonic-ext:key-transformer "otdr_baseline_events_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:loss {
+      deviate add {
+        sonic-ext:field-name "loss";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:reflection {
+      deviate add {
+        sonic-ext:field-name "reflection";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:accumulate-loss {
+      deviate add {
+        sonic-ext:field-name "accumulate-loss";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
+      deviate add {
+        sonic-ext:field-transformer "index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:type {
+      deviate add {
+        sonic-ext:field-name "type";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:length {
+      deviate add {
+        sonic-ext:field-name "length";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:scan-time {
+      deviate add {
+        sonic-ext:field-name "scan-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:span-distance {
+      deviate add {
+        sonic-ext:field-name "span-distance";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:trace {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:trace/oc-otdr:data {
+      deviate add {
+        sonic-ext:field-name "data";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:trace/oc-otdr:update-time {
+      deviate add {
+        sonic-ext:field-name "update-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:key-transformer "otdr_current_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR_EVENT";
+        sonic-ext:key-transformer "otdr_current_events_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
+      deviate add {
+        sonic-ext:field-transformer "index";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:type {
+      deviate add {
+        sonic-ext:field-name "type";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:length {
+      deviate add {
+        sonic-ext:field-name "length";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:loss {
+      deviate add {
+        sonic-ext:field-name "loss";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:reflection {
+      deviate add {
+        sonic-ext:field-name "reflection";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:accumulate-loss {
+      deviate add {
+        sonic-ext:field-name "accumulate-loss";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:scan-time {
+      deviate add {
+        sonic-ext:field-name "scan-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:span-distance {
+      deviate add {
+        sonic-ext:field-name "span-distance";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:span-loss {
+      deviate add {
+        sonic-ext:field-name "span-loss";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:trace {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:trace/oc-otdr:data {
+      deviate add {
+        sonic-ext:field-name "data";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:trace/oc-otdr:update-time {
+      deviate add {
+        sonic-ext:field-name "update-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:scanning-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:scanning-profile/oc-otdr:average-time {
+      deviate add {
+        sonic-ext:field-name "average-time";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:scanning-profile/oc-otdr:output-frequency {
+      deviate add {
+        sonic-ext:field-name "output-frequency";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:scanning-profile/oc-otdr:distance-range {
+      deviate add {
+        sonic-ext:field-name "distance-range";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:scanning-profile/oc-otdr:pulse-width {
+      deviate add {
+        sonic-ext:field-name "pulse-width";
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:trace {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:trace/oc-otdr:data {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:trace/oc-otdr:update-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scan-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:pulse-width {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:average-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:output-frequency {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:distance-range {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:length {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:loss {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:reflection {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:accumulate-loss {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:scan-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:span-distance {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:span-loss {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:name {
+      deviate add {
+        sonic-ext:field-transformer "otdr_name_field_xfmr";
+      }
+    }
+
+    deviation /oc-otdr:trigger-a-shot {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:load-results {
+      deviate add {
+      }
+    }
+
+    deviation /oc-otdr:update-baseline {
+      deviate add {
+      }
+    }
+
+}
+

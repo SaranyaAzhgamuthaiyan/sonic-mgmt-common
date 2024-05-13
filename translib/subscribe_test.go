@@ -27,6 +27,7 @@ import (
 
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/Azure/sonic-mgmt-common/translib/ocbinds"
+	"github.com/Workiva/go-datastructures/queue"
 	"github.com/openconfig/ygot/ygot"
 )
 
@@ -151,6 +152,83 @@ func Benchmark_clearListKeys(b *testing.B) {
 	}
 }
 
+func TestFetchDbNames(t *testing.T) {
+	expectedDbNames := []string{"host", "asic0", "asic1", "asic2", "asic3"}
+	dbNames, err := fetchDbNames("/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier", Version{Major: 0, Minor: 0, Patch: 0})
+
+	if err != nil {
+		t.Errorf("Error fetching database names: %v", err)
+	}
+
+	if !reflect.DeepEqual(dbNames, expectedDbNames) {
+		t.Errorf("Unexpected database names. Got: %v, Expected: %v", dbNames, expectedDbNames)
+	}
+	fmt.Printf("Database names retrieved: %v\n", dbNames)
+}
+
+func TestStream(t *testing.T) {
+	req := SubscribeRequest{}
+
+	req.Paths = []string{"/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier"}
+	req.Q = queue.NewPriorityQueue(0, false)
+	req.Stop = make(chan struct{})
+	req.User = UserRoles{}
+	req.AuthEnabled = false
+	req.ClientVersion = Version{Major: 0, Minor: 0, Patch: 0}
+	req.Session = &SubscribeSession{
+		ID:          "s1",
+		callCounter: 1,
+		translatedPathCache: translatedPathCache{
+			pathData: make(map[string]*translatedSubData),
+		},
+	}
+
+	req.Session.translatedPathCache.pathData["/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier"] = &translatedSubData{
+		targetInfos: nil,
+		childInfos:  nil,
+	}
+
+	err := Stream(req)
+	if err != nil {
+		t.Errorf("Error in Stream %v", err)
+	}
+
+}
+
+func TestSubscribe(t *testing.T) {
+}
+
+/*
+type IsSubscribePath struct {
+        ID   uint32           // Path ID for correlating with IsSubscribeResponse
+        Path string           // Subscribe path
+        Mode NotificationType // Requested subscribe mode
+}
+*/
+
+func TestIsSubscribeSupported(t *testing.T) {
+	req := IsSubscribeRequest{}
+	req.Paths = []IsSubscribePath{{ID: 0, Path: "/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier", Mode: Sample}}
+	req.User = UserRoles{}
+	req.AuthEnabled = false
+	req.ClientVersion = Version{Major: 0, Minor: 0, Patch: 0}
+	req.Session = &SubscribeSession{
+		ID:          "s1",
+		callCounter: 1,
+		translatedPathCache: translatedPathCache{
+			pathData: make(map[string]*translatedSubData),
+		},
+	}
+
+	resp, err := IsSubscribeSupported(req)
+	for _, r := range resp {
+		fmt.Printf("IsSubscribeSupport resp %v", r.IsSubPath)
+	}
+	if err != nil {
+		t.Errorf("Error in IsSubscribeSupport %v", err)
+	}
+}
+
 ///////////////////
 
 // Messages is a utility to collect list of
@@ -200,7 +278,7 @@ func testTranslateSubscribeForMode(t *testing.T, path string, mode NotificationT
 	dbs := getReadOnlyDB()
 	sc := subscribeContext{
 		id:      fmt.Sprintf("test%d", subscribeCounter.Next()),
-		dbs:     dbs["jost"],
+		dbs:     dbs["host"],
 		recurse: true,
 	}
 	pInfo, err := sc.translateSubscribe(path, mode)

@@ -193,3 +193,8 @@ func (app *apiTests) getError() error {
 		return tlerr.New(app.echoMsg)
 	}
 }
+
+func (app *apiTests) getNamespace(path string) ([]string, error) {
+	var res []string
+	return res, tlerr.NotSupported("not supported")
+}

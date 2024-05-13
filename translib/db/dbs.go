@@ -16,6 +16,7 @@ func isMultiAsic() bool {
 }
 
 func getNumAsic() int {
+	glog.Infof("Sara: Asic conf file path :%v", DefaultAsicConfFilePath)
 	file, err := os.Open(DefaultAsicConfFilePath)
 	if err != nil {
 		glog.Warning("Cannot find the asic.conf file, set num_asic to 1 by default")
@@ -60,4 +61,45 @@ func GetMultiDbNames() []string {
 	}
 
 	return dbNames
+}
+
+func getDbNameBySlotNum(slotNum int) string {
+	if NumAsic == 1 || slotNum > NumAsic || slotNum < 1 {
+		return "host"
+	}
+
+	return "asic" + strconv.Itoa(slotNum-1)
+}
+
+func GetMDBNameFromEntity(entity interface{}) string {
+	var slotNum int
+	var slotNumStr string
+	switch t := entity.(type) {
+	case uint32:
+		//ch115
+		valUint32, _ := entity.(uint32)
+		slotNum = int(valUint32 / 100)
+	case string:
+		valString, _ := entity.(string)
+		elmts := strings.Split(valString, "-")
+		if len(elmts) == 2 && elmts[0] == "SLOT" {
+			// used for reboot entity-name
+			slotNumStr = elmts[1]
+		} else if len(elmts) >= 3 {
+			slotNumStr = elmts[2]
+		} else {
+			goto error
+		}
+
+		tmp, err := strconv.ParseInt(slotNumStr, 10, 64)
+		if err != nil {
+			goto error
+		}
+		slotNum = int(tmp)
+	default:
+		glog.Errorf("unexpected type %T", t)
+	}
+
+error:
+	return getDbNameBySlotNum(slotNum)
 }

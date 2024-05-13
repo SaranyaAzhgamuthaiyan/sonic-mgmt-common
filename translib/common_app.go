@@ -61,7 +61,7 @@ var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
 
 func init() {
 
-	register_model_path := []string{"/sonic-", "*"} // register YANG model path(s) to be supported via common app
+	register_model_path := []string{"/sonic-", "*", "/openconfig-"} // register YANG model path(s) to be supported via common app
 	for _, mdl_pth := range register_model_path {
 		err := register(mdl_pth, &cmnAppInfo)
 
@@ -1145,4 +1145,17 @@ func isPartialReplace(exstRw db.Value, replTblRw db.Value, auxRw db.Value) bool 
 	}
 	log.Info("returning partialReplace - ", partialReplace)
 	return partialReplace
+}
+
+func (app *CommonApp) getNamespace(path string) ([]string, error) {
+
+	var err error
+	log.Info("Sara_common_app:getNamespacepath =", path)
+	log.Infof("@@@@@@@Sara_new: getNamespace of common app called\n")
+	var res []string
+	res, err = transformer.GetNamespace(path)
+	if err != nil {
+		log.Warning("@@@@Sara_common_apptransformer.GetNamespace() returned : ", err)
+	}
+	return res, err
 }

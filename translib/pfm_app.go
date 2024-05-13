@@ -497,3 +497,8 @@ func (app *PlatformApp) doGetSysEeprom() error {
 	}
 	return err
 }
+
+func (app *PlatformApp) getNamespace(path string) ([]string, error) {
+	var res []string
+	return res, tlerr.NotSupported("not supported")
+}

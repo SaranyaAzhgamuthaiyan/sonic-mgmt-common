@@ -155,16 +155,20 @@ func initAllDbs() {
 	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
 		dbConfigPath = path
 	}
+	glog.Infof("Sara, dbConfigPath:%v", dbConfigPath)
 
 	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
 		DefaultAsicConfFilePath = path
 	}
+	glog.Infof("Sara, dbAsicConfPath:%v", DefaultAsicConfFilePath)
 
 	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
 		DefaultGlobalDbFilePath = path
 	}
+	glog.Infof("Sara, globalConfPath:%v", DefaultGlobalDbFilePath)
 
 	NumAsic = getNumAsic()
+	glog.Infof("Sara, NumAsic:%v", NumAsic)
 
 	if !isMultiAsic() {
 		dbConfigInit(dbConfigPath, "host")
@@ -199,6 +203,7 @@ func loadGlobalDatabase(globalDbFilePath string) map[string]string {
 			dbConfigMap[include.Namespace] = pwd + include.Include
 		}
 	}
+	glog.Infof("Sara, dbConfigMap:%v", dbConfigMap)
 	return dbConfigMap
 }
 

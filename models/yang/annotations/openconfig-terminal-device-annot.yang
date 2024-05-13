@@ -1,0 +1,2211 @@
+module openconfig-terminal-device-annot {
+
+    yang-version "1";
+
+    namespace "http://openconfig.net/yang/annotation/oc-opt-term-annot";
+    prefix "oc-opt-term-annot";
+
+    import sonic-extensions { prefix sonic-ext; }
+    import openconfig-if-ethernet { prefix oc-eth; }
+    import openconfig-interfaces { prefix oc-if; }
+    import openconfig-lldp { prefix oc-lldp; }
+    import ietf-yang-types { prefix yang; }
+    import openconfig-extensions { prefix oc-ext; }
+    import openconfig-yang-types { prefix oc-yang; }
+    import openconfig-types { prefix oc-types; }
+    import openconfig-transport-types { prefix oc-opt-types; }
+    import openconfig-platform { prefix oc-platform; }
+    import openconfig-platform-transceiver { prefix oc-transceiver; }
+    import openconfig-terminal-device { prefix oc-opt-term; }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel {
+      deviate add {
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_key_xfmr";
+        sonic-ext:get-namespace "och_get_namespace_xfmr";
+      }    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:frequency {
+      deviate add {
+        sonic-ext:field-name "frequency";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:target-output-power {
+      deviate add {
+        sonic-ext:field-name "target-output-power";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:operational-mode {
+      deviate add {
+        sonic-ext:field-name "operational-mode";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:line-port {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_key_xfmr";
+        sonic-ext:get-namespace "och_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:frequency {
+      deviate add {
+        sonic-ext:field-name "frequency";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:target-output-power {
+      deviate add {
+        sonic-ext:field-name "target-output-power";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:operational-mode {
+      deviate add {
+        sonic-ext:field-name "operational-mode";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:line-port {
+      deviate add {
+        sonic-ext:field-name "line-port";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_chromatic_dispersion_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:min {
+      deviate add {
+        sonic-ext:field-name "min";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_polarization_mode_dispersion_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:min {
+      deviate add {
+        sonic-ext:field-name "min";
+      }
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_second_order_polarization_mode_dispersion_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:min {
+      deviate add {
+        sonic-ext:field-name "min;
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_polarization_dependent_loss_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:min {
+      deviate add {
+        sonic-ext:field-name "min";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi {
+      deviate add {
+       // table name not present in schema
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:min {
+      deviate add {
+        sonic-ext:field-name "min";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xi/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-xq/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yi/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-yq/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase {
+      deviate add {	   
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-x-phase/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase {
+      deviate add {	   
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulator-bias-y-phase/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_osnr_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:avg {
+      deviate add {
+		sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:interval {
+      deviate add {
+		sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_carrier_frequency_offset_key_xfmr";
+		//doubtful OCH:OCH-1-3-L1_Foff:15_pm_current in COUNTERS_DB
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:instant {
+      deviate add {
+	    sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:avg {
+      deviate add {
+	    sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:interval {
+      deviate add {
+		sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_sop_roc_key_xfmr";
+		// doubtful of table name in counters db
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:instant {
+      deviate add {
+		sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:avg {
+      deviate add {
+		sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:interval {
+      deviate add {
+		sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio {
+      deviate add {  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:modulation-error-ratio/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:group-id {
+      deviate add {
+	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_output_power_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:instant {
+      deviate add {
+		sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:avg {
+      deviate add {
+	    sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	 
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:interval {
+      deviate add {
+		sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_input_power_key_xfmr";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:instant {
+      deviate add {
+		sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:avg {
+      deviate add {
+		sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:interval {
+      deviate add {
+		sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OCH";
+        sonic-ext:key-transformer "och_counter_laser_bias_current_key_xfmr";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:instant {
+      deviate add {
+		sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:avg {
+      deviate add {
+		sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:min {
+      deviate add {
+		sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:max {
+      deviate add {
+		sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:interval {
+      deviate add {
+	    sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:min-time {
+      deviate add {
+		sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:max-time {
+      deviate add {
+		sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device {
+      deviate add {
+	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:state {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels {
+      deviate add {	   
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel {
+      deviate add {
+	    sonic-ext:table-name "LOGICAL_CHANNEL";
+		sonic-ext:key-transformer "logical_channel_key_xfmr";
+		sonic-ext:get-namespace "logical_channel_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet {
+      deviate add {
+	    sonic-ext:table-name "ETHERNET";
+		sonic-ext:key-transformer "ethernet_key_xfmr";
+		sonic-ext:get-namespace "ethernet_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp {
+      deviate add {
+	    sonic-ext:table-name "LLDP";	
+		sonic-ext:key-transformer "lldp_key_xfmr";
+		sonic-ext:get-namespace "lldp_get_namespace_xfmr";		
+      }
+    }
+	
+	deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:config/oc-opt-term:enabled {
+      deviate add {
+	    sonic-ext:field-name "enabled";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state {
+      deviate add {
+	  	    sonic-ext:db-name "STATE_DB";
+	  	    sonic-ext:table-name "LLDP";
+
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:snooping {
+      deviate add {
+	    sonic-ext:field-name "snooping";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters {
+      deviate add {
+        sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "LLDP";
+        sonic-ext:key-transformer "lldp_counters_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:tlv-discard {
+      deviate add {
+	    sonic-ext:field-name "tlv-discard";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:tlv-unknown {
+      deviate add {
+	    sonic-ext:field-name "tlv-unknown";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:last-clear {
+      deviate add {
+	    sonic-ext:field-name "last-clear";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:frame-in {
+      deviate add {
+	    sonic-ext:field-name "frame-in";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:frame-out {
+      deviate add {
+	    sonic-ext:field-name "frame-out";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:frame-error-out {
+      deviate add {
+	    sonic-ext:field-name "frame-error-out;	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:frame-error-in {
+      deviate add {
+	    sonic-ext:field-name "frame-error-in";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:counters/oc-opt-term:frame-discard {
+      deviate add {
+	    sonic-ext:field-name "frame-discard";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:state/oc-opt-term:enabled {
+      deviate add {
+	    sonic-ext:field-name "enabled";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state {
+      deviate add {
+	    sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "NEIGHBOR";
+        sonic-ext:key-transformer "neighbor_key_xfmr";
+		sonic-ext:get-namespace "neighbor_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:port-description {
+      deviate add {
+	    sonic-ext:field-name "port-description";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:last-update {
+      deviate add {
+	    sonic-ext:field-name "last-update";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:id {
+      deviate add {
+	    sonic-ext:field-name "id";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:port-id-type {
+      deviate add {
+	    sonic-ext:field-name "port-id-type";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:port-id {
+      deviate add {
+	    sonic-ext:field-name "port-id";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:chassis-id-type {
+      deviate add {
+	    sonic-ext:field-name "chassis-id-type";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:ttl {
+      deviate add {
+	    sonic-ext:field-name "ttl";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:age {
+      deviate add {
+	    sonic-ext:field-name "age";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:chassis-id {
+      deviate add {
+	    sonic-ext:field-name "chassis-id";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:management-address-type {
+      deviate add {
+	    sonic-ext:field-name "management-address-type";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:system-description {
+      deviate add {
+	    sonic-ext:field-name "system-description";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:management-address {
+      deviate add {
+	    sonic-ext:field-name "management-address";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:state/oc-opt-term:system-name {
+      deviate add {
+	    sonic-ext:field-name "system-name";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:state {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:state/oc-opt-term:oui-subtype {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:state/oc-opt-term:value {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:state/oc-opt-term:type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:state/oc-opt-term:oui {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:oui {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:oui-subtype {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs/oc-opt-term:tlv/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:id {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:config/oc-opt-term:snooping {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:als-delay {
+      deviate add {
+	    sonic-ext:field-name "als-delay";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:client-als {
+      deviate add {
+	    sonic-ext:field-name "client-als";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state {
+      deviate add {
+	     sonic-ext:db-name "COUNTERS_DB";
+	  	 sonic-ext:table-name "ETHERNET";
+		 sonic-ext:key-transformer "ethernet_counters_key_xfmr";	  
+		 sonic-ext:get-namespace "ethernet_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-8021q-frames {
+      deviate add {
+	    sonic-ext:field-name "in-8021q-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-pcs-errored-seconds {
+      deviate add {
+	    sonic-ext:field-name "in-pcs-errored-seconds";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-pcs-bip-errors {
+      deviate add {
+	    sonic-ext:field-name "out-pcs-bip-errors";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-block-errors {
+      deviate add {
+	    sonic-ext:field-name "in-block-errors";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:fec-uncorrectable-blocks {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-block-errors {
+      deviate add {
+	    sonic-ext:field-name "out-block-errors";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-pcs-severely-errored-seconds {
+      deviate add {
+	    sonic-ext:field-name "in-pcs-severely-errored-seconds";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-mac-control-frames {
+      deviate add {
+	    sonic-ext:field-name "in-mac-control-frames";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-pcs-bip-errors {
+      deviate add {
+	    sonic-ext:field-name "in-pcs-bip-errors";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-jabber-frames {
+      deviate add {
+	    sonic-ext:field-name "in-jabber-frames";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-mac-pause-frames {
+      deviate add {
+	    sonic-ext:field-name "out-mac-pause-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-fragment-frames {
+      deviate add {
+	    sonic-ext:field-name "in-fragment-frames";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:als-delay {
+      deviate add {
+	    sonic-ext:db-name "STATE_DB";
+	    sonic-ext:table-name "ETHERNET";
+		sonic-ext:key-transformer "ethernet_key_xfmr";
+		sonic-ext:field-name "als-delay";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-oversize-frames {
+      deviate add {
+	    sonic-ext:field-name "in-oversize-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-crc-errors {
+      deviate add {
+	    sonic-ext:field-name "out-crc-errors";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:max-time {
+      deviate add {	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:instant {
+      deviate add { 
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-pcs-unavailable-seconds {
+      deviate add {
+	    sonic-ext:field-name "in-pcs-unavailable-seconds";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-8021q-frames {
+      deviate add {
+	    sonic-ext:field-name "out-8021q-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:min {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:max {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:interval {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:min-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:max-time {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:instant {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:avg {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-undersize-frames {
+      deviate add {
+	    sonic-ext:field-name "in-undersize-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:out-mac-control-frames {
+      deviate add {
+	    sonic-ext:field-name "out-mac-control-frames";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-mac-pause-frames {
+      deviate add {
+	    sonic-ext:field-name "in-mac-pause-frames";	    
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:in-crc-errors {
+      deviate add {
+	    sonic-ext:field-name "in-crc-errors";	    
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:state/oc-opt-term:client-als {
+      deviate add {
+	    sonic-ext:db-name "STATE_DB";	 
+	    sonic-ext:table-name "ETHERNET";
+		sonic-ext:key-transformer "ethernet_key_xfmr";		
+		sonic-ext:field-name "client-als";
+		//different case since all other state data are obtainned from COUNTERS_DB
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:state {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:state/oc-opt-term:interface {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:state/oc-opt-term:physical-channel {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:state/oc-opt-term:transceiver {
+      deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "LOGICAL_CHANNEL";
+		sonic-ext:key-transformer "logical_channel_key_xfmr";
+		sonic-ext:get-namespace "logical_channel_get_namespace_xfmr;
+        sonix-ext:field-name "transceiver";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:config/oc-opt-term:physical-channel {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:config/oc-opt-term:transceiver {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ingress/oc-opt-term:config/oc-opt-term:interface {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments {
+      deviate add {
+	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:index {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:mapping {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:index {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:description {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:assignment-type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:logical-channel {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:optical-channel {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:allocation {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:config/oc-opt-term:tributary-slot-index {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state {
+      deviate add {
+	    sonic-ext:db-name "STATE_DB";
+		sonic-ext:table-name "ASSIGNMENT";
+		sonic-ext:key-transformer "assignment_key_xfmr";
+		sonic-ext:get-namespace "assignment_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:mapping {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:index {
+      deviate add {
+	    sonic-ext:field-transformer "assignment_field_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:description {
+      deviate add {
+	    sonic-ext:field-name "description";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:assignment-type {
+      deviate add {
+	    sonic-ext:field-name "assignment-type";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:logical-channel {
+      deviate add {
+	    sonic-ext:field-name "logical-channel";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:optical-channel {
+      deviate add {
+	    sonic-ext:field-name "optical-channel";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:allocation {
+      deviate add {
+	    sonic-ext:field-name "allocation";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:logical-channel-assignments/oc-opt-term:assignment/oc-opt-term:state/oc-opt-term:tributary-slot-index {
+      deviate add {
+	    sonic-ext:field-name "tributary-slot-index";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:index {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:logical-channel-type {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:description {
+      deviate add {
+	    sonic-ext:field-name "description";
+		// not found in schema but present in config_db.json in sonic-utilities
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:test-signal {
+      deviate add {
+	    sonic-ext:field-name "test-signal";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:loopback-mode {
+      deviate add {
+	    sonic-ext:field-name "loopback-mode";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:admin-state {
+      deviate add {
+	    sonic-ext:field-name "admin-state";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:client-mapping-mode {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:trib-protocol {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:index {
+      deviate add {
+	    sonic-ext:field-transformer "logical_channel_field_xfmr";	   
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:config/oc-opt-term:rate-class {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state {
+      deviate add {
+	    sonic-ext:db-name "STATE_DB";
+		sonic-ext:table-name "LOGICAL_CHANNEL";
+		sonic-ext:key-transformer "logical_channel_key_xfmr";
+		sonic-ext:get-namespace "logical_channel_get_namespace_xfmr;
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:rate-class {
+      deviate add {
+	    sonic-ext:field-name "rate-class";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:description {
+      deviate add {
+	    sonic-ext:field-name "description";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:logical-channel-type {
+      deviate add {
+	    sonic-ext:field-name "logical-channel-type";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:test-signal {
+      deviate add {
+	    sonic-ext:field-name "test-signal";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:loopback-mode {
+      deviate add {
+	    sonic-ext:field-name "loopback-mode";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:admin-state {
+      deviate add {
+	    sonic-ext:field-name "admin-state";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:trib-protocol {
+      deviate add {
+	    sonic-ext:field-name "trib-protocol";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:client-mapping-mode {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:link-state {
+      deviate add {
+	    sonic-ext:field-name "link-state";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:state/oc-opt-term:index {
+      deviate add {
+	    sonic-ext:field-transformer "logical_channel_field_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn {
+      deviate add {
+	    sonic-ext:table-name "OTN";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state {
+      deviate add {
+	    sonic-ext:table-name "OTN";
+		sonic-ext:db-name "STATE_DB";
+		sonic-ext:key-transformer "otn_key_xfmr";
+		sonic-ext:get-namespace "otn_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-corrected-bytes {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "fec-corrected-bytes";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-corrected-bits {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "fec-corrected-bits";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber {
+      deviate add {
+	  	sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:table-name "OTN";
+		sonic-ext:key-transformer "otn_pre_fec_ber_key_xfmr";
+		sonic-ext:get-namespace "otn_pre_fec_ber_get_namespace_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:min {
+      deviate add {
+	    sonic-ext:field-name "min";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:max {
+      deviate add {
+	    sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:interval {
+      deviate add {
+	    sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:min-time {
+      deviate add {
+	    sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:max-time {
+      deviate add {
+	    sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:instant {
+      deviate add {
+	    sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber/oc-opt-term:avg {
+      deviate add {
+	    sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:code-violations {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "code-violations";		  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:errored-blocks {
+      deviate add {
+	  	sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "errored-blocks";	
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tributary-slot-granularity {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-uncorrectable-blocks {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "fec-uncorrectable-blocks";		    
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tti-msg-auto {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-auto";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+        sonic-ext:table-name "OTN";
+        sonic-ext:key-transformer "otn_counter_esnr_key_xfmr";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:max-time {
+      deviate add {
+        sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:instant {
+      deviate add {
+        sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:avg {
+      deviate add {
+        sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:min {
+      deviate add {
+	    sonic-ext:field-name "min";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:max {
+      deviate add {
+        sonic-ext:field-name "max";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:interval {
+      deviate add {
+        sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr/oc-opt-term:min-time {
+      deviate add {
+        sonic-ext:field-name "min-time";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-uncorrectable-words {
+      deviate add {
+	  	sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_key_xfmr";
+		sonic-ext:field-name "fec-uncorrectable-words";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tti-msg-expected {
+      deviate add {
+		sonic-ext:field-name "tti-msg-expected";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tti-msg-recv {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-recv";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:errored-seconds {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+	    sonic-ext:key-transformer "otn_counter_current_key_xfmr";
+	    sonic-ext:field-name "errored-seconds";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tti-msg-transmit {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-transmit";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:severely-errored-seconds {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+	    sonic-ext:key-transformer "otn_counter_15pmcurrent_key_xfmr";
+	    sonic-ext:field-name "severely-errored-seconds";	    
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:rdi-msg {
+      deviate add {
+	    sonic-ext:field-name "rdi-msg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:unavailable-seconds {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+	    sonic-ext:key-transformer "otn_counter_current_key_xfmr";
+	    sonic-ext:field-name "unavailable-seconds";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber {
+      deviate add {
+	  	sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:table-name "OTN";
+	    sonic-ext:key-transformer "otn_counter_postfecber_key_xfmr";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:interval {
+      deviate add {
+	    sonic-ext:field-name "interval";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:min-time {
+      deviate add {
+	    sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:max-time {
+      deviate add {
+	    sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:instant {
+      deviate add {
+	    sonic-ext:field-name "instant";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:avg {
+      deviate add {
+	    sonic-ext:field-name "avg";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:min {
+      deviate add {
+	    sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:post-fec-ber/oc-opt-term:max {
+      deviate add {
+	    sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value {
+      deviate add {
+	  	sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:table-name "OTN";
+	    sonic-ext:key-transformer "otn_counter_qvalue_key_xfmr";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:avg {
+      deviate add {
+	    sonic-ext:field-name "avg";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:min {
+      deviate add {
+	    sonic-ext:field-name "min";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:max {
+      deviate add {
+	    sonic-ext:field-name "max";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:interval {
+      deviate add {
+	    sonic-ext:field-name "interval";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:min-time {
+      deviate add {
+	    sonic-ext:field-name "min-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:max-time {
+      deviate add {
+	    sonic-ext:field-name "max-time";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:q-value/oc-opt-term:instant {
+      deviate add {
+	    sonic-ext:field-name "instant";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:background-block-errors {
+      deviate add {
+	    sonic-ext:db-name "COUNTERS_DB";
+		sonic-ext:key-transformer "otn_counter_current_key_xfmr";
+	    sonic-ext:field-name "background-block-errors";	  
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:-channel/oc-opt-term:otn/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:config/oc-opt-term:tti-msg-expected {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-expected";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:config/oc-opt-term:tti-msg-auto {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-auto";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:config/oc-opt-term:tributary-slot-granularity {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:config/oc-opt-term:tti-msg-transmit {
+      deviate add {
+	    sonic-ext:field-name "tti-msg-transmit";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:config {
+      deviate add {
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:state {
+      deviate add {
+	    sonic-ext:db-name "CONFIG_DB";
+	    sonic-ext:table-name "MODE";	  
+        sonic-ext:key-transformer "mode_key_xfmr";	 
+        sonic-ext:get-namespace "mode_get_namespace_xfmr";		
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:state/oc-opt-term:vendor-id {
+      deviate add {
+	    sonic-ext:field-name "vendor-id";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:state/oc-opt-term:mode-id {
+      deviate add {
+	    sonic-ext:field-transformer "mode-id";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:state/oc-opt-term:description {
+      deviate add {
+	    sonic-ext:field-name "description";
+      }
+    }
+
+    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:operational-modes/oc-opt-term:mode/oc-opt-term:mode-id {
+      deviate add {
+      }
+    }
+
+}
+

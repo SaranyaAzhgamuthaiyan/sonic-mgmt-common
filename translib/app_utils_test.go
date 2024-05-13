@@ -25,6 +25,7 @@ import (
 	"reflect"
 	"testing"
 
+	"fmt"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/golang/glog"
 )
@@ -96,26 +97,29 @@ func verifyGet(t *testing.T, req GetRequest, expJson string, expError bool) {
 	}
 
 	var respJson []byte
-	if req.FmtType == TRANSLIB_FMT_YGOT && response[0].ValueTree != nil {
-		respJson, err = dumpIetfJson(response[0].ValueTree)
-		if err != nil {
-			t.Fatalf("GET %s returned invalid YGOT. error=%v", req.Path, err)
+	fmt.Printf("response in Get %v, %v", response, len(response))
+	for _, resp := range response {
+		if req.FmtType == TRANSLIB_FMT_YGOT && resp.ValueTree != nil {
+			respJson, err = dumpIetfJson(resp.ValueTree)
+			if err != nil {
+				t.Fatalf("GET %s returned invalid YGOT. error=%v ", req.Path, err)
+			}
+		} else if req.FmtType == TRANSLIB_FMT_IETF_JSON {
+			respJson = resp.Payload
 		}
-	} else if req.FmtType == TRANSLIB_FMT_IETF_JSON {
-		respJson = response[105].Payload
-	}
 
-	var jResponse, jExpected map[string]interface{}
-	if err := json.Unmarshal(respJson, &jResponse); err != nil {
-		t.Fatalf("invalid response json; err = %v\npayload = %s", err, respJson)
-	}
-	if err := json.Unmarshal([]byte(expJson), &jExpected); err != nil {
-		t.Fatalf("invalid expected json; err = %v", err)
-	}
-	if !reflect.DeepEqual(jResponse, jExpected) {
-		t.Errorf("GET %s returned invalid response", req.Path)
-		t.Errorf("Expected: %s", expJson)
-		t.Fatalf("Received: %s", respJson)
+		var jResponse, jExpected map[string]interface{}
+		if err := json.Unmarshal(respJson, &jResponse); err != nil {
+			t.Fatalf("invalid response json; err = %v\npayload = %s", err, respJson)
+		}
+		if err := json.Unmarshal([]byte(expJson), &jExpected); err != nil {
+			t.Fatalf("invalid expected json; err = %v", err)
+		}
+		if !reflect.DeepEqual(jResponse, jExpected) {
+			t.Errorf("GET %s returned invalid response", req.Path)
+			t.Errorf("Expected: %s", expJson)
+			t.Fatalf("Received: %s", respJson)
+		}
 	}
 }
 

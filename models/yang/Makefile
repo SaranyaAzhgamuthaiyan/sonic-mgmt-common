@@ -130,13 +130,13 @@ validate: $(YANG_VALIDATE_CHK)
 
 $(OC_LINTER_INIT):
 	git clone https://github.com/openconfig/oc-pyang.git $(@D)
-	cd $(@D) && git reset --hard 8e096632abf066f092ccfb0fa8d5cfef79ca1eda
+	cd $(@D) && git reset --hard 4607fd1987d4f586aba03b40f222015cb3ef8161
 	touch $@
 
 $(YANGDIR)/.oc_lint_done: $(PREPARE_YANGS) $(OC_LINTER_INIT) lint_ignore.ocstyle
 	$(TOOLS_DIR)/pyang/lint \
 		--oc-linter \
-		-p $(YANGDIR) \
+		-p $(YANGDIR) $(YANGDIR_COMMON) \
 		-o $(YANGDIR)/oc_lint_issues.log \
 		--ignorefile $(TOPDIR)/models/yang/lint_ignore.ocstyle \
 		$(YANGDIR)/openconfig-*.yang \

@@ -1,0 +1,277 @@
+module openconfig-optical-attenuator-annot {
+
+	yang-version "1";
+
+	namespace "http://openconfig.net/yang/annotation/oc-opt-att-annot";
+	prefix "oc-opt-att-annot";
+
+	import openconfig-platform { prefix oc-platform; }
+	import openconfig-types { prefix oc-types; }
+	import openconfig-extensions { prefix oc-ext; }
+	import openconfig-optical-attenuator { prefix oc-opt-att; }
+	import sonic-extensions { prefix sonic-ext; }
+
+	deviation /oc-opt-att:optical-attenuator {
+		deviate add {
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators {
+		deviate add {
+			sonic-ext:table-name "ATTENUATOR";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator {
+		deviate add {
+			sonic-ext:key-transformer "attn_name_key_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state {
+		deviate add{
+			sonic-ext:db-name "STATE_DB";
+			sonic-ext:table-name "ATTENUATOR";
+			sonic-ext:key-transformer "attn_name_key_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation {
+		deviate add {
+			sonic-ext:db-name "COUNTERS_DB";
+			sonic-ext:table-name "ATTENUATOR";
+			sonic-ext:key-transformer "attn_actual_attenuation_key_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:instant {
+		deviate add {
+			sonic-ext:field-name "instant";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:avg {
+		deviate add {
+			sonic-ext:field-name "avg";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:min {
+		deviate add {
+			sonic-ext:field-name "min";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:max {
+		deviate add {
+			sonic-ext:field-name "max";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:interval {
+		deviate add {
+			sonic-ext:field-name "interval";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:min-time {
+		deviate add {
+			sonic-ext:field-name "min-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:actual-attenuation/oc-opt-att:max-time {
+		deviate add {
+			sonic-ext:field-name "max-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss {
+		deviate add {
+			sonic-ext:db-name "COUNTERS_DB";
+			sonic-ext:table-name "ATTENUATOR";
+			sonic-ext:key-transformer "attn_optical_return_loss_key_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:min-time {
+		deviate add {
+			sonic-ext:field-name "min-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:instant {
+		deviate add {
+			sonic-ext:field-name "instant";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:avg {
+		deviate add {
+			sonic-ext:field-name "avg";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:min {
+		deviate add {
+			sonic-ext:field-name "min";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:max {
+		deviate add {
+			sonic-ext:field-name "max";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:interval {
+		deviate add {
+			sonic-ext:field-name "interval";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:optical-return-loss/oc-opt-att:max-time {
+		deviate add {
+			sonic-ext:field-name "max-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:attenuation-mode {
+		deviate add {
+			sonic-ext:field-name "attenuation-mode";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:attenuation {
+		deviate add {
+			sonic-ext:field-name "attenuation";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:component {
+		deviate add {
+			sonic-ext:field-name "component";  
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:ingress-port {
+		deviate add {
+			sonic-ext:field-name "ingress-port";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:egress-port {
+		deviate add {
+			sonic-ext:field-name "egress-port";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:enabled {
+		deviate add {
+			sonic-ext:field-name "enabled";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:target-output-power {
+		deviate add {
+			sonic-ext:field-name "target-output-power";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total {
+		deviate add {
+			sonic-ext:db-name "COUNTERS_DB";
+			sonic-ext:table-name "ATTENUATOR";
+			sonic-ext:key-transformer "attn_output_power_total_key_xfmr";        
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:instant {
+		deviate add {
+			sonic-ext:field-name "instant";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:avg {
+		deviate add {
+			sonic-ext:field-name "avg";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:min {
+		deviate add {
+			sonic-ext:field-name "min";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:max {
+		deviate add {
+			sonic-ext:field-name "max";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:interval {
+		deviate add {
+			sonic-ext:field-name "interval";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:max-time {
+		deviate add {
+			sonic-ext:field-name "max-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:output-power-total/oc-opt-att:min-time {
+		deviate add {
+			sonic-ext:field-name "min-time";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state/oc-opt-att:name {
+		deviate add {
+			sonic-ext:field-transformer "attn_name_field_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:name {
+		deviate add {
+			//doubt need to check
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config {
+		deviate add {
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:target-output-power {
+		deviate add {
+			//doubt need to check this field not present in config db.
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:attenuation {
+		deviate add {
+			sonic-ext:field-name "attenuation";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:enabled {
+		deviate add {
+			//doubt need to check this field not present in config db.
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:name {
+		deviate add {
+			sonic-ext:field-transformer "attn_name_field_xfmr";
+		}
+	}
+
+	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:attenuation-mode {
+		deviate add {
+			sonic-ext:field-name "attenuation-mode";
+		}
+	}
+}

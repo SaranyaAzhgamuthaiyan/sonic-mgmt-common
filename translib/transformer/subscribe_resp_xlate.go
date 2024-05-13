@@ -368,12 +368,11 @@ func (dbYgXlateInfo *DbYgXlateInfo) handleDbToYangKeyXlate() error {
 		return fmt.Errorf("%v : Error: %v - in handleDbToYangKeyXlate; table name: %v",
 			dbYgXlateInfo.xlateReq.reqLogId, err, *dbYgXlateInfo.ygXpathInfo.tableName)
 	}
-	if len(tblLst) == 0 {
-		return fmt.Errorf("%v handleDbToYangKeyXlate: Error: No tables are returned by the table "+
-			"transformer: for the path: %v", dbYgXlateInfo.xlateReq.reqLogId, dbYgXlateInfo.uriPath)
+	if len(tblLst) != 0 {
+		dbYgXlateInfo.tableName = tblLst[0]
 	}
+	log.Info("Sara: table name is :%v", dbYgXlateInfo.tableName)
 	// taking the first table, since number of keys should be same between the tables returned by table transformer
-	dbYgXlateInfo.tableName = tblLst[0]
 	if log.V(dbLgLvl) {
 		log.Info(dbYgXlateInfo.xlateReq.reqLogId, "handleDbToYangKeyXlate: Found table from the table transformer: table name: ", dbYgXlateInfo.tableName)
 	}
@@ -437,19 +436,21 @@ func (dbYgXlateInfo *DbYgXlateInfo) handleTableXfmrCallback() ([]string, error) 
 	ygotObj := rootIntf.(ygot.GoStruct)
 	inParams := formXfmrInputRequest(dbs[ygXpathInfo.dbIndex], dbs, currDbNum, &ygotObj, uriPath,
 		uriPath, SUBSCRIBE, "", &dbDataMap, nil, nil, txCache)
-	tblList, tblXfmrErr := xfmrTblHandlerFunc(*ygXpathInfo.xfmrTbl, inParams, xfmrDbTblKeyCache)
-	if tblXfmrErr != nil {
-		log.Warningf("%v handleTableXfmrCallback: table transformer callback returns"+
-			" error: %v for the callback %v", dbYgXlateInfo.xlateReq.reqLogId, tblXfmrErr, *ygXpathInfo.xfmrTbl)
-	} else if inParams.isVirtualTbl != nil && *inParams.isVirtualTbl {
-		if log.V(dbLgLvl) {
-			log.Info(dbYgXlateInfo.xlateReq.reqLogId, "handleTableXfmrCallback: virtualTbl is SET to TRUE for this table transformer callback: ", *ygXpathInfo.xfmrTbl)
+	if ygXpathInfo.xfmrTbl != nil {
+		tblList, tblXfmrErr := xfmrTblHandlerFunc(*ygXpathInfo.xfmrTbl, inParams, xfmrDbTblKeyCache)
+		if tblXfmrErr != nil {
+			log.Warningf("%v handleTableXfmrCallback: table transformer callback returns"+
+				" error: %v for the callback %v", dbYgXlateInfo.xlateReq.reqLogId, tblXfmrErr, *ygXpathInfo.xfmrTbl)
+		} else if inParams.isVirtualTbl != nil && *inParams.isVirtualTbl {
+			if log.V(dbLgLvl) {
+				log.Info(dbYgXlateInfo.xlateReq.reqLogId, "handleTableXfmrCallback: virtualTbl is SET to TRUE for this table transformer callback: ", *ygXpathInfo.xfmrTbl)
+			}
+		} else {
+			if log.V(dbLgLvl) {
+				log.Infof(dbYgXlateInfo.xlateReq.reqLogId+"handleTableXfmrCallback: table list %v returned by table transformer callback: %v ", tblList, *ygXpathInfo.xfmrTbl)
+			}
+			return tblList, nil
 		}
-	} else {
-		if log.V(dbLgLvl) {
-			log.Infof(dbYgXlateInfo.xlateReq.reqLogId+"handleTableXfmrCallback: table list %v returned by table transformer callback: %v ", tblList, *ygXpathInfo.xfmrTbl)
-		}
-		return tblList, nil
 	}
 
 	return nil, nil

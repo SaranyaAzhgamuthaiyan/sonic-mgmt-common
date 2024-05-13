@@ -515,3 +515,8 @@ func GetYangPath() string {
 func GetYangModuleSetID() string {
 	return GetYangBundleVersion().String()
 }
+
+func (app *yanglibApp) getNamespace(path string) ([]string, error) {
+	var res []string
+	return res, tlerr.NotSupported("not supported")
+}
