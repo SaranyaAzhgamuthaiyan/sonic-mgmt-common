@@ -590,7 +590,6 @@ module openconfig-terminal-device-annot {
         sonic-ext:db-name "COUNTERS_DB";
         sonic-ext:table-name "OCH";
         sonic-ext:key-transformer "och_counter_carrier_frequency_offset_key_xfmr";
-		//doubtful OCH:OCH-1-3-L1_Foff:15_pm_current in COUNTERS_DB
       }
     }
 
@@ -638,52 +637,41 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc {
       deviate add {
-        sonic-ext:db-name "COUNTERS_DB";
-        sonic-ext:table-name "OCH";
-        sonic-ext:key-transformer "och_counter_sop_roc_key_xfmr";
-		// doubtful of table name in counters db
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:instant {
       deviate add {
-		sonic-ext:field-name "instant";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:avg {
       deviate add {
-		sonic-ext:field-name "avg";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:min {
       deviate add {
-		sonic-ext:field-name "min";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:max {
       deviate add {
-		sonic-ext:field-name "max";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:interval {
       deviate add {
-		sonic-ext:field-name "interval";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:min-time {
       deviate add {
-		sonic-ext:field-name "min-time";	  
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:sop-roc/oc-opt-term:max-time {
       deviate add {
-		sonic-ext:field-name "max-time";	  
       }
     }
 

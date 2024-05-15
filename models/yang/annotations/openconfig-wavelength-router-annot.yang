@@ -36,13 +36,14 @@ module openconfig-wavelength-router-annot {
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:dest/oc-wave-router:state {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "MEDIA_CHANNEL"; //doubt need to check either key transformer needs to be added o not.
+			sonic-ext:table-name "MEDIA_CHANNEL";
+            sonic-ext:key-transformer "media_channel_index_key_xfmr";
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:dest/oc-wave-router:state/oc-wave-router:port-name {
 		deviate add {
-			sonic-ext:field-name "dest-port-name";   //doubt need to check
+			sonic-ext:field-name "dest-port-name"; 
 		}
 	}
 
@@ -53,7 +54,7 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:dest/oc-wave-router:config/oc-wave-router:port-name {
 		deviate add {
-			sonic-ext:field-name "dest-port-name";   //doubt need to check
+			sonic-ext:field-name "dest-port-name";   
 		}
 	}
 
@@ -169,7 +170,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:ase-injection-delta {
 		deviate add {
-			//doubt we need to check field is in state db not in config
 		}
 	}
 
@@ -181,37 +181,31 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:attenuation-control-range {
 		deviate add {
-			//doubt this field is not in schema 
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:ase-injection-mode {
 		deviate add {
-			//doubt we need to check field is in state db not in config
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:max-undershoot-compensation {
 		deviate add {
-			//doubt we need to check field is not in schema
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:media-channel-injection-offset {
 		deviate add {
-			//doubt we need to check field is not in schema
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:ase-injection-threshold {
 		deviate add {
-			//doubt we need to check field is in state db not in config
 		}
 	}
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:max-overshoot-compensation {
 		deviate add {
-			//doubt we need to check field is not in schema
 		}
 	}
 
@@ -229,7 +223,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:config/oc-wave-router:ase-control-mode {
 		deviate add {
-			//doubt we need to check field is not in schema
 		}
 	}
 
@@ -249,7 +242,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:state/oc-wave-router:max-undershoot-compensation {
 		deviate add {
-			//doubt field is not there in schema 
 		}
 	}
 
@@ -285,7 +277,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:state/oc-wave-router:media-channel-injection-offset {
 		deviate add {
-			//doubt field is not there in schema 
 		}
 	}
 
@@ -315,7 +306,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:state/oc-wave-router:attenuation-control-range {
 		deviate add {
-			//doubt need to check it is not there in schema
 		}
 	}
 
@@ -327,7 +317,6 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:state/oc-wave-router:max-overshoot-compensation {
 		deviate add {
-			//doubt field is not there in schema 
 		}
 	}
 
@@ -361,7 +350,7 @@ module openconfig-wavelength-router-annot {
 
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel/oc-wave-router:source/oc-wave-router:config/oc-wave-router:port-name {
 		deviate add {
-			sonic-ext:field-name "source-port-name"; //doubt can we name direclty as per the schema file
+			sonic-ext:field-name "source-port-name"; 
 		}
 	}
 
@@ -377,7 +366,7 @@ module openconfig-wavelength-router-annot {
 			sonic-ext:field-name "source-port-name"; 
 		}
 	}
-	//Main doubt here
+	
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:port-spectrum-power-profiles {
 		deviate add{
 		}

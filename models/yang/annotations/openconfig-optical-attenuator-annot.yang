@@ -25,6 +25,7 @@ module openconfig-optical-attenuator-annot {
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator {
 		deviate add {
 			sonic-ext:key-transformer "attn_name_key_xfmr";
+                        sonic-ext:get-namespace "attn_name_get_namespace_xfmr";
 		}
 	}
 
@@ -33,6 +34,7 @@ module openconfig-optical-attenuator-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "ATTENUATOR";
 			sonic-ext:key-transformer "attn_name_key_xfmr";
+                        sonic-ext:get-namespace "attn_name_get_namespace_xfmr";
 		}
 	}
 
@@ -236,7 +238,6 @@ module openconfig-optical-attenuator-annot {
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:name {
 		deviate add {
-			//doubt need to check
 		}
 	}
 
@@ -247,7 +248,6 @@ module openconfig-optical-attenuator-annot {
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:target-output-power {
 		deviate add {
-			//doubt need to check this field not present in config db.
 		}
 	}
 
@@ -259,7 +259,6 @@ module openconfig-optical-attenuator-annot {
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:enabled {
 		deviate add {
-			//doubt need to check this field not present in config db.
 		}
 	}
 

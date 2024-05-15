@@ -81,7 +81,6 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config/oc-telemetry:exclude-filter {
 		deviate add {
-			//doubt
 		}
 	}
 
@@ -107,7 +106,6 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state/oc-telemetry:exclude-filter {
 		deviate add {
-			//doubt field not there in schema!!  
 		}
 	}
 
@@ -242,13 +240,11 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:config/oc-telemetry:local-source-address {
 		deviate add {
-			//doubt field is not there in schema
 		}
 	}
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:config/oc-telemetry:originated-qos-marking {
 		deviate add {
-			//doubt field is not there in schema
 		}
 	}
 
@@ -345,7 +341,6 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state/oc-telemetry:suppress-redundant {
 		deviate add {
-			//doubt field is not there in schema 
 		}
 	}
 
@@ -361,7 +356,6 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:config/oc-telemetry:suppress-redundant {
 		deviate add {
-			//doubt is not there in schema db
 		}
 	}
 
@@ -430,7 +424,6 @@ module openconfig-telemetry-annot {
 		}
 	}
 
-	//doubt need to check we doesn't have table related to this path 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions {
 		deviate add {
 		}
