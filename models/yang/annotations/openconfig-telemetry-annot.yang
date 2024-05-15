@@ -25,6 +25,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -48,7 +49,8 @@ module openconfig-telemetry-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "SENSOR_GROUP";
-			sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr"; 
+			sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr"; 
 		}
 	}
 
@@ -94,7 +96,8 @@ module openconfig-telemetry-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "SENSOR_GROUP";
-			sonic-ext:key-transformer "telemetry_sensor_path_key_xfmr"; 
+			sonic-ext:key-transformer "telemetry_sensor_path_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr"; 
 		}
 	}
 
@@ -118,6 +121,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_destination_group_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -137,6 +141,7 @@ module openconfig-telemetry-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "DESTINATION_GROUP";
 			sonic-ext:key-transformer "telemetry_destination_group_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -155,6 +160,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_destination_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -163,6 +169,7 @@ module openconfig-telemetry-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "DESTINATION";
 			sonic-ext:key-transformer "telemetry_destination_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -224,6 +231,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_persistent_subscription_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -265,6 +273,7 @@ module openconfig-telemetry-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "PERSISTENT_SUBSCRIPTION";
 			sonic-ext:key-transformer "telemetry_persistent_subscription_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -310,6 +319,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_sensor_profile_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -318,6 +328,7 @@ module openconfig-telemetry-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "SENSOR_PROFILE";
 			sonic-ext:key-transformer "telemetry_sensor_profile_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -386,6 +397,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_subscription_destination_group_key_xfmr"; //doubt need to check
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -410,6 +422,7 @@ module openconfig-telemetry-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "DESTINATION_GROUP";
 			sonic-ext:key-transformer "telemetry_subscription_destination_group_key_xfmr";
+            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 

@@ -25,6 +25,7 @@ module openconfig-wavelength-router-annot {
 	deviation /oc-wave-router:wavelength-router/oc-wave-router:media-channels/oc-wave-router:channel {
 		deviate add {
 			sonic-ext:key-transformer "media_channel_index_key_xfmr"; 
+            sonic-ext:get-namespace "media_channel_get_namespace_xfmr";
 		}
 	}
 
@@ -38,6 +39,7 @@ module openconfig-wavelength-router-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "MEDIA_CHANNEL";
             sonic-ext:key-transformer "media_channel_index_key_xfmr";
+            sonic-ext:get-namespace "media_channel_get_namespace_xfmr";
 		}
 	}
 
@@ -74,6 +76,7 @@ module openconfig-wavelength-router-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "MEDIA_CHANNEL";
 			sonic-ext:key-transformer "media_channel_frequency_key_xfmr";
+            sonic-ext:get-namespace "media_channel_get_namespace_xfmr";
 		}
 	}
 
@@ -231,6 +234,7 @@ module openconfig-wavelength-router-annot {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "MEDIA_CHANNEL";
 			sonic-ext:key-transformer "media_channel_index_key_xfmr";
+            sonic-ext:get-namespace "media_channel_get_namespace_xfmr";
 		}
 	}
 
@@ -358,6 +362,8 @@ module openconfig-wavelength-router-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "MEDIA_CHANNEL";
+            sonic-ext:key-transformer "media_channel_index_key_xfmr";
+            sonic-ext:get-namespace "media_channel_get_namespace_xfmr";
 		}
 	}
 
