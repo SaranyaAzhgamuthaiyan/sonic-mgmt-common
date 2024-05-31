@@ -1,0 +1,657 @@
+module openconfig-platform-annot {
+
+  yang-version "1";
+
+  namespace "http://openconfig.net/yang/annotation/oc-platform-annot";
+  prefix "oc-platform-annot";
+
+  import sonic-extensions { prefix sonic-ext; }
+  import openconfig-if-ethernet { prefix oc-eth; }
+  import openconfig-interfaces { prefix oc-if; }
+  import openconfig-lldp { prefix oc-lldp; }
+  import ietf-yang-types { prefix yang; }
+  import openconfig-extensions { prefix oc-ext; }
+  import openconfig-yang-types { prefix oc-yang; }
+  import openconfig-types { prefix oc-types; }
+  import openconfig-transport-types { prefix oc-opt-types; }
+  import openconfig-platform { prefix oc-platform; }
+  import openconfig-platform-transceiver { prefix oc-transceiver; }
+  import openconfig-terminal-device { prefix oc-opt-term; }
+
+  deviation /oc-platform:components {
+    deviate add {
+      sonic-ext:table-name "OC_COMPONENT_TABLE";
+    }    
+  }
+
+  deviation /oc-platform:components/oc-platform:component {
+    deviate add {
+      sonic-ext:key-transformer "component_key_xfmr";
+      sonic-ext:get-namespace "oc_get_namespace_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:config/oc-platform:name {
+    deviate add {
+      sonic-ext:field-transformer "component_field_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel {
+    deviate add {
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "component_key_xfmr";
+      sonic-ext:get-namespace "oc_get_namespace_xfmr";
+    }    
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config {
+    deviate add {
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:frequency {
+    deviate add {
+      sonic-ext:field-name "frequency";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:target-output-power {
+    deviate add {
+      sonic-ext:field-name "target-output-power";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:config/oc-opt-term:operational-mode {
+    deviate add {
+      sonic-ext:field-name "operational-mode";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:chromatic-dispersion/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";
+    }
+  }
+
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-mode-dispersion/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min;
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:second-order-polarization-mode-dispersion/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:polarization-dependent-loss/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:osnr/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:carrier-frequency-offset/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";	 
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:output-power/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:input-power/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "OCH";
+      sonic-ext:key-transformer "och_counter_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:instant {
+    deviate add {
+      sonic-ext:field-name "instant";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:avg {
+    deviate add {
+      sonic-ext:field-name "avg";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:min {
+    deviate add {
+      sonic-ext:field-name "min";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:max {
+    deviate add {
+      sonic-ext:field-name "max";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-opt-term:optical-channel/oc-opt-term:state/oc-opt-term:laser-bias-current/oc-opt-term:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";	  
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port {
+    deviate add {
+      sonic-ext:db-name "STATE_DB";
+      sonic-ext:table-name "PORT";
+      sonic-ext:key-transformer "optical_port_key_xfmr";
+      sonic-ext:get-namespace "oc_get_namespace_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state {
+    deviate add {
+      sonic-ext:db-name "STATE_DB";
+      sonic-ext:table-name "PORT";
+      sonic-ext:key-transformer "optical_port_key_xfmr";
+      sonic-ext:get-namespace "oc_get_namespace_xfmr";
+    }
+  }
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:admin-state {
+    deviate add {
+      sonic-ext:field-name "admin-state";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:optical-port-type {
+    deviate add {
+      sonic-ext:field-name "optical-port-type";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:tilt {
+    deviate add {
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "PORT";
+      sonic-ext:key-transformer "optical_port_input_power_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:min {
+    deviate add {
+      sonic-ext:field-name "min";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:input-power/oc-line-com:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power {
+    deviate add {
+      sonic-ext:db-name "COUNTERS_DB";
+      sonic-ext:table-name "PORT";
+      sonic-ext:key-transformer "optical_port_output_power_key_xfmr";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:instant {
+    deviate add {
+      sonic-ext:field-name "instant";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:avg {
+    deviate add {
+      sonic-ext:field-name "avg";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:min {
+    deviate add {
+      sonic-ext:field-name "min";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:max {
+    deviate add {
+      sonic-ext:field-name "max";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:interval {
+    deviate add {
+      sonic-ext:field-name "interval";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:min-time {
+    deviate add {
+      sonic-ext:field-name "min-time";
+    }
+  }
+
+  deviation /oc-platform:components/oc-platform:component/oc-platform:port/oc-line-com:optical-port/oc-line-com:state/oc-line-com:output-power/oc-line-com:max-time {
+    deviate add {
+      sonic-ext:field-name "max-time";
+    }
+  }
+
+}

@@ -19,8 +19,8 @@ module openconfig-optical-attenuator-annot {
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators {
 		deviate add {
 			sonic-ext:table-name "ATTENUATOR";
-		}
-	}
+                       }
+        }
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator {
 		deviate add {
@@ -42,7 +42,7 @@ module openconfig-optical-attenuator-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "ATTENUATOR";
-			sonic-ext:key-transformer "attn_actual_attenuation_key_xfmr";
+			sonic-ext:key-transformer "attn_counter_key_xfmr";
 		}
 	}
 
@@ -92,7 +92,7 @@ module openconfig-optical-attenuator-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "ATTENUATOR";
-			sonic-ext:key-transformer "attn_optical_return_loss_key_xfmr";
+			sonic-ext:key-transformer "attn_counter_key_xfmr";
 		}
 	}
 
@@ -184,7 +184,7 @@ module openconfig-optical-attenuator-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "ATTENUATOR";
-			sonic-ext:key-transformer "attn_output_power_total_key_xfmr";        
+			sonic-ext:key-transformer "attn_counter_key_xfmr";        
 		}
 	}
 
@@ -248,6 +248,7 @@ module openconfig-optical-attenuator-annot {
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:target-output-power {
 		deviate add {
+                       sonic-ext:field-name "target-output-power";
 		}
 	}
 
@@ -259,6 +260,7 @@ module openconfig-optical-attenuator-annot {
 
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:config/oc-opt-att:enabled {
 		deviate add {
+                       sonic-ext:field-name "enabled";
 		}
 	}
 

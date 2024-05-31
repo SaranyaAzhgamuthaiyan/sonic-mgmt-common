@@ -282,7 +282,7 @@ module openconfig-optical-time-domain-reflectometer-annot {
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result {
       deviate add {
         sonic-ext:db-name "STATE_DB";
-        sonic-ext:key-transformer "otdr_baseline_key_xfmr";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
         sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
@@ -403,7 +403,7 @@ module openconfig-optical-time-domain-reflectometer-annot {
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result {
       deviate add {
         sonic-ext:db-name "STATE_DB";
-        sonic-ext:key-transformer "otdr_current_key_xfmr";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
         sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }

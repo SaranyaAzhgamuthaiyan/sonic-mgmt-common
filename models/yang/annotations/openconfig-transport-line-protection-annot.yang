@@ -19,7 +19,9 @@ module openconfig-transport-line-protection-annot {
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules {
 		deviate add {
 			sonic-ext:table-name "APS";
-		}
+                        //sonic-ext:key-transformer "aps_name_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
+        	}
 	}
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module {
@@ -169,7 +171,8 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:common-output {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_common_output_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -177,7 +180,8 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_common_output_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -191,7 +195,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_co_optical_power_key_xfmr";
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr";
 		}
 	}
 
@@ -255,7 +259,8 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:line-primary-in {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_line_primary_in_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -263,7 +268,8 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_primary_in_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -283,7 +289,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_p_in_optical_power_key_xfmr";
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr";
 		}
 	}
 
@@ -352,7 +358,8 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:line-primary-out {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_line_primary_out_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -360,7 +367,8 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_primary_out_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -368,7 +376,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_p_out_optical_power_key_xfmr"; 
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr"; 
 		}
 	}
 
@@ -438,7 +446,8 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:line-secondary-in {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_line_secondary_in_key_xfmr";  
+			sonic-ext:key-transformer "aps_port_key_xfmr";  
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -446,7 +455,8 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_secondary_in_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -460,7 +470,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_s_in_optical_power_key_xfmr";
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr";
 		}
 	}
 
@@ -535,7 +545,8 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:line-secondary-out {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_line_secondary_out_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -553,7 +564,8 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_secondary_out_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
+                        //sonic-ext:get-namespace "aps_name_get_namespace_xfmr";
 		}
 	}
 
@@ -573,7 +585,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_line_s_out_optical_power_key_xfmr";
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr";
 		}
 	}
 
@@ -621,7 +633,7 @@ module openconfig-transport-line-protection-annot {
 
 	deviation /oc-line-protect:aps/oc-line-protect:aps-modules/oc-line-protect:aps-module/oc-line-protect:ports/oc-line-protect:common-in {
 		deviate add {
-			sonic-ext:key-transformer "aps_ports_common_in_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
 		}
 	}
 
@@ -644,7 +656,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "STATE_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_common_in_key_xfmr";
+			sonic-ext:key-transformer "aps_port_key_xfmr";
 		}
 	}
 
@@ -652,7 +664,7 @@ module openconfig-transport-line-protection-annot {
 		deviate add {
 			sonic-ext:db-name "COUNTERS_DB";
 			sonic-ext:table-name "APS_PORT";
-			sonic-ext:key-transformer "aps_ports_cin_optical_power_key_xfmr";
+			sonic-ext:key-transformer "aps_port_counter_key_xfmr";
 		}
 	}
 

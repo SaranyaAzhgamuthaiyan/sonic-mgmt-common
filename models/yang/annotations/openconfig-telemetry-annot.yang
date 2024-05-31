@@ -1,116 +1,49 @@
 module openconfig-telemetry-annot {
 
-	yang-version "";
+        yang-version "1";
 
-	namespace "http://openconfig.net/yang/annotation/oc-telemetry-annot";
-	prefix "oc-telemetry-annot";
+        namespace "http://openconfig.net/yang/annotation/oc-telemetry-annot";
+        prefix "oc-telemetry-annot";
 
-	import openconfig-extensions { prefix oc-ext; }
-	import openconfig-telemetry-types { prefix oc-telemetry-types; }
-	import openconfig-inet-types { prefix oc-inet; }
-	import openconfig-telemetry { prefix oc-telemetry; }
-	import sonic-extensions { prefix sonic-ext; }
+        import sonic-extensions { prefix sonic-ext; }
+        import openconfig-telemetry { prefix oc-telemetry; }
 
-	deviation /oc-telemetry:telemetry-system {
-		deviate add {
-		}
-	}
+        deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups {
+                deviate add {
+                        sonic-ext:table-name "SENSOR_GROUP";
+                        sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+                }
+        }
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups {
-		deviate add {
-			sonic-ext:table-name "SENSOR_GROUP";
-		}
-	}
+        deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group {
+                deviate add {
+                        sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr";
+                        sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+                }
+        }
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group {
-		deviate add {
-			sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
+        deviation  /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:config/oc-telemetry:sensor-group-id {
+                deviate add {
+                        sonic-ext:field-transformer "telemetry_sensor_group_id_field_xfmr";
+                }
+        }
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-group-id {
-		deviate add {
-		}
-	}
+        deviation  /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths{
+                deviate add {
+                }
+        }
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:config {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:config/oc-telemetry:sensor-group-id {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_sensor_group_id_field_xfmr";  
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "SENSOR_GROUP";
-			sonic-ext:key-transformer "telemetry_sensor_group_id_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr"; 
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:state/oc-telemetry:sensor-group-id {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_sensor_group_id_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path {
-		deviate add {
+        deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path {
+	    deviate add {
 			sonic-ext:key-transformer "telemetry_sensor_path_key_xfmr";
-		}
-	}
+	     }
+        }
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:path {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config/oc-telemetry:exclude-filter {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config/oc-telemetry:path {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_sensor_path_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "SENSOR_GROUP";
-			sonic-ext:key-transformer "telemetry_sensor_path_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr"; 
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state/oc-telemetry:path {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_sensor_path_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state/oc-telemetry:exclude-filter {
-		deviate add {
-		}
-	}
+        deviation  /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config/oc-telemetry:path {
+                deviate add {
+                        sonic-ext:field-transformer "telemetry_sensor_path_field_xfmr";
+                }
+        }
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups {
 		deviate add {
@@ -120,8 +53,8 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group {
 		deviate add {
-			sonic-ext:key-transformer "telemetry_destination_group_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+			sonic-ext:key-transformer "telemetry_group_id_key_xfmr";
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -132,22 +65,7 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:config/oc-telemetry:group-id {
 		deviate add {
-			sonic-ext:field-transformer "telemetry_destination_group_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "DESTINATION_GROUP";
-			sonic-ext:key-transformer "telemetry_destination_group_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:state/oc-telemetry:group-id {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_destination_group_field_xfmr";
+			sonic-ext:field-transformer "telemetry_group_id_field_xfmr";
 		}
 	}
 
@@ -160,28 +78,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_destination_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "DESTINATION";
-			sonic-ext:key-transformer "telemetry_destination_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:state/oc-telemetry:destination-address {
-		deviate add {
-			sonic-ext:field-transformer "destination-address";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:state/oc-telemetry:destination-port {
-		deviate add {
-			sonic-ext:field-transformer "destination-port";
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -202,13 +99,13 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:config/oc-telemetry:destination-address {
 		deviate add {
-			sonic-ext:field-transformer "destination-address";
+			sonic-ext:field-transformer "telemetry_destination_field_xfmr";
 		}
 	}
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:config/oc-telemetry:destination-port {
 		deviate add {
-			sonic-ext:field-transformer "destination-port";
+			sonic-ext:field-transformer "telemetry_destination_field_xfmr";
 		}
 	}
 
@@ -217,7 +114,7 @@ module openconfig-telemetry-annot {
 		}
 	}
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions {
+        deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions {
 		deviate add {
 		}
 	}
@@ -231,7 +128,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_persistent_subscription_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -268,48 +165,6 @@ module openconfig-telemetry-annot {
 		}
 	}
 
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "PERSISTENT_SUBSCRIPTION";
-			sonic-ext:key-transformer "telemetry_persistent_subscription_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:encoding {
-		deviate add {
-			sonic-ext:field-name "encoding";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:name {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_persistent_subscription_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:id {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:local-source-address {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:originated-qos-marking {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:state/oc-telemetry:protocol {
-		deviate add {
-			sonic-ext:field-name "protocol";
-		}
-	}
-
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles {
 		deviate add {
 			sonic-ext:table-name "SENSOR_PROFILE";
@@ -319,39 +174,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile {
 		deviate add {
 			sonic-ext:key-transformer "telemetry_sensor_profile_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "SENSOR_PROFILE";
-			sonic-ext:key-transformer "telemetry_sensor_profile_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state/oc-telemetry:sensor-group {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_sensor_profile_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state/oc-telemetry:sample-interval {
-		deviate add {
-			sonic-ext:field-name "sample-interval";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state/oc-telemetry:heartbeat-interval {
-		deviate add {
-			sonic-ext:field-name "heartbeat-interval";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:sensor-profiles/oc-telemetry:sensor-profile/oc-telemetry:state/oc-telemetry:suppress-redundant {
-		deviate add {
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -396,8 +219,8 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group {
 		deviate add {
-			sonic-ext:key-transformer "telemetry_subscription_destination_group_key_xfmr"; //doubt need to check
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+			sonic-ext:key-transformer "telemetry_group_id_key_xfmr"; //doubt need to check
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -413,22 +236,7 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:config/oc-telemetry:group-id {
 		deviate add {
-			sonic-ext:field-transformer "telemetry_subscription_destination_group_field_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:state {
-		deviate add {
-			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "DESTINATION_GROUP";
-			sonic-ext:key-transformer "telemetry_subscription_destination_group_key_xfmr";
-            sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:state/oc-telemetry:group-id {
-		deviate add {
-			sonic-ext:field-transformer "telemetry_subscription_destination_group_field_xfmr";
+			sonic-ext:field-transformer "telemetry_group_id_field_xfmr";
 		}
 	}
 
@@ -436,101 +244,4 @@ module openconfig-telemetry-annot {
 		deviate add {
 		}
 	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:id {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:suppress-redundant {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:originated-qos-marking {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:encoding {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:heartbeat-interval {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:protocol {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:destination-address {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:destination-port {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:sample-interval {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:state/oc-telemetry:id {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths/oc-telemetry:sensor-path {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:path {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state/oc-telemetry:path {
-		deviate add {
-		}
-	}
-
-	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:dynamic-subscriptions/oc-telemetry:dynamic-subscription/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:state/oc-telemetry:exclude-filter {
-		deviate add {
-		}
-	}
-
 }
-
