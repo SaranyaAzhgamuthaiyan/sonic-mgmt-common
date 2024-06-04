@@ -243,14 +243,14 @@ func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 var oa_name_table_xfmr TableXfmrFunc = func(inParams XfmrParams) ([]string, error) {
 	var tblList []string
 
-	log.Info("Sara oa_name_table_xfmr inParams.uri ", inParams.uri)
+	log.Info("oa_name_table_xfmr inParams.uri ", inParams.uri)
 	if strings.Contains(inParams.uri, "/amplifier") {
 		tblList = append(tblList, "AMPLIFIER")
 	} else if strings.Contains(inParams.uri, "/supervisory-channel") {
 		tblList = append(tblList, "OSC")
 	}
 
-	log.Info("Sara oa_name_table_xfmr tblList= ", tblList)
+	log.Info("oa_name_table_xfmr tblList= ", tblList)
 	return tblList, nil
 }
 

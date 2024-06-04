@@ -74,7 +74,7 @@ var YangToDb_media_channel_frequency_key_xfmr KeyXfmrYangToDb = func(inParams Xf
 	log.Infof("YangToDb_media_channel_frequency_key_xfmr : root: ", inParams.ygRoot,
 		", uri: ", inParams.uri)
 	pathInfo := NewPathInfo(inParams.uri)
-	log.Infof("Gokul: YangToDb_media_channel_frequency_key_xfmr , pathInfo", pathInfo)
+	log.Infof(": YangToDb_media_channel_frequency_key_xfmr , pathInfo", pathInfo)
 	idx := pathInfo.Var("index")
 	lower := pathInfo.Var("lower-frequency")
 	upper := pathInfo.Var("upper-frequency")
@@ -111,11 +111,11 @@ var YangToDb_media_channel_frequency_field_xfmr FieldXfmrYangToDb = func(inParam
 var DbToYang_media_channel_frequency_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 	var err error
 	rmap := make(map[string]interface{})
-	log.Infof("Gokul: YangToDb_media_channel_frequency_field_xfmr : root: ", inParams.ygRoot,
+	log.Infof(": YangToDb_media_channel_frequency_field_xfmr : root: ", inParams.ygRoot,
 		", uri: ", inParams.uri)
 	key := inParams.key
 	TableKeys := strings.Split(key, "|")
-	log.Info("Gokul: TableKeys ", TableKeys, len(TableKeys))
+	log.Info(": TableKeys ", TableKeys, len(TableKeys))
 	if len(TableKeys) >= 2 {
 		switch {
 		case strings.Contains(inParams.uri, LOWER_FREQUENCY):
@@ -135,7 +135,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 
 	pathInfo := NewPathInfo(inParams.uri)
 	key = pathInfo.Var("index")
-	log.Infof("Gokul: media_channel_get_namespace %S, %T", key, key)
+	log.Infof(": media_channel_get_namespace %S, %T", key, key)
 
 	// If Key is present in the xpath add the corresponding dbNAME and return
 	if key != "" {
@@ -149,7 +149,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 		response = append(response, "*")
 	}
 
-	log.Infof("Gokul: media_channel_get_namespace", response)
+	log.Infof(": media_channel_get_namespace", response)
 	return response, err
 }
 
