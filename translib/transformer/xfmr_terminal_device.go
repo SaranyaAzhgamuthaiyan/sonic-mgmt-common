@@ -83,6 +83,10 @@ func init() {
 	XlateFuncBind("YangToDb_otn_counter_key_xfmr", YangToDb_otn_counter_key_xfmr)
 	XlateFuncBind("DbToYang_otn_counter_key_xfmr", DbToYang_otn_counter_key_xfmr)
 
+	// Override the existing function with the new implementation
+    // Uncomment the below line to override the existing GetNamespaceFunc
+	// oc_get_namespace_xfmr = customGetNamespaceFunc
+
 	/* Get Namespace transformer for platform table*/
 	XlateFuncBind("oc_get_namespace_xfmr", oc_get_namespace_xfmr)
 
@@ -299,7 +303,7 @@ var DbToYang_assignment_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (ma
 	TableKeys := strings.Split(key, "|")
 
 	if len(TableKeys) >= 2 {
-		index := strings.Replace(TableKeys[0], "CH", "", -1)
+		index := strings.Replace(TableKeys[1], "ASS", "", -1)
 		aKey, _ := strconv.ParseUint(index, 10, 32)
 		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", aKey)
 		res_map["index"] = uint32(aKey)
@@ -322,7 +326,7 @@ var DbToYang_assignment_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
 	TableKeys := strings.Split(key, "|")
 
 	if len(TableKeys) >= 2 {
-		index := strings.Replace(TableKeys[0], "CH", "", -1)
+		index := strings.Replace(TableKeys[1], "ASS", "", -1)
 		aKey, _ := strconv.ParseUint(index, 10, 32)
 		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", aKey)
 		rmap["index"] = uint32(aKey)
@@ -519,5 +523,13 @@ var oc_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]string
 	}
 	log.Infof("oc_get_namespace_xfmr: nameSpaceList:%v ", nameSpaceList)
 
+	return nameSpaceList, err
+}
+
+// Define a new implementation for GetNamespaceFunc
+func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+	// Your custom implementation here
+	var nameSpaceList []string
+	var err error
 	return nameSpaceList, err
 }

@@ -25,6 +25,10 @@ func init() {
 	XlateFuncBind("YangToDb_otdr_name_field_xfmr", YangToDb_otdr_name_field_xfmr)
 	XlateFuncBind("DbToYang_otdr_name_field_xfmr", DbToYang_otdr_name_field_xfmr)
 
+	// Override the existing function with the new implementation
+    // Uncomment the below line to override the existing GetNamespaceFunc
+	// otdr_get_namespace_xfmr = customGetNamespaceFunc
+
 	/* Get Namespace transformer for OTDR table*/
 	XlateFuncBind("otdr_get_namespace_xfmr", otdr_get_namespace_xfmr)
 
@@ -170,5 +174,13 @@ var otdr_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]stri
 	}
 	log.Infof("otdr_get_namespace_xfmr: nameSpaceList:%v ", nameSpaceList)
 
+	return nameSpaceList, err
+}
+
+// Define a new implementation for GetNamespaceFunc
+func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+	// Your custom implementation here
+	var nameSpaceList []string
+	var err error
 	return nameSpaceList, err
 }

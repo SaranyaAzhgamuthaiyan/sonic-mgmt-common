@@ -29,6 +29,10 @@ func init() {
 	XlateFuncBind("YangToDb_oa_name_field_xfmr", YangToDb_oa_name_field_xfmr)
 	XlateFuncBind("DbToYang_oa_name_field_xfmr", DbToYang_oa_name_field_xfmr)
 
+	// Override the existing function with the new implementation
+    // Uncomment the below line to override the existing GetNamespaceFunc
+	// oa_name_get_namespace_xfmr = customGetNamespaceFunc
+
 	/* Get Namespace transformer for AMPLIFIER table*/
 	XlateFuncBind("oa_name_get_namespace_xfmr", oa_name_get_namespace_xfmr)
 
@@ -47,9 +51,9 @@ func init() {
 	/* Key transformer for OSC Counter table*/
 	XlateFuncBind("YangToDb_osc_counter_key_xfmr", YangToDb_osc_counter_key_xfmr)
 	XlateFuncBind("DbToYang_osc_counter_key_xfmr", DbToYang_osc_counter_key_xfmr)
+
 	// Table transformer functions
 	//XlateFuncBind("oa_name_table_xfmr", oa_name_table_xfmr)
-
 }
 
 var YangToDb_oa_name_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
@@ -224,6 +228,14 @@ var oa_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]s
 	}
 	log.Infof("oa_name_get_namespace_xfmr: nameSpaceList:%v ", nameSpaceList)
 
+	return nameSpaceList, err
+}
+
+// Define a new implementation for GetNamespaceFunc
+func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+	// Your custom implementation here
+	var nameSpaceList []string
+	var err error
 	return nameSpaceList, err
 }
 

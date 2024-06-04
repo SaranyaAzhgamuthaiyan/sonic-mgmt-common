@@ -161,15 +161,14 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet {
       deviate add {
+	    sonic-ext:table-name "ETHERNET";
+		sonic-ext:key-transformer "logical_channel_key_xfmr";
+		sonic-ext:get-namespace "oc_get_namespace_xfmr";
       }
     }
 
     deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config {
       deviate add {
-        sonic-ext:db-name "CONFIG_DB";
-	    sonic-ext:table-name "ETHERNET";
-		sonic-ext:key-transformer "logical_channel_key_xfmr";
-		sonic-ext:get-namespace "oc_get_namespace_xfmr";
       }
     }
 
@@ -701,6 +700,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-corrected-bytes {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "fec-corrected-bytes";
@@ -709,6 +709,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-corrected-bits {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "fec-corrected-bits";	  
@@ -717,8 +718,8 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:pre-fec-ber {
       deviate add {
-	  	sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:table-name "OTN";
+	  	sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:get-namespace "oc_get_namespace_xfmr";
       }
@@ -768,6 +769,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:code-violations {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "code-violations";		  
@@ -776,6 +778,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:errored-blocks {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	  	sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "errored-blocks";	
@@ -789,6 +792,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-uncorrectable-blocks {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "fec-uncorrectable-blocks";		    
@@ -802,8 +806,8 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:esnr {
       deviate add {
-	    sonic-ext:db-name "COUNTERS_DB";
         sonic-ext:table-name "OTN";
+	    sonic-ext:db-name "COUNTERS_DB";
         sonic-ext:key-transformer "otn_counter_esnr_key_xfmr";	  
       }
     }
@@ -852,6 +856,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:fec-uncorrectable-words {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	  	sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 		sonic-ext:field-name "fec-uncorrectable-words";
@@ -869,15 +874,16 @@ module openconfig-terminal-device-annot {
 	    sonic-ext:field-name "tti-msg-recv";
       }
     }
-/*
+
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:errored-seconds {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 	    sonic-ext:key-transformer "otn_counter_key_xfmr";
 	    sonic-ext:field-name "errored-seconds";
       }
     }
-*/
+
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:tti-msg-transmit {
       deviate add {
 	    sonic-ext:field-name "tti-msg-transmit";
@@ -886,6 +892,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:severely-errored-seconds {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 	    sonic-ext:key-transformer "otn_counter_key_xfmr";
 	    sonic-ext:field-name "severely-errored-seconds";	    
@@ -899,6 +906,7 @@ module openconfig-terminal-device-annot {
     }
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:unavailable-seconds {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 	    sonic-ext:key-transformer "otn_counter_key_xfmr";
 	    sonic-ext:field-name "unavailable-seconds";	  
@@ -1007,6 +1015,7 @@ module openconfig-terminal-device-annot {
 
     deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:otn/oc-opt-term:state/oc-opt-term:background-block-errors {
       deviate add {
+	    sonic-ext:table-name "OTN";
 	    sonic-ext:db-name "COUNTERS_DB";
 		sonic-ext:key-transformer "otn_counter_key_xfmr";
 	    sonic-ext:field-name "background-block-errors";	  

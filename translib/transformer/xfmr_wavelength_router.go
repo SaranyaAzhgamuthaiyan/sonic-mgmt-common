@@ -25,6 +25,10 @@ func init() {
 	XlateFuncBind("YangToDb_media_channel_frequency_field_xfmr", YangToDb_media_channel_frequency_field_xfmr)
 	XlateFuncBind("DbToYang_media_channel_frequency_field_xfmr", DbToYang_media_channel_frequency_field_xfmr)
 
+	// Override the existing function with the new implementation
+    // Uncomment the below line to override the existing GetNamespaceFunc
+	// media_channel_get_namespace_xfmr = customGetNamespaceFunc
+
 	/* Get Namespace transformer for MEDIA_CHANNEL table*/
 	XlateFuncBind("media_channel_get_namespace_xfmr", media_channel_get_namespace_xfmr)
 }
@@ -147,4 +151,12 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 
 	log.Infof("Gokul: media_channel_get_namespace", response)
 	return response, err
+}
+
+// Define a new implementation for GetNamespaceFunc
+func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+	// Your custom implementation here
+	var nameSpaceList []string
+	var err error
+	return nameSpaceList, err
 }

@@ -17,6 +17,11 @@ func init() {
 	XlateFuncBind("DbToYang_optical_port_input_power_key_xfmr", DbToYang_optical_port_input_power_key_xfmr)
 	XlateFuncBind("YangToDb_optical_port_output_power_key_xfmr", YangToDb_optical_port_output_power_key_xfmr)
 	XlateFuncBind("DbToYang_optical_port_output_power_key_xfmr", DbToYang_optical_port_output_power_key_xfmr)
+
+	// Override the existing function with the new implementation
+    // Uncomment the below line to override the existing GetNamespaceFunc
+	// optical_port_get_namespace_xfmr = customGetNamespaceFunc
+
 	/* Get Namespace transformer for PORT table*/
 	XlateFuncBind("optical_port_get_namespace_xfmr", optical_port_get_namespace_xfmr)
 }
@@ -106,4 +111,12 @@ var optical_port_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams)
 	}
 	log.Info("optical_port_get_namespace_xfmr", response)
 	return response, err
+}
+
+// Define a new implementation for GetNamespaceFunc
+func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+	// Your custom implementation here
+	var nameSpaceList []string
+	var err error
+	return nameSpaceList, err
 }
