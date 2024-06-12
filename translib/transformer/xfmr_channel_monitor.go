@@ -22,8 +22,8 @@ func init() {
 	XlateFuncBind("DbToYang_ocm_upper_frequency_field_xfmr", DbToYang_ocm_upper_frequency_field_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
-	// ocm_get_namespace_xfmr = customGetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
+	// ocm_get_namespace_xfmr = customOcmGetNamespaceFunc
 
 	// OCM table name get-namespace transformers
 	XlateFuncBind("ocm_get_namespace_xfmr", ocm_get_namespace_xfmr)
@@ -154,7 +154,7 @@ var ocm_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]strin
 }
 
 // Define a new implementation for GetNamespaceFunc
-func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+func customOcmGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 	// Your custom implementation here
 	var nameSpaceList []string
 	var err error

@@ -30,7 +30,7 @@ func init() {
 	XlateFuncBind("DbToYang_oa_name_field_xfmr", DbToYang_oa_name_field_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
 	// oa_name_get_namespace_xfmr = customGetNamespaceFunc
 
 	/* Get Namespace transformer for AMPLIFIER table*/
@@ -243,14 +243,14 @@ func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 var oa_name_table_xfmr TableXfmrFunc = func(inParams XfmrParams) ([]string, error) {
 	var tblList []string
 
-	log.Info("oa_name_table_xfmr inParams.uri ", inParams.uri)
+	log.Info("Sara oa_name_table_xfmr inParams.uri ", inParams.uri)
 	if strings.Contains(inParams.uri, "/amplifier") {
 		tblList = append(tblList, "AMPLIFIER")
 	} else if strings.Contains(inParams.uri, "/supervisory-channel") {
 		tblList = append(tblList, "OSC")
 	}
 
-	log.Info("oa_name_table_xfmr tblList= ", tblList)
+	log.Info("Sara oa_name_table_xfmr tblList= ", tblList)
 	return tblList, nil
 }
 

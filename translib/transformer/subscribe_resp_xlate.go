@@ -371,7 +371,7 @@ func (dbYgXlateInfo *DbYgXlateInfo) handleDbToYangKeyXlate() error {
 	if len(tblLst) != 0 {
 		dbYgXlateInfo.tableName = tblLst[0]
 	}
-	log.Info("Sara: table name is :%v", dbYgXlateInfo.tableName)
+	log.Info("table name is :%v", dbYgXlateInfo.tableName)
 	// taking the first table, since number of keys should be same between the tables returned by table transformer
 	if log.V(dbLgLvl) {
 		log.Info(dbYgXlateInfo.xlateReq.reqLogId, "handleDbToYangKeyXlate: Found table from the table transformer: table name: ", dbYgXlateInfo.tableName)

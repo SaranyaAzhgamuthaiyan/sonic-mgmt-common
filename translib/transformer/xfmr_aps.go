@@ -28,8 +28,8 @@ func init() {
 	XlateFuncBind("DbToYang_aps_name_field_xfmr", DbToYang_aps_name_field_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
-	// aps_name_get_namespace_xfmr = customGetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
+	// aps_name_get_namespace_xfmr = customApsGetNamespaceFunc
 
 	/* Get Namespace transformer for APS table*/
 	XlateFuncBind("aps_name_get_namespace_xfmr", aps_name_get_namespace_xfmr)
@@ -166,10 +166,9 @@ var aps_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]
 }
 
 // Define a new implementation for GetNamespaceFunc
-func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+func customApsGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 	// Your custom implementation here
 	var nameSpaceList []string
 	var err error
 	return nameSpaceList, err
 }
-

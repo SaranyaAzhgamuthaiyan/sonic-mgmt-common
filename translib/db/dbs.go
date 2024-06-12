@@ -16,7 +16,6 @@ func isMultiAsic() bool {
 }
 
 func getNumAsic() int {
-	glog.Infof("Sara: Asic conf file path :%v", DefaultAsicConfFilePath)
 	file, err := os.Open(DefaultAsicConfFilePath)
 	if err != nil {
 		glog.Warning("Cannot find the asic.conf file, set num_asic to 1 by default")
@@ -75,6 +74,9 @@ func GetMDBNameFromEntity(entity interface{}) string {
 	var slotNum int
 	var slotNumStr string
 	switch t := entity.(type) {
+	case uint16:
+		valUint16, _ := entity.(uint16)
+		slotNum = int(valUint16 / 100)
 	case uint32:
 		//ch115
 		valUint32, _ := entity.(uint32)

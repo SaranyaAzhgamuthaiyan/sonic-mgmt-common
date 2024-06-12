@@ -155,20 +155,16 @@ func initAllDbs() {
 	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
 		dbConfigPath = path
 	}
-	glog.Infof("Sara, dbConfigPath:%v", dbConfigPath)
 
 	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
 		DefaultAsicConfFilePath = path
 	}
-	glog.Infof("Sara, dbAsicConfPath:%v", DefaultAsicConfFilePath)
 
 	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
 		DefaultGlobalDbFilePath = path
 	}
-	glog.Infof("Sara, globalConfPath:%v", DefaultGlobalDbFilePath)
 
 	NumAsic = getNumAsic()
-	glog.Infof("Sara, NumAsic:%v", NumAsic)
 
 	if !isMultiAsic() {
 		dbConfigInit(dbConfigPath, "host")
@@ -396,6 +392,7 @@ type DB struct {
 
 	// Non-Session Config DB Lock acquired
 	configDBLocked bool
+	multiDbName    string
 }
 
 func (d DB) String() string {
@@ -594,6 +591,7 @@ func NewMDB(opt Options, multiDbName string) (*DB, error) {
 			d.client.Close()
 			goto NewDBExit
 		}
+		d.multiDbName = multiDbName
 		d.configDBLocked = true
 	}
 
@@ -630,7 +628,7 @@ func (d *DB) DeleteDB() error {
 
 	// Release the ConfigDB Lock if we placed on in NewMDB()
 	if d.configDBLocked {
-		ConfigDBUnlock(noSessionToken, "host")
+		ConfigDBUnlock(noSessionToken, d.multiDbName)
 		d.configDBLocked = false
 	}
 
@@ -1165,11 +1163,14 @@ func (d *DB) doWrite(ts *TableSpec, op _txOp, k Key, val interface{}) error {
 	}
 
 	if d.Opts.DBNo == ConfigDB && !d.Opts.IsSession && !d.configDBLocked {
-		if e = ConfigDBTryLock(noSessionToken, "host"); e != nil {
-			glog.Errorf("doWrite: ConfigDB possibly locked: %s", e)
-			goto doWriteExit
+		multiDbNames := GetMultiDbNames()
+		for _, multiDbName := range multiDbNames {
+			if e = ConfigDBTryLock(noSessionToken, multiDbName); e != nil {
+				glog.Errorf("doWrite: ConfigDB possibly locked: %s", e)
+				goto doWriteExit
+			}
+			d.configDBLocked = true
 		}
-		d.configDBLocked = true
 	}
 
 	if d.Opts.IsSession && (d.Opts.TxCmdsLim != 0) &&
@@ -1349,10 +1350,8 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 	var valueComplement Value = Value{Field: make(map[string]string, len(value.Field))}
 	var valueCurrent Value
 
-	if glog.V(3) {
-		glog.Info("setEntry: Begin: ", d.Name(), ": ts: ", ts, " key: ", key,
-			" value: ", value, " isCreate: ", isCreate)
-	}
+	glog.Info("setEntry: Begin: ", d.Name(), ": ts: ", ts, " key: ", key,
+		" value: ", value, " isCreate: ", isCreate)
 
 	if len(value.Field) == 0 {
 		if ts.NoDelete {
@@ -1381,9 +1380,7 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 	}
 
 	if !isCreate && e == nil {
-		if glog.V(3) {
-			glog.Info("setEntry: DoCVL for UPDATE")
-		}
+		glog.Info("setEntry: DoCVL for UPDATE")
 		if len(valueComplement.Field) == 0 {
 			e = d.doCVL(ts, []cmn.CVLOperation{cmn.OP_UPDATE},
 				key, []Value{value})
@@ -1392,9 +1389,7 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 				key, []Value{value, valueComplement})
 		}
 	} else {
-		if glog.V(3) {
-			glog.Info("setEntry: DoCVL for CREATE")
-		}
+		glog.Info("setEntry: DoCVL for CREATE")
 		e = d.doCVL(ts, []cmn.CVLOperation{cmn.OP_CREATE}, key, []Value{value})
 	}
 
@@ -1804,9 +1799,7 @@ SkipWatch:
 
 // CommitTx method is used by infra to commit a check-and-set Transaction.
 func (d *DB) commitTx() error {
-	if glog.V(3) {
-		glog.Info("CommitTx: Begin:")
-	}
+	glog.Infof("CommitTx: Begin::%v", d)
 
 	var e error = nil
 	var tsmap map[TableSpec]bool = make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
@@ -1847,10 +1840,12 @@ func (d *DB) commitTx() error {
 		glog.Warning("CommitTx: Do: MULTI e: ", e.Error())
 		goto CommitTxExit
 	}
+	glog.Infof("CommitTx:d.txCmds):%v ", d.txCmds)
 
 	// For each cmd in txCmds
 	//   Invoke it
 	for i := 0; i < len(d.txCmds); i++ {
+		glog.Infof("CommitTx:inside for loop :%v ", i)
 
 		var args []interface{}
 

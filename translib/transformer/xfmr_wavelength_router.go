@@ -26,8 +26,8 @@ func init() {
 	XlateFuncBind("DbToYang_media_channel_frequency_field_xfmr", DbToYang_media_channel_frequency_field_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
-	// media_channel_get_namespace_xfmr = customGetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
+	// media_channel_get_namespace_xfmr = customMcGetNamespaceFunc
 
 	/* Get Namespace transformer for MEDIA_CHANNEL table*/
 	XlateFuncBind("media_channel_get_namespace_xfmr", media_channel_get_namespace_xfmr)
@@ -74,7 +74,7 @@ var YangToDb_media_channel_frequency_key_xfmr KeyXfmrYangToDb = func(inParams Xf
 	log.Infof("YangToDb_media_channel_frequency_key_xfmr : root: ", inParams.ygRoot,
 		", uri: ", inParams.uri)
 	pathInfo := NewPathInfo(inParams.uri)
-	log.Infof(": YangToDb_media_channel_frequency_key_xfmr , pathInfo", pathInfo)
+	log.Infof("Gokul: YangToDb_media_channel_frequency_key_xfmr , pathInfo", pathInfo)
 	idx := pathInfo.Var("index")
 	lower := pathInfo.Var("lower-frequency")
 	upper := pathInfo.Var("upper-frequency")
@@ -111,11 +111,11 @@ var YangToDb_media_channel_frequency_field_xfmr FieldXfmrYangToDb = func(inParam
 var DbToYang_media_channel_frequency_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 	var err error
 	rmap := make(map[string]interface{})
-	log.Infof(": YangToDb_media_channel_frequency_field_xfmr : root: ", inParams.ygRoot,
+	log.Infof("Gokul: YangToDb_media_channel_frequency_field_xfmr : root: ", inParams.ygRoot,
 		", uri: ", inParams.uri)
 	key := inParams.key
 	TableKeys := strings.Split(key, "|")
-	log.Info(": TableKeys ", TableKeys, len(TableKeys))
+	log.Info("Gokul: TableKeys ", TableKeys, len(TableKeys))
 	if len(TableKeys) >= 2 {
 		switch {
 		case strings.Contains(inParams.uri, LOWER_FREQUENCY):
@@ -135,7 +135,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 
 	pathInfo := NewPathInfo(inParams.uri)
 	key = pathInfo.Var("index")
-	log.Infof(": media_channel_get_namespace %S, %T", key, key)
+	log.Infof("Gokul: media_channel_get_namespace %S, %T", key, key)
 
 	// If Key is present in the xpath add the corresponding dbNAME and return
 	if key != "" {
@@ -149,12 +149,12 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 		response = append(response, "*")
 	}
 
-	log.Infof(": media_channel_get_namespace", response)
+	log.Infof("Gokul: media_channel_get_namespace", response)
 	return response, err
 }
 
 // Define a new implementation for GetNamespaceFunc
-func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+func customMcGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 	// Your custom implementation here
 	var nameSpaceList []string
 	var err error

@@ -84,8 +84,8 @@ func init() {
 	XlateFuncBind("DbToYang_otn_counter_key_xfmr", DbToYang_otn_counter_key_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
-	// oc_get_namespace_xfmr = customGetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
+	// oc_get_namespace_xfmr = customOcGetNamespaceFunc
 
 	/* Get Namespace transformer for platform table*/
 	XlateFuncBind("oc_get_namespace_xfmr", oc_get_namespace_xfmr)
@@ -527,7 +527,7 @@ var oc_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]string
 }
 
 // Define a new implementation for GetNamespaceFunc
-func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+func customOcGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 	// Your custom implementation here
 	var nameSpaceList []string
 	var err error

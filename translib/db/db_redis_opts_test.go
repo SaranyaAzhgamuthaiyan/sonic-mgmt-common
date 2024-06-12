@@ -157,7 +157,7 @@ func compareRedisOptsDBRead2Struct(t *testing.T, optsS string, opts *redis.Optio
 
 	t.Logf("TestReadFromDBRedisOpts: handleReconfigureSignal()")
 	dbRedisOptsConfig.handleReconfigureSignal()
-	dbRedisOptsConfig.reconfigure()
+	dbRedisOptsConfig.reconfigure("host")
 	if !reflect.DeepEqual(dbRedisOptsConfig.opts, *opts) {
 		t.Errorf("reconfigure() mismatch (%s) != %+v", optsS, opts)
 		t.Errorf("New dbRedisOptsConfig.opts: %+v", dbRedisOptsConfig.opts)

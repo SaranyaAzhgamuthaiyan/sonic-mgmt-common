@@ -25,8 +25,8 @@ func init() {
 	XlateFuncBind("DbToYang_attn_name_field_xfmr", DbToYang_attn_name_field_xfmr)
 
 	// Override the existing function with the new implementation
-    // Uncomment the below line to override the existing GetNamespaceFunc
-	// attn_name_get_namespace_xfmr = customGetNamespaceFunc
+	// Uncomment the below line to override the existing GetNamespaceFunc
+	// attn_name_get_namespace_xfmr = customAttenGetNamespaceFunc
 
 	/* Get Namespace transformer for ATTENUATOR table*/
 	XlateFuncBind("attn_name_get_namespace_xfmr", attn_name_get_namespace_xfmr)
@@ -87,6 +87,71 @@ var DbToYang_attn_counter_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (
 	return res_map, err
 }
 
+/*
+var YangToDb_attn_actual_attenuation_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	log.Infof("Gokul atten:YangToDb_attn_actual_attenuation_key_xfmr: root: ", inParams.ygRoot,
+	", uri: ", inParams.uri)
+	pathInfo := NewPathInfo(inParams.uri)
+	ockey := pathInfo.Var("name")
+	log.Infof("Gokul atten:YangToDb_attn_actual_attenuation_key_xfmr : ockey", ockey)
+	key := ockey + "_ActualAttenuation:15_pm_current"
+
+	return key, nil
+}
+
+var DbToYang_attn_actual_attenuation_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+	log.Infof("Gokul atten:DbToYang_attn_actual_attenuation_key_xfmr: ", inParams.key)
+	res_map := make(map[string]interface{}, 1)
+	var err error
+
+	res_map["name"] = inParams.key
+
+	return res_map, err
+}
+
+var YangToDb_attn_optical_return_loss_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	log.Infof("Gokul atten:YangToDb_attn_optical_return_loss_key_xfmr: root: ", inParams.ygRoot,
+	", uri: ", inParams.uri)
+	pathInfo := NewPathInfo(inParams.uri)
+	ockey := pathInfo.Var("name")
+	log.Infof("Gokul atten:YangToDb_attn_optical_return_loss_key_xfmr : ockey", ockey)
+	key := ockey + "_OpticalReturnLoss:15_pm_current"
+
+	return key, nil
+}
+
+var DbToYang_attn_optical_return_loss_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+	log.Infof("Gokul atten:DbToYang_attn_optical_return_loss_key_xfmr: ", inParams.key)
+	res_map := make(map[string]interface{}, 1)
+	var err error
+
+	res_map["name"] = inParams.key
+
+	return res_map, err
+}
+
+var YangToDb_attn_output_power_total_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
+	log.Infof("Gokul atten:YangToDb_attn_output_power_total_key_xfmr : root: ", inParams.ygRoot,
+	", uri: ", inParams.uri)
+	pathInfo := NewPathInfo(inParams.uri)
+	ockey := pathInfo.Var("name")
+	log.Infof("Gokul atten:YangToDb_attn_output_power_total_key_xfmr: ockey", ockey)
+	key := ockey + "_OutputPowerTotal:15_pm_current"
+
+	return key, nil
+}
+
+var DbToYang_attn_output_power_total_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
+	log.Infof("Gokul atten:DbToYang_attn_output_power_total_key_xfmr: ", inParams.key)
+	res_map := make(map[string]interface{})
+	var err error
+
+	res_map["name"] = inParams.key
+
+	return res_map, err
+}
+*/
+
 var YangToDb_attn_name_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
@@ -125,7 +190,7 @@ var attn_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([
 }
 
 // Define a new implementation for GetNamespaceFunc
-func customGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
+func customAttenGetNamespaceFunc(inParams XfmrParams) ([]string, error) {
 	// Your custom implementation here
 	var nameSpaceList []string
 	var err error

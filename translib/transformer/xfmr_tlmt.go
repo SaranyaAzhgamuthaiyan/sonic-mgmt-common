@@ -20,8 +20,10 @@ func init() {
 	/* Field transformer for SENSOR_GROUP table*/
 	XlateFuncBind("YangToDb_telemetry_sensor_group_id_field_xfmr", YangToDb_telemetry_sensor_group_id_field_xfmr)
 	XlateFuncBind("DbToYang_telemetry_sensor_group_id_field_xfmr", DbToYang_telemetry_sensor_group_id_field_xfmr)
-	XlateFuncBind("YangToDb_telemetry_sensor_path_field_xfmr", YangToDb_telemetry_sensor_path_field_xfmr)
-	XlateFuncBind("DbToYang_telemetry_sensor_path_field_xfmr", DbToYang_telemetry_sensor_path_field_xfmr)
+	/*
+		XlateFuncBind("YangToDb_telemetry_sensor_path_field_xfmr", YangToDb_telemetry_sensor_path_field_xfmr)
+		XlateFuncBind("DbToYang_telemetry_sensor_path_field_xfmr", DbToYang_telemetry_sensor_path_field_xfmr)
+	*/
 
 	/* Key transformer for DESTINATION_GROUP and SUBSCRIPTION_DESTINATION_GROUP table*/
 	XlateFuncBind("YangToDb_telemetry_group_id_key_xfmr", YangToDb_telemetry_group_id_key_xfmr)
@@ -97,7 +99,7 @@ var YangToDb_telemetry_sensor_path_key_xfmr KeyXfmrYangToDb = func(inParams Xfmr
 	log.Infof("YangToDb_telemetry_sensor_path_key_xfmr root: ", inParams.ygRoot,
 		", uri: ", inParams.uri)
 	pathInfo := NewPathInfo(inParams.uri)
-	key := pathInfo.Var("sensor-paths")
+	key := pathInfo.Var("sensor-group-id")
 	log.Infof("YangToDb_telemetry_sensor_path_key_xfmr : key", key)
 
 	return key, nil
@@ -106,11 +108,13 @@ var YangToDb_telemetry_sensor_path_key_xfmr KeyXfmrYangToDb = func(inParams Xfmr
 var DbToYang_telemetry_sensor_path_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 	res_map := make(map[string]interface{}, 1)
 	var err error
-	res_map["path"] = inParams.key
+	pathInfo := NewPathInfo(inParams.uri)
+	res_map["path"] = pathInfo.Var("path")
 
 	return res_map, err
 }
 
+/*
 var YangToDb_telemetry_sensor_path_field_xfmr FieldXfmrYangToDb = func(inParams XfmrParams) (map[string]string, error) {
 	res_map := make(map[string]string)
 	var err error
@@ -121,10 +125,12 @@ var YangToDb_telemetry_sensor_path_field_xfmr FieldXfmrYangToDb = func(inParams 
 var DbToYang_telemetry_sensor_path_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams) (map[string]interface{}, error) {
 	var err error
 	rmap := make(map[string]interface{})
-	rmap["path"] = inParams.key
+	pathInfo := NewPathInfo(inParams.uri)
+	rmap["path"] = pathInfo.Var("path")
 
 	return rmap, err
 }
+*/
 
 var YangToDb_telemetry_group_id_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (string, error) {
 	log.Infof("YangToDb_telemetry_group_id_key_xfmr root: ", inParams.ygRoot,

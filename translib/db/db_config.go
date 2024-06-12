@@ -45,7 +45,6 @@ func dbConfigInit(dbConfigPath string, multiDbName string) {
 			dbConfigPath = goTestDBConfigPath
 		}
 	}
-	glog.Infof("Sara, dbConfigInit, dbConfigPath:%v", dbConfigPath)
 
 	data, err := io.ReadFile(dbConfigPath)
 	if err != nil {
@@ -57,7 +56,6 @@ func dbConfigInit(dbConfigPath string, multiDbName string) {
 		}
 	}
 	multiDbsConfigMap[multiDbName] = dbConfigMap
-	glog.Infof("Sara, dbConfigInit, multiDbsConfigMap :%v", multiDbsConfigMap)
 }
 
 func assert(msg error) {

@@ -171,69 +171,73 @@ func (config *DBCacheConfig) handleReconfigureSignal() error {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (config *DBCacheConfig) readFromDB() error {
-	fields, e := readRedis("TRANSLIB_DB|default", "host")
-	if e != nil {
+	var e error
+	multiDbNames := GetMultiDbNames()
+	for _, multiDbName := range multiDbNames {
+		fields, e := readRedis("TRANSLIB_DB|default", multiDbName)
+		if e != nil {
 
-		config.PerConnection = defaultDBCacheConfig.PerConnection
-		config.Global = defaultDBCacheConfig.Global
-		config.CacheTables = make(map[string]bool,
-			len(defaultDBCacheConfig.CacheTables))
-		for k, v := range defaultDBCacheConfig.CacheTables {
-			config.CacheTables[k] = v
-		}
+			config.PerConnection = defaultDBCacheConfig.PerConnection
+			config.Global = defaultDBCacheConfig.Global
+			config.CacheTables = make(map[string]bool,
+				len(defaultDBCacheConfig.CacheTables))
+			for k, v := range defaultDBCacheConfig.CacheTables {
+				config.CacheTables[k] = v
+			}
 
-		config.NoCacheTables = make(map[string]bool,
-			len(defaultDBCacheConfig.NoCacheTables))
-		for k, v := range defaultDBCacheConfig.NoCacheTables {
-			config.NoCacheTables[k] = v
-		}
+			config.NoCacheTables = make(map[string]bool,
+				len(defaultDBCacheConfig.NoCacheTables))
+			for k, v := range defaultDBCacheConfig.NoCacheTables {
+				config.NoCacheTables[k] = v
+			}
 
-		config.CacheMaps = make(map[string]bool,
-			len(defaultDBCacheConfig.CacheMaps))
-		for k, v := range defaultDBCacheConfig.CacheMaps {
-			config.CacheMaps[k] = v
-		}
+			config.CacheMaps = make(map[string]bool,
+				len(defaultDBCacheConfig.CacheMaps))
+			for k, v := range defaultDBCacheConfig.CacheMaps {
+				config.CacheMaps[k] = v
+			}
 
-		config.NoCacheMaps = make(map[string]bool,
-			len(defaultDBCacheConfig.NoCacheMaps))
-		for k, v := range defaultDBCacheConfig.NoCacheMaps {
-			config.NoCacheMaps[k] = v
-		}
-
-	} else {
-		for k, v := range fields {
-			switch {
-			case k == "per_connection_cache" && v == "True":
-				config.PerConnection = true
-			case k == "per_connection_cache" && v == "False":
-				config.PerConnection = false
-			case k == "global_cache" && v == "True":
-				config.Global = true
-			case k == "global_cache" && v == "False":
-				config.Global = false
-			case k == "@tables_cache":
-				l := strings.Split(v, ",")
-				config.CacheTables = make(map[string]bool, len(l))
-				for _, t := range l {
-					config.CacheTables[t] = true
-				}
-			case k == "@no_tables_cache":
-				l := strings.Split(v, ",")
-				config.NoCacheTables = make(map[string]bool, len(l))
-				for _, t := range l {
-					config.NoCacheTables[t] = true
-				}
-			case k == "@maps_cache":
-				l := strings.Split(v, ",")
-				config.CacheMaps = make(map[string]bool, len(l))
-				for _, t := range l {
-					config.CacheMaps[t] = true
-				}
-			case k == "@no_maps_cache":
-				l := strings.Split(v, ",")
-				config.NoCacheMaps = make(map[string]bool, len(l))
-				for _, t := range l {
-					config.NoCacheMaps[t] = true
+			config.NoCacheMaps = make(map[string]bool,
+				len(defaultDBCacheConfig.NoCacheMaps))
+			for k, v := range defaultDBCacheConfig.NoCacheMaps {
+				config.NoCacheMaps[k] = v
+			}
+			break
+		} else {
+			for k, v := range fields {
+				switch {
+				case k == "per_connection_cache" && v == "True":
+					config.PerConnection = true
+				case k == "per_connection_cache" && v == "False":
+					config.PerConnection = false
+				case k == "global_cache" && v == "True":
+					config.Global = true
+				case k == "global_cache" && v == "False":
+					config.Global = false
+				case k == "@tables_cache":
+					l := strings.Split(v, ",")
+					config.CacheTables = make(map[string]bool, len(l))
+					for _, t := range l {
+						config.CacheTables[t] = true
+					}
+				case k == "@no_tables_cache":
+					l := strings.Split(v, ",")
+					config.NoCacheTables = make(map[string]bool, len(l))
+					for _, t := range l {
+						config.NoCacheTables[t] = true
+					}
+				case k == "@maps_cache":
+					l := strings.Split(v, ",")
+					config.CacheMaps = make(map[string]bool, len(l))
+					for _, t := range l {
+						config.CacheMaps[t] = true
+					}
+				case k == "@no_maps_cache":
+					l := strings.Split(v, ",")
+					config.NoCacheMaps = make(map[string]bool, len(l))
+					for _, t := range l {
+						config.NoCacheMaps[t] = true
+					}
 				}
 			}
 		}
