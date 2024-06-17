@@ -50,13 +50,13 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:repetition/oc-otdr:enable {
       deviate add {
-        sonic-ext:field-name "period";
+        sonic-ext:field-name "enable";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:config/oc-otdr:name {
       deviate add {
-        sonic-ext:field-name "enable";
+        sonic-ext:field-transformer "otdr_name_field_xfmr";
       }
     }
 
@@ -141,7 +141,7 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:state/oc-otdr:name {
       deviate add {
-        sonic-ext:field-name "name";
+        sonic-ext:field-transformer "otdr_name_field_xfmr";
       }
     }
 
@@ -318,11 +318,16 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events {
       deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:span-loss {
       deviate add {
+        sonic-ext:field-name "span-loss";
       }
     }
 
@@ -330,7 +335,7 @@ module openconfig-optical-time-domain-reflectometer-annot {
       deviate add {
         sonic-ext:db-name "STATE_DB";
         sonic-ext:table-name "OTDR_EVENT";
-        sonic-ext:key-transformer "otdr_baseline_events_key_xfmr";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
         sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
@@ -355,7 +360,7 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:baseline-result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
       deviate add {
-        sonic-ext:field-transformer "index";
+        sonic-ext:field-name "index";
       }
     }
 
@@ -410,6 +415,10 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events {
       deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
@@ -417,14 +426,14 @@ module openconfig-optical-time-domain-reflectometer-annot {
       deviate add {
         sonic-ext:db-name "STATE_DB";
         sonic-ext:table-name "OTDR_EVENT";
-        sonic-ext:key-transformer "otdr_current_events_key_xfmr";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
         sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:current-result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
       deviate add {
-        sonic-ext:field-transformer "index";
+        sonic-ext:field-name "index";
       }
     }
 
@@ -524,11 +533,15 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results {
       deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result {
       deviate add {
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
       }
     }
 
@@ -539,16 +552,19 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:trace/oc-otdr:data {
       deviate add {
+        sonic-ext:field-name "data";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:trace/oc-otdr:update-time {
       deviate add {
+        sonic-ext:field-name "update-time";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scan-time {
       deviate add {
+        sonic-ext:field-name "scan-time";
       }
     }
 
@@ -559,82 +575,102 @@ module openconfig-optical-time-domain-reflectometer-annot {
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:pulse-width {
       deviate add {
+        sonic-ext:field-name "pulse-width";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:average-time {
       deviate add {
+        sonic-ext:field-name "average-time";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:output-frequency {
       deviate add {
+        sonic-ext:field-name "output-frequency";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:scanning-profile/oc-otdr:distance-range {
       deviate add {
+        sonic-ext:field-name "distance-range";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events {
       deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event {
       deviate add {
+        sonic-ext:db-name "STATE_DB";
+        sonic-ext:table-name "OTDR_EVENT";
+        sonic-ext:key-transformer "otdr_state_key_xfmr";
+        sonic-ext:get-namespace "otdr_get_namespace_xfmr";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:index {
       deviate add {
+        sonic-ext:field-name "index";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:type {
       deviate add {
+        sonic-ext:field-name "type";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:length {
       deviate add {
+        sonic-ext:field-name "length";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:loss {
       deviate add {
+        sonic-ext:field-name "loss";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:reflection {
       deviate add {
+        sonic-ext:field-name "reflection";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:event/oc-otdr:accumulate-loss {
       deviate add {
+        sonic-ext:field-name "accumulate-loss";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:scan-time {
       deviate add {
+        sonic-ext:field-name "scan-time";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:span-distance {
       deviate add {
+        sonic-ext:field-name "span-distance";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:history-results/oc-otdr:result/oc-otdr:events/oc-otdr:span-loss {
       deviate add {
+        sonic-ext:field-name "span-loss";
       }
     }
 
     deviation /oc-otdr:otdrs/oc-otdr:otdr/oc-otdr:name {
       deviate add {
-        sonic-ext:field-transformer "otdr_name_field_xfmr";
       }
     }
 

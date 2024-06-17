@@ -19,19 +19,22 @@ module openconfig-channel-monitor-annot {
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor {
       deviate add {
+        sonic-ext:table-name "OCM";
+        sonic-ext:key-transformer "ocm_name_key_xfmr";
+        sonic-ext:get-namespace "ocm_get_namespace_xfmr";
       }
     }
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:channels {
       deviate add {
         sonic-ext:db-name "STATE_DB";
-        sonic-ext:table-name "OCM";
+        sonic-ext:table-name "OCM_CHANNEL";
         sonic-ext:get-namespace "ocm_get_namespace_xfmr";
       }
     }
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:channels/oc-chan-monitor:channel {
-      eviate add {
+      deviate add {
         sonic-ext:key-transformer "ocm_channel_key_xfmr";
       }
     }
@@ -39,7 +42,7 @@ module openconfig-channel-monitor-annot {
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:channels/oc-chan-monitor:channel/oc-chan-monitor:state {
       deviate add {
         sonic-ext:db-name "STATE_DB";
-        sonic-ext:table-name "OCM";
+        sonic-ext:table-name "OCM_CHANNEL";
         sonic-ext:key-transformer "ocm_channel_key_xfmr";
       }
     }
@@ -90,6 +93,7 @@ module openconfig-channel-monitor-annot {
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:config/oc-chan-monitor:name {
       deviate add {
+        sonic-ext:field-transformer "ocm_name_field_xfmr";
       }
     }
 
@@ -101,7 +105,7 @@ module openconfig-channel-monitor-annot {
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:state {
       deviate add {
         sonic-ext:db-name "STATE_DB";
-        sonic-ext:table-name "OCM";
+        sonic-ext:table-name "OCM_TABLE";
         sonic-ext:key-transformer "ocm_name_key_xfmr";
       }
     }

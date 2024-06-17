@@ -76,8 +76,18 @@ func TestMain(t *testing.M) {
 	os.Exit(t.Run())
 }
 
+/*
+	func TestNamespaceHandlerFunc(t *testing.T){
+		// /openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier
+		response, err := transformer.namespaceHandlerFunc("oc_name_get_namespace_xfmr","/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier[name=AMPLIFIER-1-3-1]")
+		if response == "asic2" && err != nil{
+			t.Errorf("Error in NamespaceHandlerFunc of url",response)
+		}
+
+}
+*/
 func initDbConfig() error {
-	dbConfigFile := "/run/redis/sonic-db/database_config.json"
+	dbConfigFile := "/run/redis0/sonic-db/database_config.json"
 	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
 		dbConfigFile = path
 	}
@@ -131,6 +141,13 @@ func prepareDb() bool {
 		fmt.Printf("error in getDbClient(int(db.CountersDB)")
 		return false
 	}
+
+	rclientDBNum[db.StateDB] = getDbClient(int(db.StateDB))
+	if rclientDBNum[db.StateDB] == nil {
+		fmt.Printf("error in getDbClient(int(db.StateDB)")
+		return false
+	}
+
 	rclientDBNum[db.ConfigDB] = getDbClient(int(db.ConfigDB))
 	if rclientDBNum[db.ConfigDB] == nil {
 		fmt.Printf("error in getDbClient(int(db.ConfigDB)")
@@ -185,7 +202,7 @@ func teardown() error {
 
 func loadDB(dbNum db.DBNum, mpi map[string]interface{}) {
 	client := rclientDBNum[dbNum]
-	opts := getDBOptions(dbNum, false)
+	opts := getDBOptions(dbNum, true)
 	for key, fv := range mpi {
 		switch fv.(type) {
 		case map[string]interface{}:
@@ -223,11 +240,17 @@ func unloadDB(dbNum db.DBNum, mpi map[string]interface{}) {
 			fmt.Printf("Invalid data for db: %v : %v", key, fv)
 		}
 	}
-
 }
 
 func getDbClient(dbNum int) *redis.Client {
-	addr := "localhost:6379"
+	//addr := "localhost:6379"
+	data, _ := ioutil.ReadFile("/run/redis0/sonic-db/database_config.json")
+	unmarshal_err := json.Unmarshal(data, &dbConfig)
+	if unmarshal_err != nil {
+		fmt.Println("Error decoding JSON:", unmarshal_err)
+	}
+	fmt.Printf("data:latest of database_config.json %v", dbConfig.Instances["redis"]["hostname"])
+	addr := fmt.Sprint(dbConfig.Instances["redis"]["hostname"])
 	pass := ""
 	for _, d := range dbConfig.Databases {
 		if id, ok := d["id"]; !ok || int(id.(float64)) != dbNum {
@@ -251,6 +274,7 @@ func getDbClient(dbNum int) *redis.Client {
 		DialTimeout: 0,
 	})
 	_, err := rclient.Ping().Result()
+
 	if err != nil {
 		fmt.Printf("failed to connect to redis server %v", err)
 	}

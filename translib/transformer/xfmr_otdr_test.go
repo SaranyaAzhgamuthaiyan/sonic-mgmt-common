@@ -1,0 +1,42 @@
+package transformer_test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/Azure/sonic-mgmt-common/translib/db"
+)
+
+/* otdr config,counters, state DB fields and values */
+func Test_otdr_config_state_DB_key_and_field_xfmr(t *testing.T) {
+	var pre_req_map, cleanuptbl, cleanupstatetbl map[string]interface{}
+	var expected_get_json, url []string
+
+	/* OTDR config DB test */
+	t.Log("\n\n+++++++++++++ Performing Get on configDB OTDR Key-Xfmr and Field-Xfmr ++++++++++++")
+	pre_req_map = map[string]interface{}{"OTDR": map[string]interface{}{"OTDR-1-1-2": map[string]interface{}{"average-time": "2", "backscatter-index": "2.0", "distance-range": "2", "enable": "true", "end-of-fiber-threshold": "0.0", "name": "OTDR-1-1-2", "output-frequency": "88", "parent-port": "test_parent_port", "period": "1", "pulse-width": "2", "refractive-index": "0.0", "reflection-threshold": "0.0", "splice-loss-threshold": "0.0", "start-time": "0:10"}}}
+	loadDB(db.ConfigDB, pre_req_map)
+	expected_get_json = []string{"{\"openconfig-optical-time-domain-reflectometer:config\":{\"fiber-profile\":{\"backscatter-index\":\"2\",\"end-of-fiber-threshold\":\"0\",\"reflection-threshold\":\"0\",\"refractive-index\":\"0\",\"splice-loss-threshold\":\"0\"},\"name\":\"OTDR-1-1-2\",\"parent-port\":\"test_parent_port\",\"repetition\":{\"enable\":true,\"period\":1,\"start-time\":\"0:10\"},\"scanning-profile\":{\"average-time\":2,\"distance-range\":2,\"output-frequency\":\"88\",\"pulse-width\":2}}}"}
+	url = []string{"/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/config"}
+	t.Run("Test get on config DB otdr Key-Xfmr and Field-Xfmr.", processGetRequest(url[0], nil, expected_get_json[0], false))
+	time.Sleep(1 * time.Second)
+	t.Log("\n\n+++++++++++++ Done Performing Get on configDB otdr Key-Xfmr and Field-Xfmr ++++++++++++")
+
+	/* OTDR State DB test */
+	t.Log("\n\n+++++++++++++ Performing Get on stateDB otdr Key-Xfmr and Field-Xfmr ++++++++++++")
+	pre_req_map = map[string]interface{}{"OTDR": map[string]interface{}{"OTDR-1-1-2": map[string]interface{}{"average-time": "2", "backscatter-index": "2.0", "distance-accuracy": "0.0", "distance-range": "2", "dynamic-range": "1", "enable": "true", "end-of-fiber-threshold": "0.0", "firmware-version": "test_f_version", "hardware-version": "test_version", "loss-dead-zone": "2.0", "mfg-date": "test-mfg-date", "mfg-name": "test-mfg-name", "name": "OTDR-1-1-2", "oper-status": "test_oper", "output-frequency": "88", "parent": "test_parent", "parent-port": "test_parent_port", "part-no": "test_part-no", "period": "1", "pulse-width": "2", "reflection-dead-zone": "2.0", "reflection-threshold": "0.0", "refractive-index": "0.0", "removable": "false", "sampling-resolution": "2.0", "scanning-status": "ACTIVE", "serial-no": "test_serial_no", "software-version": "test_soft", "splice-loss-threshold": "0.0", "start-time": "0:10"}, "OTDR-1-1-2|BASELINE": map[string]interface{}{"scan-time": "2024-06-14T15:30:45.123Z+05:30", "span-distance": "0.0", "span-loss": "0.0", "distance-range": "12", "pulse-width": "12", "average-time": "0", "output-frequency": "2", "update-time": "0:0:1", "data": "test_data"}, "OTDR-1-1-2|CURRENT": map[string]interface{}{"scan-time": "2024-06-14T15:30:45.123Z+05:30", "span-distance": "0.0", "span-loss": "0.0", "distance-range": "12", "pulse-width": "12", "average-time": "0", "output-frequency": "2", "update-time": "0:0:1", "data": "test_data"}, "OTDR-1-1-2|2024-06-14T15:30:45.123Z+05:30": map[string]interface{}{"scan-time": "2024-06-14T15:30:45.123Z+05:30", "span-distance": "0.0", "span-loss": "0.0", "distance-range": "12", "pulse-width": "12", "average-time": "0", "output-frequency": "2", "update-time": "0:0:1", "data": "test_data"}}, "OTDR_EVENT": map[string]interface{}{"OTDR-1-1-2|BASELINE|101": map[string]interface{}{"index": "101", "length": "0.0", "loss": "0.0", "accumulate-loss": "0.0", "type": "REFLECTION", "reflection": "0.0"}, "OTDR-1-1-2|CURRENT|101": map[string]interface{}{"index": "101", "length": "0.0", "loss": "0.0", "accumulate-loss": "0.0", "type": "REFLECTION", "reflection": "0.0"}, "OTDR-1-1-2|2024-06-14T15:30:45.123Z+05:30|101": map[string]interface{}{"index": "101", "length": "0.0", "loss": "0.0", "accumulate-loss": "0.0", "type": "REFLECTION", "reflection": "0.0"}}}
+	loadDB(db.StateDB, pre_req_map)
+	expected_get_json = []string{"{\"openconfig-optical-time-domain-reflectometer:state\":{\"fiber-profile\":{\"backscatter-index\":\"2\",\"end-of-fiber-threshold\":\"0\",\"reflection-threshold\":\"0\",\"refractive-index\":\"0\",\"splice-loss-threshold\":\"0\"},\"name\":\"OTDR-1-1-2\",\"parent-port\":\"test_parent_port\",\"repetition\":{\"enable\":true,\"period\":1,\"start-time\":\"0:10\"},\"scanning-profile\":{\"average-time\":2,\"distance-range\":2,\"output-frequency\":\"88\",\"pulse-width\":2},\"scanning-status\":\"openconfig-platform-types:ACTIVE\",\"specification\":{\"distance-accuracy\":\"0\",\"dynamic-range\":1,\"loss-dead-zone\":\"2\",\"reflection-dead-zone\":\"2\",\"sampling-resolution\":\"2\"}}}", "{\"openconfig-optical-time-domain-reflectometer:baseline-result\":{\"events\":{\"event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}],\"scan-time\":\"2024-06-14T15:30:45.123Z+05:30\",\"span-distance\":\"0\",\"span-loss\":\"0\"},\"scanning-profile\":{\"average-time\":0,\"distance-range\":12,\"output-frequency\":\"2\",\"pulse-width\":12},\"trace\":{\"data\":\"test_data\",\"update-time\":\"0:0:1\"}}}", "{\"openconfig-optical-time-domain-reflectometer:event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}]}", "{\"openconfig-optical-time-domain-reflectometer:events\":{\"event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}],\"scan-time\":\"2024-06-14T15:30:45.123Z+05:30\",\"span-distance\":\"0\",\"span-loss\":\"0\"}}", "{\"openconfig-optical-time-domain-reflectometer:current-result\":{\"events\":{\"event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}],\"scan-time\":\"2024-06-14T15:30:45.123Z+05:30\",\"span-distance\":\"0\",\"span-loss\":\"0\"},\"scanning-profile\":{\"average-time\":0,\"distance-range\":12,\"output-frequency\":\"2\",\"pulse-width\":12},\"trace\":{\"data\":\"test_data\",\"update-time\":\"0:0:1\"}}}", "{\"openconfig-optical-time-domain-reflectometer:event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}]}", "{\"openconfig-optical-time-domain-reflectometer:events\":{\"event\":[{\"accumulate-loss\":\"0\",\"index\":101,\"length\":\"0\",\"loss\":\"0\",\"reflection\":\"0\",\"type\":\"REFLECTION\"}],\"scan-time\":\"2024-06-14T15:30:45.123Z+05:30\",\"span-distance\":\"0\",\"span-loss\":\"0\"}}"}
+
+	url = []string{"/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/state", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/baseline-result", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/baseline-result/events/event[index=101]", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/baseline-result/events", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/current-result", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/current-result/events/event[index=101]", "/openconfig-optical-time-domain-reflectometer:otdrs/otdr[name=OTDR-1-1-2]/current-result/events"}
+	for idx, url := range url {
+		t.Run("Test get on state DB otdr Key-Xfmr and Field-Xfmr for "+url, processGetRequest(url, nil, expected_get_json[idx], false))
+		time.Sleep(1 * time.Second)
+	}
+
+	t.Log("\n\n+++++++++++++ Done Performing Get on stateDB otdr Key-Xfmr and Field-Xfmr ++++++++++++")
+	cleanuptbl = map[string]interface{}{"OTDR": map[string]interface{}{"OTDR-1-1-2": ""}}
+	unloadDB(db.ConfigDB, cleanuptbl)
+	cleanupstatetbl = map[string]interface{}{"OTDR": map[string]interface{}{"OTDR-1-1-2": "", "OTDR-1-1-2|BASELINE": "", "OTDR-1-1-2|2024-06-14T15:30:45.123Z+05:30": "", "OTDR-1-1-2|CURRENT": ""}, "OTDR_EVENT": map[string]interface{}{"OTDR-1-1-2|CURRENT|101": "", "OTDR-1-1-2|BASELINE|101": "", "OTDR-1-1-2|2024-06-14T15:30:45.123Z+05:30|101": ""}}
+	unloadDB(db.StateDB, cleanupstatetbl)
+}

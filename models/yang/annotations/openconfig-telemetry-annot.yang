@@ -8,6 +8,14 @@ module openconfig-telemetry-annot {
         import sonic-extensions { prefix sonic-ext; }
         import openconfig-telemetry { prefix oc-telemetry; }
 
+        deviation /oc-telemetry:telemetry-system {
+                deviate add {
+                        sonic-ext:post-transformer "telemetry_client_sync_post_xfmr";
+                        sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
+                }
+        }
+
+
         deviation /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups {
                 deviate add {
                         sonic-ext:table-name "SENSOR_GROUP";
@@ -41,13 +49,14 @@ module openconfig-telemetry-annot {
 
         deviation  /oc-telemetry:telemetry-system/oc-telemetry:sensor-groups/oc-telemetry:sensor-group/oc-telemetry:sensor-paths/oc-telemetry:sensor-path/oc-telemetry:config/oc-telemetry:path {
                 deviate add {
-                        sonic-ext:field-transformer "telemetry_sensor_path_field_xfmr";
+                        sonic-ext:field-name "sensor-paths";
                 }
         }
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups {
 		deviate add {
 			sonic-ext:table-name "DESTINATION_GROUP";
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -72,6 +81,7 @@ module openconfig-telemetry-annot {
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations {
 		deviate add {
 			sonic-ext:table-name "DESTINATION";
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 
@@ -116,6 +126,7 @@ module openconfig-telemetry-annot {
 
         deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions {
 		deviate add {
+			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
 

@@ -167,19 +167,19 @@ module openconfig-terminal-device-annot {
       }
     }
 
-    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config {
+    deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config {
       deviate add {
       }
     }
 
-    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:client-als {
+    deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:client-als {
       deviate add {
 	    sonic-ext:field-name "client-als";	  
       }
     }
 
 
-    deviation /oc-platform:components/oc-platform:component/oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:als-delay {
+    deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:config/oc-opt-term:als-delay {
       deviate add {
 	    sonic-ext:field-name "als-delay";
       }
