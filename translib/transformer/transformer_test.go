@@ -76,16 +76,6 @@ func TestMain(t *testing.M) {
 	os.Exit(t.Run())
 }
 
-/*
-	func TestNamespaceHandlerFunc(t *testing.T){
-		// /openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier
-		response, err := transformer.namespaceHandlerFunc("oc_name_get_namespace_xfmr","/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier[name=AMPLIFIER-1-3-1]")
-		if response == "asic2" && err != nil{
-			t.Errorf("Error in NamespaceHandlerFunc of url",response)
-		}
-
-}
-*/
 func initDbConfig() error {
 	dbConfigFile := "/run/redis0/sonic-db/database_config.json"
 	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
@@ -202,7 +192,7 @@ func teardown() error {
 
 func loadDB(dbNum db.DBNum, mpi map[string]interface{}) {
 	client := rclientDBNum[dbNum]
-	opts := getDBOptions(dbNum, true)
+	opts := getDBOptions(dbNum, false)
 	for key, fv := range mpi {
 		switch fv.(type) {
 		case map[string]interface{}:
@@ -249,7 +239,6 @@ func getDbClient(dbNum int) *redis.Client {
 	if unmarshal_err != nil {
 		fmt.Println("Error decoding JSON:", unmarshal_err)
 	}
-	fmt.Printf("data:latest of database_config.json %v", dbConfig.Instances["redis"]["hostname"])
 	addr := fmt.Sprint(dbConfig.Instances["redis"]["hostname"])
 	pass := ""
 	for _, d := range dbConfig.Databases {

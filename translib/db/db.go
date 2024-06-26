@@ -199,7 +199,6 @@ func loadGlobalDatabase(globalDbFilePath string) map[string]string {
 			dbConfigMap[include.Namespace] = pwd + include.Include
 		}
 	}
-	glog.Infof("Sara, dbConfigMap:%v", dbConfigMap)
 	return dbConfigMap
 }
 

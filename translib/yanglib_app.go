@@ -518,5 +518,9 @@ func GetYangModuleSetID() string {
 
 func (app *yanglibApp) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	glog.Info("Yanglibapp:getNamespace response", res)
+
+	return res, nil
 }

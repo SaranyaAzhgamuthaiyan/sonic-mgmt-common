@@ -12,7 +12,7 @@ const (
 	/* STATE_DB KEYS */
 	BASELINE_RESULT = "baseline-result"
 	CURRENT_RESULT  = "current-result"
-	EVENTS          = "events"
+	EVENTS          = "events/event"
 	HISTORY_RESULTS = "history-results"
 )
 
@@ -79,9 +79,8 @@ var YangToDb_otdr_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (st
 	pathInfo := NewPathInfo(inParams.uri)
 	otdrkey := pathInfo.Var("name")
 	var oaStateKey string
+	var errMsg error
 	switch {
-	case strings.Contains(inParams.uri, BASELINE_RESULT):
-		oaStateKey = otdrkey + "|BASELINE"
 
 	case strings.Contains(inParams.uri, BASELINE_RESULT) &&
 		strings.Contains(inParams.uri, EVENTS):
@@ -90,8 +89,8 @@ var YangToDb_otdr_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (st
 			oaStateKey = otdrkey + "|BASELINE|" + otdrIndex
 		}
 
-	case strings.Contains(inParams.uri, CURRENT_RESULT):
-		oaStateKey = otdrkey + "|CURRENT"
+	case strings.Contains(inParams.uri, BASELINE_RESULT):
+		oaStateKey = otdrkey + "|BASELINE"
 
 	case strings.Contains(inParams.uri, CURRENT_RESULT) &&
 		strings.Contains(inParams.uri, EVENTS):
@@ -100,11 +99,8 @@ var YangToDb_otdr_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (st
 			oaStateKey = otdrkey + "|CURRENT|" + otdrIndex
 		}
 
-	case strings.Contains(inParams.uri, HISTORY_RESULTS):
-		{
-			otdrScanTime := pathInfo.Var("scan-time")
-			oaStateKey = otdrkey + "|" + otdrScanTime
-		}
+	case strings.Contains(inParams.uri, CURRENT_RESULT):
+		oaStateKey = otdrkey + "|CURRENT"
 
 	case strings.Contains(inParams.uri, HISTORY_RESULTS) &&
 		strings.Contains(inParams.uri, EVENTS):
@@ -114,10 +110,15 @@ var YangToDb_otdr_state_key_xfmr KeyXfmrYangToDb = func(inParams XfmrParams) (st
 			oaStateKey = otdrkey + "|" + otdrScanTime + "|" + otdrIndex
 		}
 
+	case strings.Contains(inParams.uri, HISTORY_RESULTS):
+		{
+			otdrScanTime := pathInfo.Var("scan-time")
+			oaStateKey = otdrkey + "|" + otdrScanTime
+		}
 	}
 	log.Infof("YangToDb_otdr_state_key_xfmr: key:", oaStateKey)
 
-	return oaStateKey, nil
+	return oaStateKey, errMsg
 }
 
 var DbToYang_otdr_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (map[string]interface{}, error) {
@@ -128,7 +129,7 @@ var DbToYang_otdr_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (ma
 	key := inParams.key
 	TableKeys := strings.Split(key, "|")
 
-	if len(TableKeys) >= 3 {
+	if len(TableKeys) == 3 {
 
 		res_map["name"] = TableKeys[0]
 		log.Infof("DbToYang_otdr_state_key_xfmr: TableKeys[0]:%v", TableKeys[0])
@@ -136,17 +137,21 @@ var DbToYang_otdr_state_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (ma
 
 		log.Infof("DbToYang_otdr_state_key_xfmr: TableKeys[2]:%v", TableKeys[2])
 		res_map["index"] = uint32(index)
+
 	} else if len(TableKeys) == 2 {
 		res_map["name"] = TableKeys[0]
+	} else if len(TableKeys) == 1 {
+		res_map["name"] = TableKeys[0]
 	}
+	if len(TableKeys) >= 2 {
+		// HISTORY RESULT
+		if !strings.Contains(TableKeys[1], "BASELINE") &&
+			!strings.Contains(TableKeys[1], "CURRENT") {
+			log.Infof("DbToYang_otdr_state_key_xfmr: Scan time:TableKeys[1]:%v", TableKeys[1])
+			res_map["scan-time"] = TableKeys[1]
+		}
 
-	// HISTORY RESULT
-	if !strings.Contains(TableKeys[1], "BASELINE") &&
-		!strings.Contains(TableKeys[1], "CURRENT") {
-		log.Infof("DbToYang_otdr_state_key_xfmr: Scan time:TableKeys[1]:%v", TableKeys[1])
-		res_map["scan-time"] = TableKeys[1]
 	}
-
 	return res_map, err
 }
 

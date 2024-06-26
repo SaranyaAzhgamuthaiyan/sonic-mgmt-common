@@ -55,6 +55,11 @@ const (
 	AppErr
 )
 
+const (
+	TYPE_ACTION = "Action"
+	TYPE_GET    = "Get"
+)
+
 type TranslibFmtType int
 
 const (
@@ -142,6 +147,19 @@ type ModelData struct {
 // initializes logging and app modules
 func init() {
 	log.Flush()
+}
+
+// Function to throw Get and Action response error
+func ResponseError(optype string, payload []byte, errorType ErrSource) interface{} {
+	if optype == TYPE_GET {
+		allResp := make([]GetResponse, 1)
+		allResp[0] = GetResponse{Payload: payload, ErrSrc: errorType}
+		return allResp
+	} else {
+		allResp := make([]ActionResponse, 1)
+		allResp[0] = ActionResponse{Payload: payload, ErrSrc: errorType}
+		return allResp
+	}
 }
 
 // Create - Creates entries in the redis DB pertaining to the path and payload
@@ -365,6 +383,7 @@ func Replace(req SetRequest) (SetResponse, error) {
 		defer writeMutex.Unlock()
 
 		d, err := db.NewMDB(getDBOptions(db.ConfigDB), dbName)
+		//d.Opts.DisableCVLCheck = true
 
 		if err != nil {
 			resp.ErrSrc = ProtoErr
@@ -374,6 +393,7 @@ func Replace(req SetRequest) (SetResponse, error) {
 		defer d.DeleteDB()
 
 		keys, err = (*app).translateReplace(d)
+		log.Infof("Replace request :keys%v", keys)
 
 		if err != nil {
 			resp.ErrSrc = AppErr
@@ -510,13 +530,14 @@ func Get(req GetRequest) ([]GetResponse, error) {
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
 	if err != nil {
-		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
+		allResp := ResponseError(TYPE_GET, payload, ProtoErr)
+		return allResp.([]GetResponse), err
 	}
 	dbNames, err := (*app).getNamespace(path)
-	if err != nil {
-		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
+
+	if err != nil || len(dbNames) == 0 {
+		allResp := ResponseError(TYPE_GET, payload, ProtoErr)
+		return allResp.([]GetResponse), err
 	}
 
 	// Fetching the DBNames to iterate if getNamespace returned *
@@ -525,25 +546,20 @@ func Get(req GetRequest) ([]GetResponse, error) {
 		dbNames = db.GetMultiDbNames()
 	}
 
-	if dbNames == nil {
-		allResp[0] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
-	}
-	for i, dbName := range dbNames {
-
+	for _, dbName := range dbNames {
 		opts := appOptions{depth: req.QueryParams.Depth, content: req.QueryParams.Content, fields: req.QueryParams.Fields, ctxt: req.Ctxt}
 		err = appInitialize(app, appInfo, path, nil, &opts, GET)
 
 		if err != nil {
-			allResp[i] = GetResponse{Payload: payload, ErrSrc: AppErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_GET, payload, AppErr)
+			return allResp.([]GetResponse), err
 		}
 
 		mdb, err := getAllMdbs(withWriteDisable)
 
 		if err != nil {
-			allResp[i] = GetResponse{Payload: payload, ErrSrc: ProtoErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_GET, payload, ProtoErr)
+			return allResp.([]GetResponse), err
 		}
 
 		defer closeAllMdbs(mdb)
@@ -551,9 +567,10 @@ func Get(req GetRequest) ([]GetResponse, error) {
 		err = (*app).translateGet(mdb[dbName])
 
 		if err != nil {
-			allResp[i] = GetResponse{Payload: payload, ErrSrc: AppErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_GET, payload, AppErr)
+			return allResp.([]GetResponse), err
 		}
+		log.Infof("Process Get for dbname:%v ", dbName)
 
 		resp, err = (*app).processGet(mdb[dbName], req.FmtType)
 		if len(resp.Payload) > 0 && err == nil {
@@ -585,13 +602,14 @@ func Action(req ActionRequest) ([]ActionResponse, error) {
 	app, appInfo, err := getAppModule(path, req.ClientVersion)
 
 	if err != nil {
-		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
+		allResp := ResponseError(TYPE_ACTION, payload, ProtoErr)
+		return allResp.([]ActionResponse), err
 	}
 	dbNames, err := (*app).getNamespace(path)
-	if err != nil {
-		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
+
+	if err != nil || len(dbNames) == 0 {
+		allResp := ResponseError(TYPE_ACTION, payload, ProtoErr)
+		return allResp.([]ActionResponse), err
 	}
 
 	// Fetching the DBNames to iterate if getNamespace returned *
@@ -600,11 +618,7 @@ func Action(req ActionRequest) ([]ActionResponse, error) {
 		dbNames = db.GetMultiDbNames()
 	}
 
-	if dbNames == nil {
-		allResp[0] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-		return allResp, err
-	}
-	for i, dbName := range dbNames {
+	for _, dbName := range dbNames {
 
 		aInfo := *appInfo
 
@@ -613,8 +627,8 @@ func Action(req ActionRequest) ([]ActionResponse, error) {
 		err = appInitialize(app, &aInfo, path, &req.Payload, nil, GET)
 
 		if err != nil {
-			allResp[i] = ActionResponse{Payload: payload, ErrSrc: AppErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_ACTION, payload, AppErr)
+			return allResp.([]ActionResponse), err
 		}
 
 		writeMutex.Lock()
@@ -623,8 +637,8 @@ func Action(req ActionRequest) ([]ActionResponse, error) {
 		mdb, err := getAllMdbs()
 
 		if err != nil {
-			allResp[i] = ActionResponse{Payload: payload, ErrSrc: ProtoErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_ACTION, payload, ProtoErr)
+			return allResp.([]ActionResponse), err
 		}
 
 		defer closeAllMdbs(mdb)
@@ -632,8 +646,8 @@ func Action(req ActionRequest) ([]ActionResponse, error) {
 		err = (*app).translateAction(mdb[dbName])
 
 		if err != nil {
-			allResp[i] = ActionResponse{Payload: payload, ErrSrc: AppErr}
-			return allResp, err
+			allResp := ResponseError(TYPE_ACTION, payload, AppErr)
+			return allResp.([]ActionResponse), err
 		}
 
 		resp, err = (*app).processAction(mdb[dbName])
@@ -1026,7 +1040,7 @@ func closeAllDbs(dbs []*db.DB) {
 	}
 }
 
-//Closes the multiple dbs for multi_asic, and nils out the arr.
+// Closes the multiple dbs for multi_asic, and nils out the arr.
 func closeAllMdbs(mdb map[string][db.MaxDB]*db.DB) {
 	for name, db := range mdb {
 		if db[:] != nil {

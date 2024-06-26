@@ -93,12 +93,12 @@ module openconfig-channel-monitor-annot {
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:config/oc-chan-monitor:name {
       deviate add {
-        sonic-ext:field-transformer "ocm_name_field_xfmr";
       }
     }
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:config/oc-chan-monitor:monitor-port {
       deviate add {
+        sonic-ext:field-name "monitor-port";
       }
     }
 
@@ -118,7 +118,6 @@ module openconfig-channel-monitor-annot {
 
     deviation /oc-chan-monitor:channel-monitors/oc-chan-monitor:channel-monitor/oc-chan-monitor:state/oc-chan-monitor:name {
       deviate add {
-        sonic-ext:field-transformer "ocm_name_field_xfmr";
       }
     }
 

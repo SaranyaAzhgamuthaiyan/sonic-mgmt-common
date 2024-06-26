@@ -500,5 +500,9 @@ func (app *PlatformApp) doGetSysEeprom() error {
 
 func (app *PlatformApp) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	log.Info("Platformapp:getNamespace response", res)
+
+	return res, nil
 }

@@ -305,8 +305,13 @@ var DbToYang_assignment_key_xfmr KeyXfmrDbToYang = func(inParams XfmrParams) (ma
 	if len(TableKeys) >= 2 {
 		index := strings.Replace(TableKeys[1], "ASS", "", -1)
 		aKey, _ := strconv.ParseUint(index, 10, 32)
-		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", aKey)
+		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[1]:%v", aKey)
 		res_map["index"] = uint32(aKey)
+		lindex := strings.Replace(TableKeys[0], "CH", "", -1)
+		lKey, _ := strconv.ParseUint(lindex, 10, 32)
+		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", lKey)
+		res_map["index"] = uint32(lKey)
+		log.Infof("DbToYang_assignment_key_xfmr: res_map:%v", res_map)
 	}
 
 	return res_map, err
@@ -326,10 +331,15 @@ var DbToYang_assignment_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrParams)
 	TableKeys := strings.Split(key, "|")
 
 	if len(TableKeys) >= 2 {
-		index := strings.Replace(TableKeys[1], "ASS", "", -1)
-		aKey, _ := strconv.ParseUint(index, 10, 32)
-		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", aKey)
+		aindex := strings.Replace(TableKeys[1], "ASS", "", -1)
+		aKey, _ := strconv.ParseUint(aindex, 10, 32)
+		log.Infof("DbToYang_assignment_key_xfmr: TableKey[1]:%v", aKey)
 		rmap["index"] = uint32(aKey)
+		lindex := strings.Replace(TableKeys[0], "CH", "", -1)
+		lKey, _ := strconv.ParseUint(lindex, 10, 32)
+		log.Infof("DbToYang_assignment_key_xfmr: TableKeys[0]:%v", lKey)
+		rmap["index"] = uint32(lKey)
+		log.Infof("DbToYang_assignment_key_xfmr: rmap:%v", rmap)
 	}
 
 	return rmap, err

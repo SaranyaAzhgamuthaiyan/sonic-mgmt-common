@@ -109,13 +109,13 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:config/oc-telemetry:destination-address {
 		deviate add {
-			sonic-ext:field-transformer "telemetry_destination_field_xfmr";
+			sonic-ext:field-transformer "telemetry_destination_address_field_xfmr";
 		}
 	}
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:destinations/oc-telemetry:destination/oc-telemetry:config/oc-telemetry:destination-port {
 		deviate add {
-			sonic-ext:field-transformer "telemetry_destination_field_xfmr";
+			sonic-ext:field-transformer "telemetry_destination_port_field_xfmr";
 		}
 	}
 
@@ -230,7 +230,7 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group {
 		deviate add {
-			sonic-ext:key-transformer "telemetry_group_id_key_xfmr"; //doubt need to check
+			sonic-ext:key-transformer "telemetry_sub_dest_group_id_key_xfmr"; //doubt need to check
 			sonic-ext:get-namespace "telemetry_get_namespace_xfmr";
 		}
 	}
@@ -247,7 +247,7 @@ module openconfig-telemetry-annot {
 
 	deviation /oc-telemetry:telemetry-system/oc-telemetry:subscriptions/oc-telemetry:persistent-subscriptions/oc-telemetry:persistent-subscription/oc-telemetry:destination-groups/oc-telemetry:destination-group/oc-telemetry:config/oc-telemetry:group-id {
 		deviate add {
-			sonic-ext:field-transformer "telemetry_group_id_field_xfmr";
+			sonic-ext:field-transformer "telemetry_sub_dest_group_id_field_xfmr";
 		}
 	}
 

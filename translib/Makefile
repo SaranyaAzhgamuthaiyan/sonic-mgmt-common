@@ -99,14 +99,6 @@ $(FORMAT_CHECK): $(SRCS) $(SRCX) $(TESTS) | $(YGOT_BINDS) $$(@D)/.
 		$?
 	touch $@
 
-DESTINATION_DIR := ../../../dockers/docker-sonic-mgmt-framework
-
-all: copy_directory 
-
-copy_directory:
-	cp -r $(TRANSLIB_TEST_DIR) $(DESTINATION_DIR)
-	@echo "###############Directories $(TRANSLIB_TEST_DIR) and $(TRANSFORMER_TEST_APP_BIN) copied to $(DESTINATION_DIR) successfully."
-
 clean:
 	$(RM) $(YGOT_BINDS)
 	$(RM) -r $(TRANSLIB_TEST_DIR) $(XFMR_BUILD_DIR)

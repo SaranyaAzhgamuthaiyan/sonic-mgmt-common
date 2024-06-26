@@ -898,8 +898,25 @@ func SortSncTableDbKeys(tableName string, dbKeyMap map[string]db.Value) []string
 }
 
 func GetNamespace(uri string) ([]string, error) {
-	var err error
-	xpath, _, _ := XfmrRemoveXPATHPredicates(uri)
-	res, err := namespaceHandlerFunc(xYangSpecMap[xpath].namespaceFunc, uri)
-	return res, err
+
+	xpath, _, err := XfmrRemoveXPATHPredicates(uri)
+	if err != nil {
+		return nil, err
+	}
+	xfmrLogInfo("GetNamespace:Returned from XfmrRemoveXPATHPredicates: %v", xpath)
+
+	// Check if xpath exists in xYangSpecMap to avoid nil pointer dereference
+	if spec, ok := xYangSpecMap[xpath]; ok {
+		res, err := namespaceHandlerFunc(spec.namespaceFunc, uri)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Warningf("xYangSpecMap data not found for xpath : %v", xpath)
+		errStr := "xYangSpecMap data not found for xpath : " + xpath
+		err = tlerr.InternalError{Format: errStr}
+		return nil, err
+    }
+
+    return res, nil
 }

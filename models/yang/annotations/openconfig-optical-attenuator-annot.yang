@@ -32,7 +32,7 @@ module openconfig-optical-attenuator-annot {
 	deviation /oc-opt-att:optical-attenuator/oc-opt-att:attenuators/oc-opt-att:attenuator/oc-opt-att:state {
 		deviate add{
 			sonic-ext:db-name "STATE_DB";
-			sonic-ext:table-name "ATTENUATOR";
+			sonic-ext:table-name "ATTENUATOR_TABLE";
 			sonic-ext:key-transformer "attn_name_key_xfmr";
                         sonic-ext:get-namespace "attn_name_get_namespace_xfmr";
 		}

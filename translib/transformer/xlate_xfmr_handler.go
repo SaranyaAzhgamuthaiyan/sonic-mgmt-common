@@ -145,19 +145,20 @@ func validateHandlerFunc(inParams XfmrParams, validateFuncNm string) bool {
 }
 
 func namespaceHandlerFunc(namespaceFuncNm string, uri string) ([]string, error) {
-	var retTblLst []string
+	var retNamespaceLst []string
 	var inParams XfmrParams
 	inParams.uri = uri
-	xfmrLogDebug("Before calling namespace xfmr %v, inParams %v", namespaceFuncNm, inParams)
 	ret, err := XlateFuncCall(namespaceFuncNm, inParams)
-	xfmrLogDebug("After calling namespace xfmr %v, inParams %v", namespaceFuncNm, inParams)
 
-	if ret[0].Interface() != nil {
-		retTblLst = ret[0].Interface().([]string)
+	if len(ret) > 0 && ret != nil {
+		if ret[0].Interface() != nil {
+			retNamespaceLst = ret[0].Interface().([]string)
+		}
 	}
-	xfmrLogDebug("Namespace transformer returned %v", retTblLst)
 
-	return retTblLst, err
+	xfmrLogDebug("Namespace transformer returned %v", retNamespaceLst)
+
+	return retNamespaceLst, err
 }
 
 func xfmrTblHandlerFunc(xfmrTblFunc string, inParams XfmrParams, xfmrTblKeyCache map[string]tblKeyCache) ([]string, error) {

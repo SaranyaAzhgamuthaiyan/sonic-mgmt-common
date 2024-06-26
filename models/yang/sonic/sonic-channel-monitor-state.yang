@@ -1,0 +1,71 @@
+module sonic-channel-monitor-state {
+  namespace "http://github.com/Azure/sonic-channel-monitor-state";
+  prefix sonic-opt-cha-mon;
+
+  import sonic-extension { prefix sonic-ext; }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC CHANNEL MONITOR STATE";
+
+  revision 2024-03-05 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-channel-monitor-state {
+    container OCM {
+      list OCM_LIST {
+        key "name";
+        leaf name {
+            type string;
+        }
+
+        leaf monitor-port {
+            type string;
+        }
+      }
+    }
+    container OCM_TABLE {
+      sonic-ext:db-name "STATE_DB";
+      list OCM_TABLE_LIST {
+        key "name";
+        sonic-ext:map-list "true"; //special annotation for map table
+
+        leaf name {
+          type string;
+        }
+
+        leaf monitor-port {
+          type string;
+        }
+     }
+    }
+   container OCM_CHANNEL {     
+     sonic-ext:db-name "STATE_DB"; 
+     list OCM_CHANNEL_LIST { //this is list inside list for storing mapping between two fields
+       key "lower-frequency upper-frequency";
+       leaf lower-frequency {
+	       type uint64;
+	       units "MHz";
+               description
+	       "Type for optical spectrum frequency values";
+       }
+       leaf upper-frequency {
+	       type uint64;
+	       units "MHz";
+	       description
+               "Type for optical spectrum frequency values";
+       }
+       leaf power {
+         type decimal64 {
+           fraction-digits 2;
+         }
+       } 
+     } 
+   }
+  }
+}

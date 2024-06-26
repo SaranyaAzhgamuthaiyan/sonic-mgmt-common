@@ -437,5 +437,9 @@ func (app *lldpApp) getRemoteSysCap(capb string, ifname string, setCap bool) {
 
 func (app *lldpApp) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	log.Info("lldpapp:getNamespace response", res)
+
+	return res, nil
 }

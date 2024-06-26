@@ -352,5 +352,9 @@ func (app *SysApp) processAction(dbs [db.MaxDB]*db.DB) (ActionResponse, error) {
 
 func (app *SysApp) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	log.Info("Sysapp:getNamespace response", res)
+
+	return res, nil
 }

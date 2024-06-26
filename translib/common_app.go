@@ -680,11 +680,16 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 	var xfmrTblLst []string
 	var resultTblLst []string
 	var isSonicYangReq bool
+	log.Info("In cmnAppCRUCommonDbOpn")
 
+	log.Infof("In cmnAppCRUCommonDbOpn dbMap:%v", dbMap)
 	for tblNm := range dbMap {
 		xfmrTblLst = append(xfmrTblLst, tblNm)
 	}
-	resultTblLst, err = utils.SortAsPerTblDeps(xfmrTblLst)
+	log.Infof("In cmnAppCRUCommonDbOpn xfmrTblLst:%v", xfmrTblLst)
+	//resultTblLst, err = utils.SortAsPerTblDeps(xfmrTblLst)
+	resultTblLst = xfmrTblLst
+	log.Infof("In cmnAppCRUCommonDbOpn resultTblLst:%v", resultTblLst)
 	if err != nil {
 		return err
 	}
@@ -792,6 +797,7 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 						}
 					}
 				case REPLACE:
+					log.Infof("In Replace case tblNm:%v,%v", tblNm, tblKey)
 					origTblRw := db.Value{Field: map[string]string{}}
 					for fld, val := range tblRw.Field {
 						origTblRw.Field[fld] = val
@@ -1150,12 +1156,10 @@ func isPartialReplace(exstRw db.Value, replTblRw db.Value, auxRw db.Value) bool 
 func (app *CommonApp) getNamespace(path string) ([]string, error) {
 
 	var err error
-	log.Info("Sara_common_app:getNamespacepath =", path)
-	log.Infof("@@@@@@@Sara_new: getNamespace of common app called\n")
 	var res []string
 	res, err = transformer.GetNamespace(path)
 	if err != nil {
-		log.Warning("@@@@Sara_common_apptransformer.GetNamespace() returned : ", err)
+		log.Warning("common_apptransformer.GetNamespace() returned : ", err)
 	}
 	return res, err
 }

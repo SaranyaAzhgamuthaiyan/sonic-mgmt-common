@@ -1788,5 +1788,9 @@ func (app *AclApp) processSubscribe(req processSubRequest) (processSubResponse, 
 
 func (app *AclApp) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	log.Info("Aclapp:getNamespace response", res)
+
+	return res, nil
 }

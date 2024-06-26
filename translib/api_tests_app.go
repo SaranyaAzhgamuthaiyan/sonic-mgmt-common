@@ -196,5 +196,9 @@ func (app *apiTests) getError() error {
 
 func (app *apiTests) getNamespace(path string) ([]string, error) {
 	var res []string
-	return res, tlerr.NotSupported("not supported")
+
+	res = append(res, "host")
+	glog.Info("Apitestsapp:getNamespace response", res)
+
+	return res, nil
 }

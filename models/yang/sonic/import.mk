@@ -6,3 +6,7 @@
 # Other sonic yangs referred by these will also be copied.
 #
 SONICYANG_IMPORTS += sonic-sflow.yang
+SONICYANG_IMPORTS += sonic-telemetry-client.yang
+SONICYANG_IMPORTS += sonic-optical-amplifier.yang
+SONICYANG_IMPORTS += sonic-telemetry-config.yang
+SONICYANG_IMPORTS += sonic-optical-attenuator.yang
