@@ -61,7 +61,7 @@ var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
 
 func init() {
 
-	register_model_path := []string{"/sonic-", "*", "/openconfig-"} // register YANG model path(s) to be supported via common app
+	register_model_path := []string{"/sonic-", "*"} // register YANG model path(s) to be supported via common app
 	for _, mdl_pth := range register_model_path {
 		err := register(mdl_pth, &cmnAppInfo)
 
