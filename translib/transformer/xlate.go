@@ -911,12 +911,11 @@ func GetNamespace(uri string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
+		return res, nil
 	} else {
 		log.Warningf("xYangSpecMap data not found for xpath : %v", xpath)
 		errStr := "xYangSpecMap data not found for xpath : " + xpath
 		err = tlerr.InternalError{Format: errStr}
 		return nil, err
-    }
-
-    return res, nil
+	}
 }
