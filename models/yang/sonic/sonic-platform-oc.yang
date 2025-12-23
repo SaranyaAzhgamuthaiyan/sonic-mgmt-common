@@ -1,0 +1,102 @@
+module sonic-platform-oc {
+  namespace "http://github.com/Azure/sonic-platform-oc";
+  prefix sonic-opt-amp;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC OC COMPONENT";
+
+  revision 2024-03-19 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-platform-oc {
+    container OC_COMPONENT {
+      description
+        "Configuration data for platform components in CONFIG_DB.";
+      list OC_COMPONENT_LIST {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "User-defined name assigned to identify a specific component
+             in the device";
+        }
+	leaf frequency {
+		type uint64;
+		units "MHz";
+		description
+			"Frequency of the optical channel, expressed in MHz";
+	}
+
+	leaf target-output-power {
+		type decimal64 {
+			fraction-digits 2;
+		}
+		units dBm;
+		description
+			"Target output optical power level of the optical channel,
+			expressed in increments of 0.01 dBm (decibel-milliwats)";
+	}
+
+	leaf operational-mode {
+		type uint16;
+		description
+			"Vendor-specific mode identifier";
+	}
+        // TRANSCEIVER
+	leaf enabled {
+          type boolean;
+          description
+            "Turns power on / off to the transceiver -- provides a means
+             to power on/off the transceiver (in the case of SFP, SFP+,
+             QSFP,...) or enable high-power mode (in the case of CFP,
+             CFP2, CFP4) and is optionally supported (device can choose to
+             always enable).  True = power on / high power, False =
+             powered off";
+        }
+        leaf fec-mode {
+          type string;
+          description
+            "The FEC mode indicates the mode of operation for the
+             transceiver's FEC. This defines typical operational modes
+             and does not aim to specify more granular FEC capabilities.";
+        }
+        leaf ethernet-pmd-preconf {
+          type string;
+          description
+            "The Ethernet PMD is a property of the optical transceiver
+            used on the port, indicating the type of physical connection.
+            It is included in configuration data to allow pre-configuring
+            a port/transceiver with the expected PMD.  The actual PMD is
+            indicated by the ethernet-pmd state leaf.";
+        }
+
+
+     }
+    }
+    container OC_COMPONENT_TABLE {
+	    sonic-ext:db-name "STATE_DB";
+	    config false;
+	    description
+		    "Operational state data for optical components in STATE_DB.";
+	    list OC_COMPONENT_TABLE_LIST {
+		    key "name";
+		    leaf name {
+			    type string;
+			    description
+				    "User-defined name assigned to identify a specific component
+				    in the device";
+		    }
+	    }
+    }
+  }
+}

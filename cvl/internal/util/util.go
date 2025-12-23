@@ -41,6 +41,7 @@ static void ly_set_log_callback(int enable) {
 */
 import "C"
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,6 +58,7 @@ import (
 	set "github.com/Workiva/go-datastructures/set"
 	"github.com/go-redis/redis/v7"
 	log "github.com/golang/glog"
+	"path/filepath"
 )
 
 var CVL_SCHEMA string = "schema/"
@@ -65,6 +67,22 @@ var CVL_CFG_FILE string = "/usr/sbin/cvl_cfg.json"
 const CVL_LOG_FILE = "/tmp/cvl.log"
 const SONIC_DB_CONFIG_FILE string = "/var/run/redis/sonic-db/database_config.json"
 const ENV_VAR_SONIC_DB_CONFIG_FILE = "DB_CONFIG_PATH"
+
+var DEFAULT_ASIC_CONF_FILE_PATH = "/usr/share/sonic/platform/asic.conf"
+var DEFAULT_GLOBALDB_FILE_PATH = "/var/run/redis/sonic-db/database_global.json"
+var NumAsic = 1
+var multiDbsConfigMap = make(map[string]map[string]interface{})
+
+type DbGlobal struct {
+	Includes     []DbInclude `json:"INCLUDES"`
+	Version      string      `json:"VERSION"`
+	KeySeperator string      `json:"KEY_SEPERATOR"`
+}
+
+type DbInclude struct {
+	Include   string `json:"include"`
+	Namespace string `json:"namespace"`
+}
 
 var sonic_db_config = make(map[string]interface{})
 
@@ -92,10 +110,52 @@ func init() {
 	logFileMutex = &sync.Mutex{}
 
 	//Initialize DB settings
-	dbCfgInit()
+	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
+		DEFAULT_ASIC_CONF_FILE_PATH = path
+	}
+	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
+		DEFAULT_GLOBALDB_FILE_PATH = path
+	}
+
+	NumAsic = getNumAsic()
+	if !IsMultiAsic() {
+		dbCfgInit(SONIC_DB_CONFIG_FILE, "host")
+	} else {
+		globalDbInfo := loadGlobalDatabase(DEFAULT_GLOBALDB_FILE_PATH)
+		for namespace, path := range globalDbInfo {
+			dbCfgInit(path, namespace)
+		}
+	}
+
 	redisOptions = &redis.Options{}
 
 	formatterFunctionsMap = make(map[string]Formatter)
+}
+
+func loadGlobalDatabase(globalDbFilePath string) map[string]string {
+	var globalDbCfg DbGlobal
+
+	data, err := os.ReadFile(globalDbFilePath)
+	if err != nil {
+		panic(err)
+	} else {
+		err = json.Unmarshal([]byte(data), &globalDbCfg)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	var dbConfigMap = make(map[string]string)
+	var pwd = filepath.Dir(globalDbFilePath) + "/"
+	for i := 0; i < len(globalDbCfg.Includes); i++ {
+		if i == 0 {
+			dbConfigMap["host"] = pwd + globalDbCfg.Includes[0].Include
+		} else {
+			include := globalDbCfg.Includes[i]
+			dbConfigMap[include.Namespace] = pwd + include.Include
+		}
+	}
+	return dbConfigMap
 }
 
 var cvlCfgMap map[string]string
@@ -164,6 +224,46 @@ var traceLevelMap = map[int]string{
 var Tracing bool = false
 
 var traceFlags uint16 = 0
+
+func IsMultiAsic() bool {
+	return NumAsic > 0
+}
+
+func getNumAsic() int {
+	file, err := os.Open(DEFAULT_ASIC_CONF_FILE_PATH)
+	if err != nil {
+		log.Warning("Cannot find the asic.conf file, set num_asic to 1 by default")
+		return 1
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var text []string
+	for scanner.Scan() {
+		text = append(text, scanner.Text())
+	}
+
+	var numAsics = 1
+	for _, line := range text {
+		tokens := strings.Split(line, "=")
+		if len(tokens) != 2 {
+			continue
+		}
+
+		if strings.ToLower(tokens[0]) == "num_asic" {
+			num, err := strconv.Atoi(tokens[1])
+			if err != nil {
+				log.Warning("invalid line in asic.config")
+				continue
+			}
+			numAsics = num
+		}
+	}
+
+	return numAsics
+}
 
 func SetTrace(on bool) {
 	if on {
@@ -453,7 +553,8 @@ func SkipSemanticValidation() bool {
 // Function to read Redis DB configuration from file.
 // In absence of the file, it uses default config for CONFIG_DB
 // so that CVL UT will pass in development environment.
-func dbCfgInit() {
+func dbCfgInit(dbConfigPath string, multiDbName string) {
+	var sonic_db_config = make(map[string]interface{})
 	defaultDBConfig := `{
 		"INSTANCES": {
 			"redis":{
@@ -478,8 +579,8 @@ func dbCfgInit() {
 	dbCfgFile := ""
 
 	//Check if multi-db config file is present
-	if _, errF := os.Stat(SONIC_DB_CONFIG_FILE); !os.IsNotExist(errF) {
-		dbCfgFile = SONIC_DB_CONFIG_FILE
+	if _, errF := os.Stat(dbConfigPath); !os.IsNotExist(errF) {
+		dbCfgFile = dbConfigPath
 	} else {
 		//Check if multi-db config file is specified in environment
 		if fileName := os.Getenv(ENV_VAR_SONIC_DB_CONFIG_FILE); fileName != "" {
@@ -509,10 +610,12 @@ func dbCfgInit() {
 			panic(err)
 		}
 	}
+	multiDbsConfigMap[multiDbName] = sonic_db_config
 }
 
 // Get list of DB
-func getDbList() map[string]interface{} {
+func getDbList(multiDbName string) map[string]interface{} {
+	var sonic_db_config = multiDbsConfigMap[multiDbName]
 	db_list, ok := sonic_db_config["DATABASES"].(map[string]interface{})
 	if !ok {
 		panic(fmt.Errorf("DATABASES' is not valid key in %s!",
@@ -523,6 +626,8 @@ func getDbList() map[string]interface{} {
 
 // Get DB instance based on given DB name
 func getDbInst(dbName string) map[string]interface{} {
+	dbName, multiDbName := getDBNames(dbName)
+	var sonic_db_config = multiDbsConfigMap[multiDbName]
 	db, ok := sonic_db_config["DATABASES"].(map[string]interface{})[dbName]
 	if !ok {
 		panic(fmt.Errorf("database name '%v' is not valid in %s !",
@@ -543,7 +648,8 @@ func getDbInst(dbName string) map[string]interface{} {
 
 // GetDbSeparator Get DB separator based on given DB name
 func GetDbSeparator(dbName string) string {
-	db_list := getDbList()
+	dbName, multiDbName := getDBNames(dbName)
+	db_list := getDbList(multiDbName)
 	separator, ok := db_list[dbName].(map[string]interface{})["separator"]
 	if !ok {
 		panic(fmt.Errorf("'separator' is not a valid field in %s !",
@@ -554,7 +660,8 @@ func GetDbSeparator(dbName string) string {
 
 // GetDbId Get DB id on given db name
 func GetDbId(dbName string) int {
-	db_list := getDbList()
+	dbName, multiDbName := getDBNames(dbName)
+	db_list := getDbList(multiDbName)
 	id, ok := db_list[dbName].(map[string]interface{})["id"]
 	if !ok {
 		panic(fmt.Errorf("'id' is not a valid field in %s !",
@@ -594,6 +701,15 @@ func GetDbPassword(dbName string) string {
 	return password
 }
 
+func getDbPort(dbName string) int {
+	inst := getDbInst(dbName)
+	port, ok := inst["port"]
+	if !ok {
+		panic(fmt.Errorf("'port' is not a valid field"))
+	}
+	return int(port.(float64))
+}
+
 // GetDbTcpAddr Get DB TCP endpoint
 func GetDbTcpAddr(dbName string) string {
 	inst := getDbInst(dbName)
@@ -602,12 +718,7 @@ func GetDbTcpAddr(dbName string) string {
 		panic(fmt.Errorf("'hostname' is not a valid field in %s !",
 			SONIC_DB_CONFIG_FILE))
 	}
-
-	port, ok1 := inst["port"]
-	if !ok1 {
-		panic(fmt.Errorf("'port' is not a valid field in %s !",
-			SONIC_DB_CONFIG_FILE))
-	}
+	port := getDbPort(dbName)
 
 	return fmt.Sprintf("%v:%v", hostname, port)
 }
@@ -701,7 +812,16 @@ func UpdateRedisOptions(opts *redis.Options) {
 	redisOptions = opts
 }
 
+func getDBNames(str string) (string, string) {
+	if strings.Contains(str, ".") {
+		parts := strings.SplitN(str, ".", 2)
+		return parts[0], parts[1]
+	}
+	return str, "host"
+}
+
 func getRedisOptions(dbName string) *redis.Options {
+	// dbName = dbName + Namespace
 	var dbNetwork, dbAddr string
 
 	// need to create copy of redisOptions because few attributes

@@ -21,14 +21,14 @@ package cvl
 
 import (
 	"errors"
-
 	"github.com/go-redis/redis/v7"
+	//lint:ignore ST1001 This is safe to dot import for util package
 )
 
 // RunLua is a temporary API to run a named lua script in ConfigDb. Script name
 // can be one of "count_entries" or "filter_entries".
 // TODO move the script definitions to DBAL and remove this API
-func RunLua(name string, args ...interface{}) (interface{}, error) {
+func RunLua(redisClient *redis.Client, name string, args ...interface{}) (interface{}, error) {
 	script, ok := luaScripts[name]
 	if !ok || script == nil {
 		return nil, errors.New("unknown script: " + name)

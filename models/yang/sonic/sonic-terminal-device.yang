@@ -1,0 +1,182 @@
+module sonic-terminal-device {
+  namespace "http://github.com/Azure/sonic-terminal-device";
+  prefix sonic-ter-dev;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC TERMINAL DEVICE";
+
+  revision 2024-07-03 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-terminal-device {
+    container OCH {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container the list of optical channels";
+      list OCH_LIST {
+        key "index";
+
+        leaf index {
+          type string;
+          description
+            "Index of the current logical channel";
+        }
+
+        leaf frequency {
+          type uint64;
+          units "MHz";
+          description
+            "Frequency of the optical channel, expressed in MHz";
+        }
+
+        leaf target-output-power {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units dBm;
+          description
+            "Target output optical power level of the optical channel,
+            expressed in increments of 0.01 dBm (decibel-milliwats)";
+        }
+
+        leaf operational-mode {
+          type uint16;
+          description
+            "Vendor-specific mode identifier";
+        }
+      }
+    }
+    container LOGICAL_CHANNEL {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container the list of logical channels";
+      list LOGICAL_CHANNEL_LIST {
+        key "index";
+        leaf test-signal {
+          type boolean;
+          description
+            "When enabled the logical channel's DSP will generate a pseudo
+             randmon bit stream (PRBS) which can be used during testing.";
+        }
+        leaf loopback-mode {
+          type string;
+          description
+            "Sets the loopback type on the logical channel. Setting the
+             mode to something besides NONE activates the loopback in
+             the specified mode.";
+        }
+        leaf admin-state {
+          type string;
+          description
+            "Sets the admin state of the logical channel";
+        }
+        leaf index {
+          type string;
+          description
+            "Index of the current logical channel";
+        }
+        leaf description {
+          type string;
+          description
+            "Description of the logical channel";
+        }
+      }
+    }
+    container ETHERNET {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container the list of logical channels";
+      list ETHERNET_LIST {
+        key "index";
+        leaf index {
+          type string;
+          description
+            "Index of the current logical channel";
+        }
+        leaf client-als {
+          type enumeration {
+            enum NONE {
+              description
+                "The client port will do nothing when a failure is
+                detected on the line port or the remote client port";
+            }
+            enum LASER_SHUTDOWN {
+              description
+                "The client port will shut down the laser to notify the
+                subtending Ethernet equipment of the failure detected on
+                the line port or the remote client port.";
+            }
+            enum ETHERNET {
+              description
+                "The client port will propagate the local fault or remote
+                fault signal to the subtending Ethernet equipment.";
+            }
+          }
+          default ETHERNET;
+          description
+            "Sets the client port behavior that defines if the actions
+            of automatic laser shutdown (als), ethernet fault
+            propagation, or nothing will be done upon the detection
+            of a failure on the line port or the upstream remote
+            client port.";
+        }
+
+        leaf als-delay {
+          type uint32;
+          units milliseconds;
+          default 0;
+          description
+            "The timer to delay the client-als actions on the client
+            port when a local or remote fault is detected on the line
+            port. The delay will only be valid when the client-als is
+            set to LASER_SHUTDOWN";
+        }
+
+      }
+    }
+
+    container OTN {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container the list of logical channels";
+      list OTN_LIST {
+        key "index";
+        leaf index {
+          type string;
+          description
+            "Index of the current logical channel";
+        }
+        leaf tti-msg-transmit {
+          type string;
+          description
+            "Trail trace identifier (TTI) message transmitted";
+        }
+
+        leaf tti-msg-expected {
+          type string;
+          description
+            "Trail trace identifier (TTI) message expected";
+        }
+
+        leaf tti-msg-auto {
+          type boolean;
+          description
+            "Trail trace identifier (TTI) transmit message automatically
+            created.  If true, then setting a custom transmit message
+            would be invalid.";
+        }
+      }
+    }
+
+  }
+}

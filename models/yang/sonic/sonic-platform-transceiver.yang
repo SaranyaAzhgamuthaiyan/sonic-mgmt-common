@@ -1,0 +1,60 @@
+module sonic-platform-transceiver {
+  namespace "http://github.com/Azure/sonic-platform-transceiver";
+  prefix sonic-pfm-transceiver;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC PLATFORM TRANSCEIVER";
+
+  revision 2024-06-28 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-platform-transceiver {
+    container TRANSCEIVER {
+      description
+        "Configuration data for transceiver list in CONFIG_DB";
+      list TRANSCEIVER_LIST {
+	key "name";
+	leaf name {  
+           type string; 
+	   description "Unique identifier for the transceiver.";
+	}
+	leaf enabled {
+          type boolean;
+          description
+            "Turns power on / off to the transceiver -- provides a means
+             to power on/off the transceiver (in the case of SFP, SFP+,
+             QSFP,...) or enable high-power mode (in the case of CFP,
+             CFP2, CFP4) and is optionally supported (device can choose to
+             always enable).  True = power on / high power, False =
+             powered off";
+        }
+        leaf fec-mode {
+          type string;
+          description
+            "The FEC mode indicates the mode of operation for the
+             transceiver's FEC. This defines typical operational modes
+             and does not aim to specify more granular FEC capabilities.";
+        }
+        leaf ethernet-pmd-preconf {
+          type string;
+          description
+            "The Ethernet PMD is a property of the optical transceiver
+            used on the port, indicating the type of physical connection.
+            It is included in configuration data to allow pre-configuring
+            a port/transceiver with the expected PMD.  The actual PMD is
+            indicated by the ethernet-pmd state leaf.";
+        }
+      }
+    }
+  }
+}

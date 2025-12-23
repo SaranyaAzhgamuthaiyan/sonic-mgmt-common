@@ -37,6 +37,7 @@ type DBAccess interface {
 	Lookup(s Search) JsonResult
 	// Count entries using a Search criteria. Returns 0 if there are no matches.
 	Count(s Search) IntResult
+	GetMDBName() string
 }
 
 type IntResult interface {
