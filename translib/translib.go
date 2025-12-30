@@ -37,14 +37,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	//"fmt"
+	"fmt"
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/Azure/sonic-mgmt-common/translib/tlerr"
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/golang/glog"
 	"github.com/openconfig/ygot/ygot"
-	//"os"
-	//"path/filepath"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -174,10 +174,7 @@ func ResponseError(optype string, payload []byte, errorType ErrSource) interface
 }
 
 func commitTransactions(redisMdbInstances map[string]*db.DB, nsMaps []NamespacePayload) error {
-	total := len(redisMdbInstances)
-	i := 0
 	for ns, redisDbInstance := range redisMdbInstances {
-		i++
 
 		if err := redisDbInstance.CommitTx(); err != nil {
 			return err
@@ -188,12 +185,6 @@ func commitTransactions(redisMdbInstances map[string]*db.DB, nsMaps []NamespaceP
 			if nsMaps[i].Namespace == ns {
 				nsMaps[i].Commited = true
 			}
-		}
-
-		// Purposefully fail on last iteration
-		if i == total {
-			//		err := fmt.Errorf("Intentional failure on last iteration: %s", ns)
-			//		return tlerr.InvalidArgsError{Format: err.Error()}
 		}
 
 	}
@@ -237,28 +228,27 @@ func initializeMDBInstance(mdbName string, redisMdbInstances map[string]*db.DB) 
 
 func processPostPhase() error {
 	log.Infof("Cleanup: deleting all backup files from /tmp")
-	/*
-		// Match all files with pattern: /tmp/common_backup_*.json
-		backupFiles, err := filepath.Glob("/var/tmp/common_backup_*.json")
+
+	// Match all files with pattern: /tmp/common_backup_*.json
+	backupFiles, err := filepath.Glob("/var/tmp/common_backup_*.json")
+	if err != nil {
+		log.Infof("Failed to list backup files: %v", err)
+		return err
+	}
+
+	if len(backupFiles) == 0 {
+		log.Infof("No backup files found to delete.")
+		return nil
+	}
+
+	for _, file := range backupFiles {
+		err := os.Remove(file)
 		if err != nil {
-			log.Infof("Failed to list backup files: %v", err)
+			log.Infof("Failed to delete backup file: %s, error: %v", file, err)
 			return err
 		}
-
-		if len(backupFiles) == 0 {
-			log.Infof("No backup files found to delete.")
-			return nil
-		}
-
-		for _, file := range backupFiles {
-			err := os.Remove(file)
-			if err != nil {
-				log.Infof("Failed to delete backup file: %s, error: %v", file, err)
-				return err
-			}
-			log.Infof("Deleted backup file: %s", file)
-		}
-	*/
+		log.Infof("Deleted backup file: %s", file)
+	}
 	return nil
 }
 
