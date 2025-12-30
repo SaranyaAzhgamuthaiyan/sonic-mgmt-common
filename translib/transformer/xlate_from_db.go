@@ -1483,7 +1483,7 @@ func yangDataFill(inParamsForGet xlateFromDbParams, isOcMdl bool) error {
 	xpath := inParamsForGet.xpath
 	var chldUri string
 
-	log.V(5).Infof("yangDataFill: uri: %v; parent obj: %v; inParamsForGet.relUri: %v; xpath: %v",
+	log.Infof("yangDataFill: uri: %v; parent obj: %v; inParamsForGet.relUri: %v; xpath: %v",
 		inParamsForGet.uri, reflect.TypeOf(*inParamsForGet.ygParentObj), inParamsForGet.relUri, xpath)
 
 	yangNode, ok := xYangSpecMap[xpath]
@@ -1511,7 +1511,7 @@ func yangDataFill(inParamsForGet xlateFromDbParams, isOcMdl bool) error {
 				inParamsForGet.ygSchema = ygotCtx.trgtYgSchema
 				inParamsForGet.relUri = ""
 			}
-			log.V(5).Infof("yangDataFill: after uri marshalling: uri: %v; parent obj: %v", inParamsForGet.uri, reflect.TypeOf(*inParamsForGet.ygParentObj))
+			log.Infof("yangDataFill: after uri marshalling: uri: %v; parent obj: %v", inParamsForGet.uri, reflect.TypeOf(*inParamsForGet.ygParentObj))
 		}
 
 		for yangChldName := range yangNode.yangEntry.Dir {
@@ -1528,9 +1528,10 @@ func yangDataFill(inParamsForGet xlateFromDbParams, isOcMdl bool) error {
 			isValid := inParamsForGet.validate
 			if xYangSpecMap[chldXpath] != nil && yangNode.yangEntry.Dir[yangChldName] != nil {
 				chldYangType := xYangSpecMap[chldXpath].yangType
+
 				if chldYangType == YANG_CONTAINER || chldYangType == YANG_LIST {
 					inParamsForGet.relUri = "/" + yangChldName
-					log.V(5).Infof("yangDataFill: About to process URI : %v, chldYangType: %v; inParamsForGet.relUri: %v ",
+					log.Infof("yangDataFill: About to process URI : %v, chldYangType: %v; inParamsForGet.relUri: %v ",
 						chldUri, getYangTypeStrId(chldYangType), inParamsForGet.relUri)
 				}
 				if inParamsForGet.queryParams.content != QUERY_CONTENT_ALL {
@@ -1643,6 +1644,7 @@ func yangDataFill(inParamsForGet xlateFromDbParams, isOcMdl bool) error {
 						if qdbMap, getOk := inParamsForGet.dbTblKeyGetCache[cdb]; getOk {
 							if dbTblData, tblPresent := qdbMap[chtbl]; tblPresent {
 								qdbMapHasTblData = true
+
 								if _, keyPresent := dbTblData[tblKey]; keyPresent {
 									qdbMapHasTblKeyData = true
 								}
@@ -1744,6 +1746,7 @@ func yangDataFill(inParamsForGet xlateFromDbParams, isOcMdl bool) error {
 					inParamsForGet.dbDataMap = dbDataMap
 					inParamsForGet.ygRoot = ygRoot
 				} else if chldYangType == YANG_LIST {
+
 					xpathKeyExtRet, xerr := xpathKeyExtractForGet(dbs[cdb], ygRoot, GET, chldUri, requestUri, dbDataMap, nil, txCache, inParamsForGet.xfmrDbTblKeyCache, dbs)
 					if xerr != nil && len(xpathKeyExtRet.dbKey) == 0 {
 						log.Warningf("yangDataFill: could not convert yang key into db key, error: %v; chldUri: %v", xerr.Error(), chldUri)

@@ -19,8 +19,12 @@
 package translib
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -41,6 +45,18 @@ import (
 
 var ()
 
+type BackupEntry struct {
+	Operation string   `json:"operation"`
+	Value     db.Value `json:"value,omitempty"` // omit if empty (e.g., CREATE no value)
+}
+
+// BackupData maps table name -> key -> BackupEntry
+type BackupData map[string]map[string]BackupEntry
+
+// BackupFile stores all namespaces backup data
+// Namespace -> BackupData
+type BackupFile map[string]BackupData
+
 type CommonApp struct {
 	pathInfo            *PathInfo
 	body                []byte
@@ -59,6 +75,8 @@ var cmnAppInfo = appInfo{appType: reflect.TypeOf(CommonApp{}),
 	ygotRootType:  nil,
 	isNative:      false,
 	tablesToWatch: nil}
+
+const BackupFilePath = "/tmp/common_app_backup.json"
 
 func init() {
 
@@ -713,7 +731,14 @@ func (app *CommonApp) cmnAppCRUCommonDbOpn(d *db.DB, opcode int, dbMap map[strin
 			for _, tblKey := range reverOrdDbKeyLst {
 				tblRw := tblVal[tblKey]
 				log.Info("Processing Table key ", tblKey)
-				existingEntry, _ := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+				existingEntry, err := d.GetEntry(cmnAppTs, db.Key{Comp: []string{tblKey}})
+				if err != nil {
+					if !(strings.Contains(err.Error(), "Entry does not exist")) {
+						log.Errorf("Failed to get old entry for key %v: %v", tblKey, err)
+						continue
+					}
+				}
+
 				if existingEntry.IsPopulated() && len(tblRw.Field) == 1 && (opcode == CREATE || opcode == UPDATE) {
 					/*If tbl/key in result map exists in Db and the resultmap has only NULL/NULL field then don't do Db oper */
 					if _, nullFieldOk := tblRw.Field["NULL"]; nullFieldOk {
@@ -1173,4 +1198,365 @@ func isPartialReplace(exstRw db.Value, replTblRw db.Value, auxRw db.Value) bool 
 	}
 	log.Info("returning partialReplace - ", partialReplace)
 	return partialReplace
+}
+
+func opcodeToStr(opcode int) string {
+	switch opcode {
+	case GET:
+		return "GET"
+	case CREATE:
+		return "CREATE"
+	case REPLACE:
+		return "REPLACE"
+	case UPDATE:
+		return "UPDATE"
+	case DELETE:
+		return "DELETE"
+	default:
+		return "UNKNOWN"
+	}
+}
+
+const (
+	backupFileDir        = "/var/tmp"
+	backupFilePrefix     = "common_backup_"
+	backupFileExt        = ".json"
+	MAX_BACKUP_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+)
+
+func getNamespaceBackupFilePath(namespace string) string {
+	return filepath.Join(backupFileDir, backupFilePrefix+namespace+backupFileExt)
+}
+
+func loadBackupFile(namespace string) (BackupData, error) {
+	var backupData BackupData = make(BackupData)
+	filePath := getNamespaceBackupFilePath(namespace)
+
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return backupData, nil
+		}
+		return nil, fmt.Errorf("failed to read backup file: %v", err)
+	}
+
+	err = json.Unmarshal(data, &backupData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal backup file: %v", err)
+	}
+
+	return backupData, nil
+}
+
+func writeBackupToFile(namespace string, backupData BackupData) error {
+	filePath := getNamespaceBackupFilePath(namespace)
+
+	data, err := json.MarshalIndent(backupData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal backup data: %v", err)
+	}
+
+	if len(data) > MAX_BACKUP_FILE_SIZE {
+		return fmt.Errorf("backup file size exceeds maximum allowed limit of %d bytes", MAX_BACKUP_FILE_SIZE)
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write backup file: %v", err)
+	}
+
+	log.Infof("Backup successfully written to %s", filePath)
+	return nil
+}
+
+// Backup function that stores current entries with operation and namespace to the shared backup file
+func (app *CommonApp) cmnAppCRUDTakeBackup(d *db.DB, ckey string, opcode int, dbMap map[string]map[string]db.Value) error {
+	var err error
+	var xfmrTblLst []string
+	var resultTblLst []string
+
+	d.Opts.DisableCVLCheck = true
+
+	// Step 1: Sort tables by dependency
+	for tblNm := range dbMap {
+		xfmrTblLst = append(xfmrTblLst, tblNm)
+	}
+
+	resultTblLst, err = utils.SortAsPerTblDeps(xfmrTblLst)
+	if err != nil {
+		return err
+	}
+
+	namespace := d.Opts.MDBName
+
+	backupContent, err := loadBackupFile(namespace)
+	if err != nil {
+		return err
+	}
+
+	if backupContent == nil {
+		backupContent = make(BackupData)
+	}
+
+	// Step 2: If ckey == "*", backup all keys in the DB
+	if ckey == "*" {
+		for _, tblNm := range resultTblLst {
+			cmnAppTs := &db.TableSpec{Name: tblNm}
+			tblVal := make(map[string]BackupEntry)
+
+			tbl, err := d.GetTable(cmnAppTs)
+			if err != nil {
+				log.Infof("Failed to fetch table %s for backup: %v", tblNm, err)
+				continue
+			}
+
+			keys, err := tbl.GetKeys()
+			if err != nil {
+				log.Infof("Failed to get keys for table %s: %v", tblNm, err)
+				continue
+			}
+
+			for _, key := range keys {
+				if len(key.Comp) == 0 {
+					continue
+				}
+				keyStr := key.Comp[0]
+				val, err := tbl.GetEntry(key)
+				if err != nil {
+					log.Infof("Failed to get entry for key %v in table %s: %v", key, tblNm, err)
+					continue
+				}
+				if val.IsPopulated() {
+					tblVal[keyStr] = BackupEntry{
+						Operation: opcodeToStr(opcode),
+						Value:     val,
+					}
+				}
+			}
+
+			backupContent[tblNm] = tblVal
+		}
+
+		return writeBackupToFile(namespace, backupContent)
+	}
+
+	// Step 3: Backup based on passed dbMap keys
+	for _, tblNm := range resultTblLst {
+		tblVal, ok := dbMap[tblNm]
+		if !ok || len(tblVal) == 0 {
+			continue
+		}
+
+		cmnAppTs := &db.TableSpec{Name: tblNm}
+		ordDbKeyLst := transformer.SortSncTableDbKeys(tblNm, tblVal)
+
+		sort.SliceStable(ordDbKeyLst, func(i, j int) bool {
+			return i > j
+		})
+
+		entryMap := make(map[string]BackupEntry)
+
+		for _, tblKey := range ordDbKeyLst {
+			keyObj := db.Key{Comp: []string{tblKey}}
+			oldEntry, err := d.GetEntry(cmnAppTs, keyObj)
+			if err != nil {
+				if !(strings.Contains(err.Error(), "Entry does not exist")) {
+					log.Errorf("Failed to get old entry for key %v: %v", tblKey, err)
+					continue
+				}
+			}
+
+			switch opcode {
+			case CREATE:
+				entryMap[tblKey] = BackupEntry{
+					Operation: opcodeToStr(opcode),
+				}
+			case DELETE:
+				if oldEntry.IsPopulated() {
+					entryMap[tblKey] = BackupEntry{
+						Operation: opcodeToStr(opcode),
+						Value:     oldEntry,
+					}
+				}
+			case UPDATE, REPLACE, GET:
+				if oldEntry.IsPopulated() {
+					entryMap[tblKey] = BackupEntry{
+						Operation: opcodeToStr(opcode),
+						Value:     oldEntry,
+					}
+				} else {
+					entryMap[tblKey] = BackupEntry{
+						Operation: "CREATE",
+					}
+				}
+			default:
+				log.Infof("Unhandled opcode %d for key %s", opcode, tblKey)
+			}
+		}
+
+		// Merge into existing backupContent
+		if existingTblMap, found := backupContent[tblNm]; found {
+			for k, v := range entryMap {
+				existingTblMap[k] = v
+			}
+		} else {
+			backupContent[tblNm] = entryMap
+		}
+	}
+
+	return writeBackupToFile(namespace, backupContent)
+}
+
+// Restore function reads backup file and applies rollback for current namespace only
+func (app *CommonApp) RestoreFromBackupFile(d *db.DB) error {
+	namespace := d.Opts.MDBName
+
+	backupContent, err := loadBackupFile(namespace)
+	if err != nil {
+		return err
+	}
+
+	if len(backupContent) == 0 {
+		return fmt.Errorf("no backup data found for namespace: %s", namespace)
+	}
+
+	for tblName, entries := range backupContent {
+		cmnAppTs := &db.TableSpec{Name: tblName}
+
+		for keyStr, backupEntry := range entries {
+			keyObj := db.Key{Comp: []string{keyStr}}
+			op := strings.ToUpper(backupEntry.Operation)
+
+			switch op {
+			case "CREATE":
+				log.Infof("Restore rollback CREATE: deleting key %s from table %s", keyStr, tblName)
+				err = d.DeleteEntry(cmnAppTs, keyObj)
+				if err != nil {
+					log.Infof("Failed to delete key %s during restore: %v", keyStr, err)
+					return err
+				}
+			case "DELETE":
+				log.Infof("Restore rollback DELETE: recreating key %s in table %s", keyStr, tblName)
+				err = d.SetEntry(cmnAppTs, keyObj, backupEntry.Value)
+				if err != nil {
+					log.Infof("Failed to recreate key %s during restore: %v", keyStr, err)
+					return err
+				}
+			case "UPDATE", "REPLACE", "GET":
+				log.Infof("Restore rollback %s: restoring key %s in table %s", op, keyStr, tblName)
+				err = d.SetEntry(cmnAppTs, keyObj, backupEntry.Value)
+				if err != nil {
+					log.Infof("Failed to restore key %s during restore: %v", keyStr, err)
+					return err
+				}
+			default:
+				log.Infof("Unknown operation %s for key %s in table %s - skipping", op, keyStr, tblName)
+			}
+		}
+	}
+
+	log.Infof("Restore from backup file completed successfully for namespace %s", namespace)
+	return nil
+}
+
+func (app *CommonApp) processPreparePhase(d *db.DB, ckey string) error {
+	var err error
+	if len(app.cmnAppTableMap) == 0 {
+		return err
+	}
+
+	log.Info("Proceeding to perform DB operation")
+
+	// Handle delete first if any available
+	if originalDeleteMap, ok := app.cmnAppTableMap[DELETE][db.ConfigDB]; ok {
+		// Deep copy to avoid mutating the original map
+		backupDeleteMap := make(map[string]map[string]db.Value, len(originalDeleteMap))
+		for tblName, tblEntries := range originalDeleteMap {
+			copiedTblEntries := make(map[string]db.Value, len(tblEntries))
+			for key, val := range tblEntries {
+				copiedTblEntries[key] = val // db.Value is assumed to be a struct (copied by value)
+			}
+			backupDeleteMap[tblName] = copiedTblEntries
+		}
+
+		err := app.cmnAppCRUDTakeBackup(d, ckey, DELETE, backupDeleteMap)
+		if err != nil {
+			log.Info("Process delete fail. cmnAppTakeBackup error:", err)
+			return err
+		}
+	}
+
+	// Handle create operation next
+	if _, ok := app.cmnAppTableMap[CREATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUDTakeBackup(d, ckey, CREATE, app.cmnAppTableMap[CREATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process create fail. cmnAppTakeBackup error:", err)
+			return err
+		}
+	}
+	// Handle update and replace operation next
+	if _, ok := app.cmnAppTableMap[UPDATE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUDTakeBackup(d, ckey, UPDATE, app.cmnAppTableMap[UPDATE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process update fail. cmnAppTakeBackup error:", err)
+			return err
+		}
+	}
+	if _, ok := app.cmnAppTableMap[REPLACE][db.ConfigDB]; ok {
+		err = app.cmnAppCRUDTakeBackup(d, ckey, REPLACE, app.cmnAppTableMap[REPLACE][db.ConfigDB])
+		if err != nil {
+			log.Info("Process replace fail. cmnAppTakeBackup error:", err)
+			return err
+		}
+	}
+	log.Info("Returning from processPreparePhase() - success")
+	return err
+}
+
+func (app *CommonApp) getNamespace(path string) ([]NamespacePayload, error) {
+
+	jsonString := string((*app).body)
+	log.Infof("common_app: body: %v", jsonString)
+
+	transformerPayloads, err := transformer.GetNamespace(path, (*app).ygotRoot, (*app).body)
+	if err != nil {
+		log.Warning("common_app: transformer.GetNamespace() returned: ", err)
+	}
+
+	log.Infof("common_app: Transformer NamespacePayload List: %v", transformerPayloads)
+
+	var nsPayloads []NamespacePayload
+
+	if len(transformerPayloads) == 0 {
+		nsPayloads = append(nsPayloads, NamespacePayload{
+			Namespace: "host",
+			Payloads:  []map[string]interface{}{},
+			Key:       "",
+		})
+	} else {
+		for _, tp := range transformerPayloads {
+			nsPayloads = append(nsPayloads, NamespacePayload{
+				Namespace: tp.Namespace,
+				Payloads:  tp.Payloads,
+				Key:       tp.Key,
+				Commited:  tp.Commited,
+			})
+		}
+	}
+
+	return nsPayloads, nil
+}
+
+func (app *CommonApp) rollback(d *db.DB) error {
+	log.Infof("Rollback action detected, starting restore from backup file for namespace %s", d.Opts.MDBName)
+
+	// Restore all tables/keys for the namespace from backup file
+	err := app.RestoreFromBackupFile(d)
+	if err != nil {
+		log.Errorf("Restore from backup file failed: %v", err)
+		return err
+	}
+
+	log.Infof("Rollback completed successfully for namespace %s", d.Opts.MDBName)
+	return nil
 }

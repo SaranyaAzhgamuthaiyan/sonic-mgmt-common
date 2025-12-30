@@ -1264,7 +1264,7 @@ func verifyParentTable(d *db.DB, dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, op
 	}
 }
 
-func verifyParentTblSubtree(dbs [db.MaxDB]*db.DB, uri string, xfmrFuncNm string, oper Operation, dbData RedisDbMap) (bool, error) {
+func verifyParentTblSubtree(nameSpace string, dbs [db.MaxDB]*db.DB, uri string, xfmrFuncNm string, oper Operation, dbData RedisDbMap) (bool, error) {
 	var inParams XfmrSubscInParams
 	inParams.uri = uri
 	inParams.dbDataMap = make(RedisDbMap)
@@ -1299,7 +1299,7 @@ func verifyParentTblSubtree(dbs [db.MaxDB]*db.DB, uri string, xfmrFuncNm string,
 							// Infra MUST always pass ConfigDB handle (for bulk & config session usecase)
 							err = tlerr.New("DB access failure")
 						} else {
-							dptr, err = db.NewDB(getDBOptions(dbNo))
+							dptr, err = db.NewDB(getDBOptions(dbNo, SetMDBName(nameSpace)))
 							defer dptr.DeleteDB()
 						}
 						if err != nil {
@@ -1399,7 +1399,7 @@ func verifyParentTableOc(d *db.DB, dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, 
 			if len(curXpathInfo.xfmrFunc) > 0 {
 				xfmrLogDebug("Found subtree for URI - %v", curUri)
 				stParentTblExists := false
-				stParentTblExists, err = verifyParentTblSubtree(dbs, curUri, curXpathInfo.xfmrFunc, oper, dbData)
+				stParentTblExists, err = verifyParentTblSubtree(d.Opts.MDBName, dbs, curUri, curXpathInfo.xfmrFunc, oper, dbData)
 				if err != nil {
 					parentTblExists = false
 					break
@@ -1499,7 +1499,7 @@ func verifyParentTableOc(d *db.DB, dbs [db.MaxDB]*db.DB, ygRoot *ygot.GoStruct, 
 				return true, nil
 			}
 			xfmrLogDebug("Found subtree for URI - %v", uri)
-			parentTblExists, err = verifyParentTblSubtree(dbs, uri, xpathInfo.xfmrFunc, oper, dbData)
+			parentTblExists, err = verifyParentTblSubtree(d.Opts.MDBName, dbs, uri, xpathInfo.xfmrFunc, oper, dbData)
 			if err != nil {
 				return false, err
 			}
@@ -1641,4 +1641,11 @@ func printDbData(resMap map[Operation]map[db.DBNum]map[string]map[string]db.Valu
 		}
 	}
 	fmt.Fprintf(fp, "-----------------------------------------------------------------\r\n")
+}
+
+// Define a new function to set the MDBName in Options
+func SetMDBName(nameSpace string) func(*db.Options) {
+	return func(o *db.Options) {
+		o.MDBName = nameSpace
+	}
 }

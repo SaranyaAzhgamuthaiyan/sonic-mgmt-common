@@ -896,3 +896,72 @@ func SortSncTableDbKeys(tableName string, dbKeyMap map[string]db.Value) []string
 
 	return ordDbKey
 }
+
+func topLevel(uri string) bool {
+
+	topLevelCheck := strings.Count(uri, "/")
+	if topLevelCheck > 1 {
+		return false
+	}
+
+	return true
+}
+
+func getXdbSpecMapKey(uri string) string {
+	var key string
+	if !topLevel(uri) {
+		_, _, key = sonicXpathKeyExtract(uri) //key - tableName
+	} else {
+		key = uri
+	}
+
+	return key
+}
+
+func GetNamespace(uri string, ygotRoot *ygot.GoStruct, body []byte) ([]NamespacePayload, error) {
+	var nameSpaceFunc string
+	var nsPayloads []NamespacePayload
+
+	xpath, _, err := XfmrRemoveXPATHPredicates(uri)
+	if err != nil {
+		return nil, err
+	}
+
+	if isSonicYang(uri) {
+		key := getXdbSpecMapKey(uri)
+		spec, ok := xDbSpecMap[key]
+		log.Info("GetNamespace: SONiC YANG - tableName, xDbSpecMap[key]:", key, xDbSpecMap[key])
+		if !ok {
+			errMsg := "xDbSpecMap data not found for xpath: " + xpath
+			log.Warning(errMsg)
+			return nil, errors.New(errMsg)
+		}
+		nameSpaceFunc = spec.namespaceFunc
+	} else {
+		spec, ok := xYangSpecMap[xpath]
+		if !ok {
+			errMsg := "xYangSpecMap data not found for xpath: " + xpath
+			log.Warning(errMsg)
+			return nil, errors.New(errMsg)
+		}
+		nameSpaceFunc = spec.namespaceFunc
+	}
+
+	// Updated call: use the updated handler returning []NamespacePayload
+	nsPayloads, err = namespaceHandlerFunc(nameSpaceFunc, uri, ygotRoot, body)
+	if err != nil {
+		return nil, err
+	}
+
+	// If no payloads, add wildcard with empty slice
+	if len(nsPayloads) == 0 {
+		nsPayloads = append(nsPayloads, NamespacePayload{
+			Namespace: "host",
+			Payloads:  []map[string]interface{}{},
+			Key:       "",
+		})
+	}
+
+	log.Infof("GetNamespace: xpath %v: nsPayloads %v", xpath, nsPayloads)
+	return nsPayloads, nil
+}

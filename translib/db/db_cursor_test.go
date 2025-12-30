@@ -93,6 +93,7 @@ func TestNewScanCursor(t *testing.T) {
 
 	d, e := NewDB(Options{
 		DBNo:               ConfigDB,
+		MDBName:            hostDBName,
 		InitIndicator:      "",
 		TableNameSeparator: "|",
 		KeySeparator:       "|",

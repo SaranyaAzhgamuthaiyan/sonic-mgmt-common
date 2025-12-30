@@ -53,7 +53,3 @@ func equals(tb testing.TB, exp, act interface{}) {
 		tb.FailNow()
 	}
 }
-
-func Test_Create(t *testing.T) {
-
-}

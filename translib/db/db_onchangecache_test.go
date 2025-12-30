@@ -41,6 +41,7 @@ func TestOnChangeCacheReg(t *testing.T) {
 	t.Run("occDisable", func(t *testing.T) {
 		d := newTestDB(t, Options{
 			DBNo:            ConfigDB,
+			MDBName:         hostDBName,
 			IsWriteDisabled: true,
 		})
 		if err := d.RegisterTableForOnChangeCaching(ts); err == nil {
@@ -54,6 +55,7 @@ func TestOnChangeCacheReg(t *testing.T) {
 	t.Run("occEnable", func(t *testing.T) {
 		d := newTestDB(t, Options{
 			DBNo:              ConfigDB,
+			MDBName:           hostDBName,
 			IsWriteDisabled:   true,
 			IsOnChangeEnabled: true,
 		})
@@ -71,6 +73,7 @@ func TestOnChangeCacheReg(t *testing.T) {
 	t.Run("writeEnable", func(t *testing.T) {
 		_, err := NewDB(Options{
 			DBNo:              ConfigDB,
+			MDBName:           hostDBName,
 			IsOnChangeEnabled: true,
 		})
 		if err == nil {
@@ -81,9 +84,9 @@ func TestOnChangeCacheReg(t *testing.T) {
 
 func TestOnChangeCache(t *testing.T) {
 	// OnChange cache enabled db
-	d := newTestDB(t, Options{DBNo: ConfigDB, IsWriteDisabled: true, IsOnChangeEnabled: true})
+	d := newTestDB(t, Options{DBNo: ConfigDB, MDBName: hostDBName, IsWriteDisabled: true, IsOnChangeEnabled: true})
 	// Writale db to write test keys
-	dw := newTestDB(t, Options{DBNo: ConfigDB, DisableCVLCheck: true})
+	dw := newTestDB(t, Options{DBNo: ConfigDB, MDBName: hostDBName, DisableCVLCheck: true})
 
 	tsA := &TableSpec{Name: "TESTOCC_A"}
 	tsB := &TableSpec{Name: "TESTOCC_B"}

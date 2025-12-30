@@ -168,7 +168,7 @@ var ocm_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]Names
 			payloads = append(payloads, raw)
 			log.Infof("appending raw to the payloads %v", payloads)
 		} else {
-			payloads = []map[string]interface{}{} 
+			payloads = []map[string]interface{}{}
 		}
 		log.Infof("based on the key return %v=dbName %v=key", dbName, key)
 		return []NamespacePayload{

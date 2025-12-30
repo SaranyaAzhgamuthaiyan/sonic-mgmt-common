@@ -124,6 +124,7 @@ func TestGetTablePatternCompOrigEmpty(t *testing.T) {
 func TestGetTablePattern_txCache(t *testing.T) {
 	d := newTestDB(t, Options{
 		DBNo:            ConfigDB,
+		MDBName:         hostDBName,
 		DisableCVLCheck: true,
 	})
 	setupTestData(t, d.client, map[string]map[string]interface{}{

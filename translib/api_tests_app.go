@@ -193,3 +193,24 @@ func (app *apiTests) getError() error {
 		return tlerr.New(app.echoMsg)
 	}
 }
+
+func (app *apiTests) getNamespace(path string, payload []byte) ([]string, error) {
+	var res []string
+
+	res = append(res, "host")
+	glog.Info("Apitestsapp:getNamespace response", res)
+
+	return res, nil
+}
+
+func (app *apiTests) processPreparePhase(d *db.DB, ckey string) error {
+	return nil
+}
+
+func (app *apiTests) processPostPhase(d *db.DB, opcode int) error {
+	return nil
+}
+
+func (app *apiTests) rollback(d *db.DB, opcode int, ckey string) error {
+	return nil
+}

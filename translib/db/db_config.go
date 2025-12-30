@@ -22,21 +22,18 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/golang/glog"
 	io "io/ioutil"
 	"os"
 	"strconv"
-
-	"github.com/golang/glog"
+	"strings"
 )
 
-var dbConfigMap = make(map[string]interface{})
+var multiDbsConfigMap = make(map[string]map[string]interface{})
 
-func dbConfigInit() {
-	dbConfigPath := "/var/run/redis/sonic-db/database_config.json"
-	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
-		dbConfigPath = path
-	}
+func dbConfigInit(dbConfigPath string, MDBName string) {
 
+	var dbConfigMap = make(map[string]interface{})
 	// If the path does not exist, it could be a go lang jenkins test with
 	// an uninitialized/missing DB_CONFIG_PATH. Use the path
 	// ${PWD}/../../../tools/test/database_config.json if it exists
@@ -57,13 +54,24 @@ func dbConfigInit() {
 			assert(err)
 		}
 	}
+	multiDbsConfigMap[MDBName] = dbConfigMap
 }
 
 func assert(msg error) {
 	panic(msg)
 }
 
-func getDbList() map[string]interface{} {
+// Function to split the input string and assign values to dbName and MDBName
+func getDBNames(str string) (string, string) {
+	if strings.Contains(str, ".") {
+		parts := strings.SplitN(str, ".", 2)
+		return parts[0], parts[1]
+	}
+	return str, "host"
+}
+
+func getDbList(MDBName string) map[string]interface{} {
+	var dbConfigMap = multiDbsConfigMap[MDBName]
 	dbEntries, ok := dbConfigMap["DATABASES"].(map[string]interface{})
 	if !ok {
 		assert(fmt.Errorf("DATABASES is invalid key."))
@@ -72,11 +80,14 @@ func getDbList() map[string]interface{} {
 }
 
 func isDbInstPresent(dbName string) bool {
-	_, ok := getDbList()[dbName]
+	dbName, MDBName := getDBNames(dbName)
+	_, ok := getDbList(MDBName)[dbName]
 	return ok
 }
 
 func getDbInst(dbName string) map[string]interface{} {
+	dbName, MDBName := getDBNames(dbName)
+	var dbConfigMap = multiDbsConfigMap[MDBName]
 	db, ok := dbConfigMap["DATABASES"].(map[string]interface{})[dbName]
 	if !ok {
 		assert(fmt.Errorf("database name '%v' is not found", dbName))
@@ -93,7 +104,8 @@ func getDbInst(dbName string) map[string]interface{} {
 }
 
 func getDbSeparator(dbName string) string {
-	dbEntries := getDbList()
+	dbName, MDBName := getDBNames(dbName)
+	dbEntries := getDbList(MDBName)
 	separator, ok := dbEntries[dbName].(map[string]interface{})["separator"]
 	if !ok {
 		assert(fmt.Errorf("'separator' is not a valid field"))
@@ -102,7 +114,8 @@ func getDbSeparator(dbName string) string {
 }
 
 func getDbId(dbName string) int {
-	dbEntries := getDbList()
+	dbName, MDBName := getDBNames(dbName)
+	dbEntries := getDbList(MDBName)
 	id, ok := dbEntries[dbName].(map[string]interface{})["id"]
 	if !ok {
 		assert(fmt.Errorf("'id' is not a valid field"))

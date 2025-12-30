@@ -13,6 +13,7 @@ module openconfig-test-xfmr-annot {
       deviate add {
         sonic-ext:pre-transformer "test_pre_xfmr";
         sonic-ext:post-transformer "test_post_xfmr";
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
       }
     }
 

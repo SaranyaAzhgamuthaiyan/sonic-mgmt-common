@@ -243,7 +243,7 @@ var attn_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([
 				nsPayloadMap[dbName] = append(nsPayloadMap[dbName], payloadWithKey{
 					payload: finalMap,
 					key:     key.String(),
-				}) 
+				})
 
 				if outStr, err := json.MarshalIndent(finalMap, "", "  "); err == nil {
 					log.Infof("Namespace: %s\nWrapped Output:\n%s", dbName, string(outStr))

@@ -1785,7 +1785,7 @@ func (reqXlator *subscribeReqXlator) collectChldYgXPathInfo(ygEntry *yang.Entry,
 					}
 					chldNode = ygXpNode.addChildNode(rltvChldUriPath, chYgXpathInfo, childYgPath)
 				} else {
-					if childYgEntry.IsList() && !isVirtualTbl {
+					if *chYgXpathInfo.tableName == "" && childYgEntry.IsList() && !isVirtualTbl {
 						if log.V(dbLgLvl) {
 							log.Warning(reqXlator.subReq.reqLogId, "No table related information for the LIST yang node path: ", childYgPath)
 						}

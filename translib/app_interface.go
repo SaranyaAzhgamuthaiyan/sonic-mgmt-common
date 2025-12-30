@@ -92,6 +92,13 @@ var appMap map[string]*appInfo
 // array containing all the supported models
 var models []ModelData
 
+type NamespacePayload struct {
+	Namespace string
+	Payloads  []map[string]interface{}
+	Key       string
+	Commited  bool
+}
+
 // Interface for all App Modules
 type appInterface interface {
 	initialize(data appData)
@@ -100,8 +107,11 @@ type appInterface interface {
 	translateReplace(d *db.DB) ([]db.WatchKeys, error)
 	translateDelete(d *db.DB) ([]db.WatchKeys, error)
 	translateGet(dbs [db.MaxDB]*db.DB) error
+	getNamespace(path string) ([]NamespacePayload, error)
 	translateAction(dbs [db.MaxDB]*db.DB) error
 	translateSubscribe(req translateSubRequest) (translateSubResponse, error)
+	processPreparePhase(d *db.DB, ckey string) error
+	rollback(d *db.DB) error
 	processCreate(d *db.DB) (SetResponse, error)
 	processUpdate(d *db.DB) (SetResponse, error)
 	processReplace(d *db.DB) (SetResponse, error)
@@ -147,7 +157,10 @@ func getAppModuleInfo(path string) (*appInfo, error) {
 	log.Info("getAppModule called for path =", path)
 
 	for pattern, app := range appMap {
-		if !strings.HasPrefix(path, pattern) {
+		if pattern == "/openconfig-platform:components" && (strings.Contains(path, "/openconfig-transport-line-common:optical-port") || strings.Contains(path, "/openconfig-terminal-device:optical-channel") || strings.Contains(path, "FAN") || strings.Contains(path, "PSU") || strings.Contains(path, "CU") || strings.Contains(path, "CHASSIS") || strings.Contains(path, "LINECARD")) {
+			continue
+
+		} else if !strings.HasPrefix(path, pattern) {
 			continue
 		}
 

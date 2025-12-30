@@ -72,7 +72,7 @@ func init() {
 	//validate transformer
 	XlateFuncBind("light_sensor_validate", light_sensor_validate)
 
-	// Sonic yang Key transformer functions
+	//Sonic yang Key transformer functions
 	XlateFuncBind("DbToYang_test_sensor_mode_key_xfmr", DbToYang_test_sensor_mode_key_xfmr)
 }
 

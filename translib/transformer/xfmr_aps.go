@@ -395,7 +395,7 @@ var aps_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]
 			payloads = append(payloads, raw)
 			log.Infof("appending raw to the payloads %v", payloads)
 		} else {
-			payloads = []map[string]interface{}{} 
+			payloads = []map[string]interface{}{}
 		}
 		log.Infof("based on the key return %v=dbName %v=key", dbName, key)
 		return []NamespacePayload{
@@ -459,7 +459,7 @@ var aps_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]
 				nsPayloadMap[dbName] = append(nsPayloadMap[dbName], payloadWithKey{
 					payload: finalMap,
 					key:     key.String(),
-				}) 
+				})
 
 				if outStr, err := json.MarshalIndent(finalMap, "", "  "); err == nil {
 					log.Infof("Namespace: %s\nWrapped Output:\n%s", dbName, string(outStr))

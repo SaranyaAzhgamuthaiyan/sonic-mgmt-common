@@ -171,7 +171,6 @@ var DbToYang_media_channel_uf_field_xfmr FieldXfmrDbtoYang = func(inParams XfmrP
 	return rmap, nil
 }
 
-
 func getMediaChannelObj(s *ygot.GoStruct) *ocbinds.OpenconfigWavelengthRouter_WavelengthRouter {
 	deviceObj := (*s).(*ocbinds.Device)
 	return deviceObj.WavelengthRouter
@@ -184,7 +183,6 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 		payload map[string]interface{}
 		key     string
 	}
-	
 
 	// Updated map to hold list of payload+key per namespace
 	var nsPayloadMap = make(map[string][]payloadWithKey)
@@ -192,7 +190,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 	log.Infof("media_channel_get_namespace_xfmr: inParams: %v", inParams)
 
 	pathInfo := NewPathInfo(inParams.uri)
-	
+
 	keyStr := pathInfo.Var("index")
 
 	log.Infof("media_channel_get_namespace_xfmr: key: %v", keyStr)
@@ -202,7 +200,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 		keyUint64, err := strconv.ParseUint(keyStr, 10, 32)
 		if err != nil {
 			log.Errorf("Invalid key format: %v", keyStr)
-			return nil, fmt.Errorf("Invalid key format: %v", keyStr) 
+			return nil, fmt.Errorf("Invalid key format: %v", keyStr)
 		}
 		key := uint32(keyUint64)
 
@@ -228,8 +226,8 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 			{
 				Namespace: dbName,
 				Payloads:  payloads,
-			
-				Key: fmt.Sprintf("%d", key), 
+
+				Key: fmt.Sprintf("%d", key),
 			},
 		}, nil
 	}
@@ -326,8 +324,6 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 	return result, nil
 }
 
-
-
 var media_channel_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string]map[string]db.Value, error) {
 
 	retDbDataMap := (*inParams.dbDataMap)[inParams.curDb]
@@ -408,5 +404,3 @@ func customMcGetNamespaceFunc(inParams XfmrParams) ([]NamespacePayload, error) {
 
 	return nameSpaceList, err
 }
-
-

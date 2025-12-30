@@ -27,24 +27,25 @@ import (
 
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/Azure/sonic-mgmt-common/translib/ocbinds"
+	"github.com/Workiva/go-datastructures/queue"
 	"github.com/openconfig/ygot/ygot"
 )
 
 var (
-	roDBs [db.MaxDB]*db.DB
+	roDBs map[string][db.MaxDB]*db.DB
 )
 
-func getReadOnlyDB() [db.MaxDB]*db.DB {
-	if roDBs[0] == nil {
-		roDBs, _ = getAllDbs(withWriteDisable)
+func getReadOnlyDB() map[string][db.MaxDB]*db.DB {
+	if roDBs == nil {
+		roDBs, _ = getAllMdbs(withWriteDisable)
 		addCleanupFunc("roDBs", closeAllTestDB)
 	}
 	return roDBs
 }
 
 func closeAllTestDB() error {
-	if roDBs[0] != nil {
-		closeAllDbs(roDBs[:])
+	if roDBs != nil {
+		closeAllMdbs(roDBs)
 	}
 	return nil
 }
@@ -151,6 +152,58 @@ func Benchmark_clearListKeys(b *testing.B) {
 	}
 }
 
+func TestStream(t *testing.T) {
+	req := SubscribeRequest{}
+
+	req.Paths = []string{"/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier"}
+	req.Q = queue.NewPriorityQueue(0, false)
+	req.Stop = make(chan struct{})
+	req.User = UserRoles{}
+	req.AuthEnabled = false
+	req.ClientVersion = Version{Major: 0, Minor: 0, Patch: 0}
+	req.Session = &SubscribeSession{
+		ID:          "s1",
+		callCounter: 1,
+		translatedPathCache: translatedPathCache{
+			pathData: make(map[string]*translatedSubData),
+		},
+	}
+
+	req.Session.translatedPathCache.pathData["/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier"] = &translatedSubData{
+		targetInfos: nil,
+		childInfos:  nil,
+	}
+
+	err := Stream(req)
+	if err != nil {
+		t.Errorf("Error in Stream %v", err)
+	}
+
+}
+
+func TestIsSubscribeSupported(t *testing.T) {
+	req := IsSubscribeRequest{}
+	req.Paths = []IsSubscribePath{{ID: 0, Path: "/openconfig-optical-amplifier:optical-amplifier/amplifiers/amplifier", Mode: Sample}}
+	req.User = UserRoles{}
+	req.AuthEnabled = false
+	req.ClientVersion = Version{Major: 0, Minor: 0, Patch: 0}
+	req.Session = &SubscribeSession{
+		ID:          "s1",
+		callCounter: 1,
+		translatedPathCache: translatedPathCache{
+			pathData: make(map[string]*translatedSubData),
+		},
+	}
+
+	resp, err := IsSubscribeSupported(req)
+	for _, r := range resp {
+		fmt.Printf("IsSubscribeSupport resp %v", r.IsSubPath)
+	}
+	if err != nil {
+		t.Errorf("Error in IsSubscribeSupport %v", err)
+	}
+}
+
 ///////////////////
 
 // Messages is a utility to collect list of
@@ -197,9 +250,10 @@ func testTranslateSubscribeForMode(t *testing.T, path string, mode NotificationT
 		path: path,
 		mode: mode,
 	}
+	dbs := getReadOnlyDB()
 	sc := subscribeContext{
 		id:      fmt.Sprintf("test%d", subscribeCounter.Next()),
-		dbs:     getReadOnlyDB(),
+		dbs:     dbs["host"],
 		recurse: true,
 	}
 	pInfo, err := sc.translateSubscribe(path, mode)

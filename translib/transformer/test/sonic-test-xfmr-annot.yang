@@ -7,11 +7,56 @@ module sonic-test-xfmr-annot {
 
     import sonic-test-xfmr { prefix sonic-test-xfmr; }
 
-    deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE_LIST {
-      deviate add {
-	sonic-ext:key-transformer "test_sensor_mode_key_xfmr";
+    deviation /sonic-test-xfmr:sonic-test-xfmr {
+     deviate add {
+	 sonic-ext:get-namespace "test_get_namespace_xfmr";
       }
     }
 
+    deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE_LIST {
+      deviate add {
+	 sonic-ext:get-namespace "test_get_namespace_xfmr"; 
+	 sonic-ext:key-transformer "test_sensor_mode_key_xfmr";
+      }
+    }
+
+    deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_A_TABLE/sonic-test-xfmr:TEST_SENSOR_A_TABLE_LIST {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+      }
+    }
+
+    deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_GROUP/sonic-test-xfmr:TEST_SENSOR_GROUP_LIST {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+     }
+    }
+
+    deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_INTERFACE_MODE_TABLE/sonic-test-xfmr:TEST_INTERFACE_MODE_TABLE_LIST    {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+     }
+    }
+
+   deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_GLOBAL
+   {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+     }
+   }
+
+   deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_CABLE_LENGTH/sonic-test-xfmr:TEST_CABLE_LENGTH_LIST
+   {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+      }
+   }
+
+   deviation /sonic-test-xfmr:sonic-test-xfmr/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE/sonic-test-xfmr:TEST_SENSOR_MODE_TABLE_LIST
+   {
+     deviate add {
+        sonic-ext:get-namespace "test_get_namespace_xfmr";
+      }
+   }
 }
 
