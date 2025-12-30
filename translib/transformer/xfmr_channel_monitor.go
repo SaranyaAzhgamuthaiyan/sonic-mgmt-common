@@ -153,7 +153,7 @@ var ocm_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]Names
 	key = pathInfo.Var("name")
 	log.Infof("ocm_get_namespace_xfmr: key: %v", key)
 
-	if len(key) > 0 {
+	if len(key) > 0 && key != "*" {
 		dbName := db.GetMDBNameFromEntity(key)
 		log.Infof("ocm_get_namespace_xfmr: dbName: %v", dbName)
 

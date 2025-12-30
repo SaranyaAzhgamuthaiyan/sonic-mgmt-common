@@ -163,7 +163,7 @@ var attn_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([
 	key = pathInfo.Var("name")
 	log.Infof("attn_name_get_namespace_xfmr: key: %v", key)
 
-	if len(key) > 0 {
+	if len(key) > 0 && key != "*" {
 		dbName := db.GetMDBNameFromEntity(key)
 		log.Infof("attn_name_get_namespace_xfmr: dbName: %v", dbName)
 

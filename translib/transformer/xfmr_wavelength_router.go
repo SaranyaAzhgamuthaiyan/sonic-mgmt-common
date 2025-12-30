@@ -195,7 +195,7 @@ var media_channel_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams
 
 	log.Infof("media_channel_get_namespace_xfmr: key: %v", keyStr)
 
-	if len(keyStr) > 0 {
+	if len(keyStr) > 0 && keyStr != "*" {
 
 		keyUint64, err := strconv.ParseUint(keyStr, 10, 32)
 		if err != nil {

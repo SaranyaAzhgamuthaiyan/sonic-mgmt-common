@@ -380,7 +380,7 @@ var aps_name_get_namespace_xfmr GetNamespaceFunc = func(inParams XfmrParams) ([]
 	key = pathInfo.Var("name")
 	log.Infof("aps_name_get_namespace_xfmr: key: %v", key)
 
-	if len(key) > 0 {
+	if len(key) > 0 && key != "*" {
 		dbName := db.GetMDBNameFromEntity(key)
 		log.Infof("aps_name_get_namespace_xfmr: dbName: %v", dbName)
 
