@@ -106,7 +106,8 @@ module openconfig-transport-line-common {
       "Configuration data for OSC interfaces";
 
     leaf interface {
-      type oc-if:base-interface-ref;
+      type string;
+      //type oc-if:base-interface-ref;
       description
         "Reference to an OSC interface";
     }
@@ -145,7 +146,16 @@ module openconfig-transport-line-common {
       uses oc-types:avg-min-max-instant-stats-precision2-mA;
     }
 
-    uses oc-transceiver:output-optical-frequency;
+ //OPLINK: use output-frequncy directly. avoid another level of import.
+ // uses oc-transceiver:output-optical-frequency;
+    leaf output-frequency {
+      type oc-opt-types:frequency-type;
+      description
+        "The frequency in MHz of the individual physical channel
+        (e.g. ITU C50 - 195.0THz and would be reported as
+        195,000,000 MHz in this model). This attribute is not
+        configurable on most client ports.";
+    }
   }
 
 
@@ -279,6 +289,7 @@ module openconfig-transport-line-common {
     uses transport-line-common-port-top;
   }
 
+/***** OPLINK - not used for now
   //TODO:this is placeholder until SONET model is added
   //to interfaces model
   augment "/oc-if:interfaces/oc-if:interface" {
@@ -294,6 +305,7 @@ module openconfig-transport-line-common {
         "Data related to SONET/SDH interfaces";
     }
   }
+*****/
 
   // rpc statements
 

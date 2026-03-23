@@ -1,0 +1,44 @@
+module sonic-channel-monitor {
+	namespace "http://github.com/Azure/sonic-channel-monitor";
+	prefix "sopt-ocm";
+
+	organization
+		"SONiC";
+
+	contact
+		"SONiC";
+
+	description
+		"SONIC OCM";
+
+	revision 2023-11-17 {
+		description
+			"Initial revision.";
+	}
+
+
+	container sonic-channel-monitor {
+
+		container OTN_OCM {
+
+        list OTN_OCM_LIST {
+            key "name";
+            
+            leaf name {
+              type string;
+              description
+              "User-defined name assigned to identify a specific amplifier
+                in the device";
+            }
+            
+            leaf monitor-port {
+              type string {
+                length 0..31;
+              }
+              description
+                "Type of the amplifier";
+            }
+        }
+		}
+	}
+}
