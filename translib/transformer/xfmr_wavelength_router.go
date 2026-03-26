@@ -346,7 +346,43 @@ var media_channel_post_xfmr PostXfmrFunc = func(inParams XfmrParams) (map[string
 			retDbDataMap["MEDIA_CHANNEL_DISTRIBUTION"] = make(map[string]db.Value)
 		}
 
-		if lowerFrequency == "" && upperFrequency == "" && index != "" {
+		if lowerFrequency != "" && upperFrequency != "" && index != "" {
+			mediaChannelTs := &db.TableSpec{Name: "MEDIA_CHANNEL_DISTRIBUTION"}
+			mediaChannelKeys, err := inParams.d.GetKeys(mediaChannelTs)
+			log.Infof("media_channel_get_namespace_xfmr: ", mediaChannelKeys)
+			if err != nil {
+				log.Errorf("Error retrieving keys from MEDIA_CHANNEL table: %v", err)
+				return retDbDataMap, err
+			}
+			mediaChannelDistributionKeys := []string{}
+
+			for key := range mediaChannelKeys {
+				log.Infof("media_channel_get_namespace_xfmr: ", index, mediaChannelKeys[key].Get(0), mediaChannelKeys[key])
+				if index == mediaChannelKeys[key].Get(0) {
+					mediaChannelDistribution := ""
+					for idx, mediaKeyValue := range mediaChannelKeys[key].Comp {
+						if idx == len(mediaChannelKeys[key].Comp)-1 {
+							mediaChannelDistribution += mediaKeyValue
+						} else {
+							mediaChannelDistribution += mediaKeyValue + "|"
+						}
+					}
+					mediaChannelDistributionKeys = append(mediaChannelDistributionKeys, mediaChannelDistribution)
+				}
+			}
+			log.Info("media_channel_get_namespace_xfmr: ", mediaChannelDistributionKeys)
+
+			tableTs := &db.TableSpec{Name: "MEDIA_CHANNEL_DISTRIBUTION"}
+			_ = tableTs
+			for _, DistrubutionKey := range mediaChannelDistributionKeys {
+
+				// Mark specific key for deletion in the return DB map
+				retDbDataMap["MEDIA_CHANNEL_DISTRIBUTION"][DistrubutionKey] = db.Value{}
+			}
+
+			log.Infof("media_channel_post_xfmr: marked delete for index=%s in MEDIA_CHANNEL_DISTRIBUTION", index)
+
+		} else if lowerFrequency == "" && upperFrequency == "" && index != "" {
 			mediaChannelTs := &db.TableSpec{Name: "MEDIA_CHANNEL_DISTRIBUTION"}
 			mediaChannelKeys, err := inParams.d.GetKeys(mediaChannelTs)
 			log.Infof("media_channel_get_namespace_xfmr: ", mediaChannelKeys)
