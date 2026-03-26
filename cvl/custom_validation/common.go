@@ -115,6 +115,7 @@ type CustValidationCtxt struct {
 	YCur      *xmlquery.Node       //YANG data tree
 	SessCache *CustValidationCache //Session cache, can be used for storing data, persistent in session
 	RClient   common.DBAccess      //Db access interface
+	NameSpace string               // Namespace is required to open NewDbClient to other dependent DBs like STATE_DB,APPL_DB..
 }
 
 // Search criteria for advanced lookup through DBAccess APIs

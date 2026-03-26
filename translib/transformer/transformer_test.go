@@ -29,17 +29,22 @@ import (
 	"github.com/go-redis/redis/v7"
 	"github.com/openconfig/ygot/ytypes"
 
+	"sort"
+	"strings"
 	"testing"
 )
 
-var dbConfig struct {
+var MdbConfig = make(map[string]struct {
 	Instances map[string]map[string]interface{} `json:"INSTANCES"`
 	Databases map[string]map[string]interface{} `json:"DATABASES"`
-}
-var rclient *redis.Client
+})
+
+var rclient map[string]*redis.Client
 var filehandle *os.File
 var ygSchema *ytypes.Schema
-var rclientDBNum map[db.DBNum]*redis.Client
+var rclientDBNum map[string]map[db.DBNum]*redis.Client
+
+const hostDBName string = "host"
 
 func getDBOptions(dbNo db.DBNum, isWriteDisabled bool) db.Options {
 	var opt db.Options
@@ -77,18 +82,57 @@ func TestMain(t *testing.M) {
 }
 
 func initDbConfig() error {
-	dbConfigFile := "/run/redis/sonic-db/database_config.json"
-	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
-		dbConfigFile = path
+
+	dbGlobalFile := "/var/run/redis/sonic-db/database_global.json"
+
+	type Include struct {
+		Namespace string `json:"namespace"`
+		Include   string `json:"include"`
 	}
 
-	fmt.Println("dbConfigFile =", dbConfigFile)
-	dbConfigJson, err := ioutil.ReadFile(dbConfigFile)
-	if err == nil {
+	var DBConfig struct {
+		Includes []Include `json:"INCLUDES"`
+		Version  string    `json:"VERSION"`
+	}
+
+	dbConfigJson, err := ioutil.ReadFile(dbGlobalFile)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(dbConfigJson, &DBConfig)
+	if err != nil {
+		return err
+	}
+
+	for _, DbVal := range DBConfig.Includes {
+		var dbConfig struct {
+			Instances map[string]map[string]interface{} `json:"INSTANCES"`
+			Databases map[string]map[string]interface{} `json:"DATABASES"`
+		}
+
+		if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
+			DbVal.Include = path
+		}
+
+		dbConfigJson, err := ioutil.ReadFile(strings.Replace(DbVal.Include, "../../", "/var/run/", -1))
+		if err != nil {
+			return err
+		}
+
 		err = json.Unmarshal(dbConfigJson, &dbConfig)
+		if err != nil {
+			return err
+		}
+		if DbVal.Namespace == "" {
+			MdbConfig[hostDBName] = dbConfig
+		} else {
+			MdbConfig[DbVal.Namespace] = dbConfig
+		}
 	}
 
-	return err
+	fmt.Println("------------------ database_global ----------------", DBConfig, MdbConfig)
+	return nil
 }
 
 func clearDb() {
@@ -106,13 +150,13 @@ func clearDb() {
 
 	for dbNum, tblList := range dbNumTblList {
 		for _, tbl := range tblList {
-			tblKeys, keysErr := rclientDBNum[dbNum].Keys(tbl + "|*").Result()
+			tblKeys, keysErr := rclientDBNum[hostDBName][dbNum].Keys(tbl + "|*").Result()
 			if keysErr != nil {
 				fmt.Printf("Couldn't fetch keys for table %v", tbl)
 				continue
 			}
 			for _, key := range tblKeys {
-				e := rclientDBNum[dbNum].Del(key).Err()
+				e := rclientDBNum[hostDBName][dbNum].Del(key).Err()
 				if e != nil {
 					fmt.Printf("Couldn't delete key %v", key)
 				}
@@ -123,27 +167,40 @@ func clearDb() {
 
 /* Prepares the database clients in Redis Server. */
 func prepareDb() bool {
+	rclient = make(map[string]*redis.Client)
+	rclientDBNum = make(map[string]map[db.DBNum]*redis.Client)
 
-	rclientDBNum = make(map[db.DBNum]*redis.Client)
 	/*Add redis client for specific DB as and how needed*/
-	rclientDBNum[db.CountersDB] = getDbClient(int(db.CountersDB))
-	if rclientDBNum[db.CountersDB] == nil {
-		fmt.Printf("error in getDbClient(int(db.CountersDB)")
-		return false
-	}
-	rclientDBNum[db.ConfigDB] = getDbClient(int(db.ConfigDB))
-	if rclientDBNum[db.ConfigDB] == nil {
-		fmt.Printf("error in getDbClient(int(db.ConfigDB)")
-		return false
-	}
-	rclient = rclientDBNum[db.ConfigDB]
+	for dbName, _ := range MdbConfig {
+		if rclientDBNum[dbName] == nil {
+			rclientDBNum[dbName] = make(map[db.DBNum]*redis.Client)
+		}
+		rclientDBNum[dbName][db.CountersDB] = getDbClient(dbName, int(db.CountersDB))
+		if rclientDBNum[dbName][db.CountersDB] == nil {
+			fmt.Printf("error in getDbClient(int(db.CountersDB)")
+			return false
+		}
 
-	rclientDBNum[db.ApplDB] = getDbClient(int(db.ApplDB))
-	if rclientDBNum[db.ApplDB] == nil {
-		fmt.Printf("error in getDbClient(int(db.ApplDB)")
-		return false
-	}
+		rclientDBNum[dbName][db.StateDB] = getDbClient(dbName, int(db.StateDB))
+		if rclientDBNum[dbName][db.StateDB] == nil {
+			fmt.Printf("error in getDbClient(int(db.StateDB)")
+			return false
+		}
 
+		rclientDBNum[dbName][db.ConfigDB] = getDbClient(dbName, int(db.ConfigDB))
+		if rclientDBNum[dbName][db.ConfigDB] == nil {
+			fmt.Printf("error in getDbClient(int(db.ConfigDB)")
+			return false
+		}
+
+		rclient[dbName] = rclientDBNum[dbName][db.ConfigDB]
+
+		rclientDBNum[dbName][db.ApplDB] = getDbClient(dbName, int(db.ApplDB))
+		if rclientDBNum[dbName][db.ApplDB] == nil {
+			fmt.Printf("error in getDbClient(int(db.ApplDB)")
+			return false
+		}
+	}
 	return true
 }
 
@@ -174,17 +231,24 @@ func setup() error {
 func teardown() error {
 	fmt.Println("----- Performing teardown -----")
 	clearDb()
-	for dbNum := range rclientDBNum {
-		if rclientDBNum[dbNum] != nil {
-			rclientDBNum[dbNum].Close()
+
+	for dbName, clients := range rclientDBNum {
+		for dbNum, client := range clients {
+			if client != nil {
+				err := client.Close()
+				if err != nil {
+					fmt.Printf("Error closing Redis client for %s, DB %v: %v\n", dbName, dbNum, err)
+				} else {
+					fmt.Printf("Successfully closed Redis client for %s, DB %v\n", dbName, dbNum)
+				}
+			}
 		}
 	}
-
 	return nil
 }
 
-func loadDB(dbNum db.DBNum, mpi map[string]interface{}) {
-	client := rclientDBNum[dbNum]
+func loadDB(dbName string, dbNum db.DBNum, mpi map[string]interface{}) {
+	client := rclientDBNum[dbName][dbNum]
 	opts := getDBOptions(dbNum, false)
 	for key, fv := range mpi {
 		switch fv.(type) {
@@ -204,8 +268,8 @@ func loadDB(dbNum db.DBNum, mpi map[string]interface{}) {
 	}
 }
 
-func unloadDB(dbNum db.DBNum, mpi map[string]interface{}) {
-	client := rclientDBNum[dbNum]
+func unloadDB(dbName string, dbNum db.DBNum, mpi map[string]interface{}) {
+	client := rclientDBNum[dbName][dbNum]
 	opts := getDBOptions(dbNum, false)
 	for key, fv := range mpi {
 		switch fv.(type) {
@@ -223,18 +287,17 @@ func unloadDB(dbNum db.DBNum, mpi map[string]interface{}) {
 			fmt.Printf("Invalid data for db: %v : %v", key, fv)
 		}
 	}
-
 }
 
-func getDbClient(dbNum int) *redis.Client {
-	addr := "localhost:6379"
+func getDbClient(dbName string, dbNum int) *redis.Client {
+	addr := fmt.Sprint(MdbConfig[dbName].Instances["redis"]["hostname"])
 	pass := ""
-	for _, d := range dbConfig.Databases {
+	for _, d := range MdbConfig[dbName].Databases {
 		if id, ok := d["id"]; !ok || int(id.(float64)) != dbNum {
 			continue
 		}
 
-		dbi := dbConfig.Instances[d["instance"].(string)]
+		dbi := MdbConfig[dbName].Instances[d["instance"].(string)]
 		addr = fmt.Sprintf("%v:%v", dbi["hostname"], dbi["port"])
 		if p, ok := dbi["password_path"].(string); ok {
 			pwd, _ := ioutil.ReadFile(p)
@@ -242,17 +305,29 @@ func getDbClient(dbNum int) *redis.Client {
 		}
 		break
 	}
-
-	rclient := redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Network:     "tcp",
 		Addr:        addr,
 		Password:    pass,
 		DB:          dbNum,
 		DialTimeout: 0,
 	})
-	_, err := rclient.Ping().Result()
+	_, err := client.Ping().Result()
+
 	if err != nil {
 		fmt.Printf("failed to connect to redis server %v", err)
 	}
-	return rclient
+	return client
+}
+
+func getMdbNames() []string {
+	var dbNames []string
+	for dbName, _ := range MdbConfig {
+		if dbName != hostDBName {
+			dbNames = append(dbNames, dbName)
+		}
+	}
+
+	sort.Strings(dbNames)
+	return dbNames
 }

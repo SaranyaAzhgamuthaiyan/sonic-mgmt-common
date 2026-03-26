@@ -40,7 +40,7 @@ type PlatformApp struct {
 
 func init() {
 	log.Info("Init called for Platform module")
-	err := register("/openconfig-platform:components",
+	err := register("/openconfig-platform:components/component[name=System Eeprom]",
 		&appInfo{appType: reflect.TypeOf(PlatformApp{}),
 			ygotRootType: reflect.TypeOf(ocbinds.OpenconfigPlatform_Components{}),
 			isNative:     false})
@@ -437,9 +437,13 @@ func (app *PlatformApp) doGetSysEeprom() error {
 	var err error
 	pf_cpts := app.getAppRootObject()
 
-	targetUriPath, _ := getYangPathFromUri(app.path.Path)
+	xpath := app.path.Path
+	targetUriPath, _ := getYangPathFromUri(xpath)
+
+	log.Infof("EEPROM targetUriPath:%v", targetUriPath)
+
 	switch targetUriPath {
-	case "/openconfig-platform:components":
+	case "/openconfig-platform:component":
 		pf_comp, _ := pf_cpts.NewComponent("System Eeprom")
 		ygot.BuildEmptyTree(pf_comp)
 		err = app.getSysEepromFromDb(pf_comp.State, true)
@@ -496,4 +500,80 @@ func (app *PlatformApp) doGetSysEeprom() error {
 		}
 	}
 	return err
+}
+
+/*
+func getPlatformRootObj(s *ygot.GoStruct) *ocbinds.OpenconfigPlatform_Components {
+	deviceObj := (*s).(*ocbinds.Device)
+	return deviceObj.Components
+}
+
+func (app *PlatformApp) getNamespace(path string) ([]string, error) {
+	var nameSpaceList []string
+	var err error
+	log.Infof("Platformapp:getNamespace: path:%v ", path)
+
+	if (*app).ygotRoot != nil {
+
+		// Helper function to process entities and add their MDB names
+		addDBNames := func(entities interface{}) error {
+			switch e := entities.(type) {
+			case map[string]*ocbinds.OpenconfigPlatform_Components_Component:
+				for key := range e {
+					log.Info("pfm_app: keys ", key)
+					dbName := db.GetMDBNameFromEntity(key)
+					if err != nil {
+						return err
+					}
+					if !contains(nameSpaceList, dbName) {
+						nameSpaceList = append(nameSpaceList, dbName)
+					}
+				}
+			default:
+				return fmt.Errorf("unsupported entity type")
+			}
+			return nil
+		}
+
+		if strings.Contains(path, "component") {
+
+			pf := getPlatformRootObj((*app).ygotRoot)
+			if pf.Component != nil {
+				addDBNames(pf.Component)
+			}
+		}
+	}
+
+	if len(nameSpaceList) == 0 {
+		// For Get requests without key in xpath * is returned.
+		log.Infof("No specific key found, using '*' to include all DBs.")
+		nameSpaceList = append(nameSpaceList, "*")
+	}
+
+	log.Infof("pfm_app: nameSpaceList:%v ", nameSpaceList)
+
+	return nameSpaceList, nil
+} */
+
+func (app *PlatformApp) getNamespace(path string) ([]NamespacePayload, error) {
+
+	var nameSpaceList []NamespacePayload
+
+	nameSpaceList = append(nameSpaceList, NamespacePayload{
+		Namespace: "host",
+		Payloads:  []map[string]interface{}{},
+		Key:       "",
+	})
+
+	log.Infof("PlatformApp:getNamespace: nameSpaceList:%v ", nameSpaceList)
+
+	return nameSpaceList, nil
+}
+
+func (app *PlatformApp) processPreparePhase(d *db.DB, ckey string) error {
+	return nil
+}
+
+func (app *PlatformApp) rollback(d *db.DB) error {
+	return nil
 }

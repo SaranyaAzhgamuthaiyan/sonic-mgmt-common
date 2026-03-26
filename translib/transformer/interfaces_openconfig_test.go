@@ -61,9 +61,9 @@ func Test_openconfig_interfaces(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	cleanuptbl := map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": ""}}
-	unloadDB(db.ApplDB, cleanuptbl)
+	unloadDB(hostDBName, db.ApplDB, cleanuptbl)
 	pre_req_map := map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": map[string]interface{}{"admin_status": "up", "mtu": "9000"}}}
-	loadDB(db.ApplDB, pre_req_map)
+	loadDB(hostDBName, db.ApplDB, pre_req_map)
 
 	t.Log("\n\n--- Verify PATCH interface leaf nodes  ---")
 	url = "/openconfig-interfaces:interfaces/interface[name=Ethernet0]/state"
@@ -119,9 +119,9 @@ func Test_openconfig_interfaces(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	cleanuptbl = map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": ""}}
-	unloadDB(db.ApplDB, cleanuptbl)
+	unloadDB(hostDBName, db.ApplDB, cleanuptbl)
 	pre_req_map = map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": map[string]interface{}{"admin_status": "up", "mtu": "9100"}}}
-	loadDB(db.ApplDB, pre_req_map)
+	loadDB(hostDBName, db.ApplDB, pre_req_map)
 
 	t.Log("\n\n--- Verify PATCH interface ---")
 	url = "/openconfig-interfaces:interfaces/interface[name=Ethernet0]/state"
@@ -129,7 +129,7 @@ func Test_openconfig_interfaces(t *testing.T) {
 	t.Run("Test GET on interface state", processGetRequest(url, nil, expected_get_json, false))
 	time.Sleep(1 * time.Second)
 
-	unloadDB(db.ApplDB, cleanuptbl)
+	unloadDB(hostDBName, db.ApplDB, cleanuptbl)
 }
 
 func Test_openconfig_ethernet(t *testing.T) {
@@ -148,9 +148,9 @@ func Test_openconfig_ethernet(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	cleanuptbl := map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": ""}}
-	unloadDB(db.ApplDB, cleanuptbl)
+	unloadDB(hostDBName, db.ApplDB, cleanuptbl)
 	pre_req_map := map[string]interface{}{"PORT_TABLE": map[string]interface{}{"Ethernet0": map[string]interface{}{"admin_status": "up", "autoneg": "on", "mtu": "9100", "speed": "40000", "counters": map[string]interface{}{"in-broadcast-pkts": "0", "in-discards": "0", "in-errors": "0", "in-multicast-pkts": "0", "in-octets": "0", "in-pkts": "0", "in-unicast-pkts": "0", "out-broadcast-pkts": "0", "out-discards": "0", "out-errors": "0", "out-multicast-pkts": "0", "out-octets": "0", "out-pkts": "0", "out-unicast-pkts": "0"}}}}
-	loadDB(db.ApplDB, pre_req_map)
+	loadDB(hostDBName, db.ApplDB, pre_req_map)
 
 	t.Log("\n\n--- Verify PATCH ethernet ---")
 	url = "/openconfig-interfaces:interfaces/interface[name=Ethernet0]/openconfig-if-ethernet:ethernet/config"

@@ -1,0 +1,162 @@
+module sonic-wavelength-router {
+  namespace "http://github.com/Azure/sonic-wavelength-router";
+  prefix sonic-wav-rou;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC WAVELENGTH ROUTER";
+
+  revision 2024-06-28 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-wavelength-router {
+    container MEDIA_CHANNEL {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container for media channel list";
+      list MEDIA_CHANNEL_LIST {
+        key "index";
+        leaf lower-frequency {
+          type uint64;
+          units "MHz";
+          description
+            "The lower frequency for the spectrum defined by this media
+             channel";
+        }
+        leaf admin-status {
+          type string;
+          description
+            "Sets the admin status of the media channel";
+        }
+        leaf super-channel-parent {
+          type uint32;
+          description
+            "If the media channel is contained within a super channel this
+             would specify the index of the super channel parent";
+        }
+        leaf attenuation-control-mode {
+          type string;
+          description
+            "Sets the attenuation control mode for the media channel.
+             The control mode defines the behavior of how the attenuation
+             across a media channel is set";
+        }
+        leaf index {
+          type uint32;
+          description
+            "Identifier for the defined media channel";
+        }
+        leaf super-channel {
+          type boolean;
+          description
+            "True if the media channel is a super channel which
+             contains multiple media channels within it. The contained
+             media channels should fall within the boundaries of the
+             super channel. The device should raise an error if a media
+             channel crosses a super channel boundary. When using super
+             channels, spectrum power targets should be defined in either
+             the:
+             - port-spectrum-power-profiles for the port which matches the
+             source port of the media channel representing the super
+             channel
+             - media channels that are contained within the super
+             channel, but not on the super channel itself";
+        }
+        leaf upper-frequency {
+          type uint64;
+          units "MHz";
+          description
+            "The upper frequency for the spectrum defined by this media
+             channel";
+        }
+        leaf attenuation-control-range {
+          type string;
+          description
+            "Sets the attenuation control range for the media channel.
+             The control range defines the amount of media channel
+             undershoot and overshoot compensation that will be applied
+             when performing power targeting to meet the defined output
+             port spectrum power profile";
+        }
+        leaf name {
+          type string;
+          description
+	  "The user supplied name of the media channel";
+	}
+	leaf ase-control-mode {
+	  type string;
+	  description
+	  "Sets the ASE control mode for the media channel.
+	   The control mode defines if and when ASE noise is injected
+	   on the media channel";
+	}
+
+	leaf ase-injection-threshold {
+	  type decimal64 {
+		fraction-digits 2;
+	  }
+	  units dBm;
+	  description
+	   "Defines the optical power threshold value below which ASE
+	    noise should be injected on the media channel. This or
+	    ase-injection-delta is required if an ase-control-mode is
+	    configured";
+	}
+
+	leaf source-port-name {
+	  type string;
+          description
+            "Reference to the corresponding node port";
+        }
+        leaf dest-port-name {
+          type string;
+          description
+            "Reference to the corresponding node port";
+        }
+      }
+    }
+    container MEDIA_CHANNEL_DISTRIBUTION {
+      description
+        "Enclosing container for the list of values describing
+         the target spectrum powers";
+      list MEDIA_CHANNEL_DISTRIBUTION_LIST {
+        key "index lower-frequency upper-frequency";
+        leaf index {
+          type uint32;
+          description
+            "Identifier for the defined media channel";
+        }
+        leaf target-power {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          units "dBm";
+          description
+            "Target average power to achieve within the specified
+             spectrum";
+        }
+        leaf lower-frequency {
+          type uint64;
+          units "MHz";
+          description
+            "Lower frequency of the specified target spectrum power";
+        }
+        leaf upper-frequency {
+          type uint64;
+          units "MHz";
+          description
+            "Upper frequency of the specified target spectrum power";
+        }
+      }
+    }
+  }
+}

@@ -28,6 +28,7 @@ import (
 	. "github.com/Azure/sonic-mgmt-common/translib"
 	db "github.com/Azure/sonic-mgmt-common/translib/db"
 	"github.com/go-redis/redis/v7"
+	//log "github.com/golang/glog"
 )
 
 type queryParamsUT struct {
@@ -49,6 +50,7 @@ func processGetRequest(url string, qparams *queryParamsUT, expectedRespJson stri
 		var expectedMap map[string]interface{}
 		var receivedMap map[string]interface{}
 		var qp QueryParameters
+		var respJson []byte
 
 		qp.Depth = 0
 		qp.Content = ""
@@ -73,8 +75,11 @@ func processGetRequest(url string, qparams *queryParamsUT, expectedRespJson stri
 		if err != nil {
 			t.Fatalf("failed to unmarshal %v err: %v", expectedRespJson, err)
 		}
-
-		respJson := response.Payload
+		if len(response) == 0 {
+			respJson = []byte("{}")
+		} else {
+			respJson = response[0].Payload
+		}
 		err = json.Unmarshal(respJson, &receivedMap)
 		if err != nil {
 			t.Fatalf("failed to unmarshal %v err: %v", string(respJson), err)
@@ -110,7 +115,7 @@ func processGetRequestWithFile(url string, expectedJsonFile string, errorCase bo
 			return
 		}
 
-		respJson := response.Payload
+		respJson := response[0].Payload
 		err = json.Unmarshal(respJson, &receivedMap)
 		if err != nil {
 			t.Fatalf("failed to unmarshal %v err: %v", string(respJson), err)

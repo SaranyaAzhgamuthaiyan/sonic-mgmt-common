@@ -55,6 +55,7 @@ type yangXpathInfo struct {
 	xfmrFunc           string
 	xfmrField          string
 	validateFunc       string
+	namespaceFunc      string
 	xfmrKey            string
 	keyName            *string
 	dbIndex            db.DBNum
@@ -80,21 +81,22 @@ type yangXpathInfo struct {
 }
 
 type dbInfo struct {
-	dbIndex     db.DBNum
-	keyName     *string
-	dbEntry     *yang.Entry
-	yangXpath   []string
-	module      string
-	delim       string
-	leafRefPath []string
-	listName    []string
-	keyList     []string
-	xfmrKey     string
-	xfmrValue   *string
-	hasXfmrFn   bool
-	cascadeDel  int8
-	yangType    yangElementType
-	isKey       bool
+	dbIndex       db.DBNum
+	keyName       *string
+	dbEntry       *yang.Entry
+	yangXpath     []string
+	module        string
+	delim         string
+	leafRefPath   []string
+	listName      []string
+	keyList       []string
+	xfmrKey       string
+	xfmrValue     *string
+	hasXfmrFn     bool
+	cascadeDel    int8
+	yangType      yangElementType
+	isKey         bool
+	namespaceFunc string
 }
 
 type moduleAnnotInfo struct {
@@ -346,6 +348,10 @@ func yangToDbMapFill(keyLevel uint8, xYangSpecMap map[string]*yangXpathInfo, ent
 
 		if ok && len(parentXpathData.validateFunc) > 0 {
 			xpathData.validateFunc = parentXpathData.validateFunc
+		}
+
+		if ok && len(parentXpathData.namespaceFunc) > 0 {
+			xpathData.namespaceFunc = parentXpathData.namespaceFunc
 		}
 
 		if ok && len(parentXpathData.xfmrFunc) > 0 && len(xpathData.xfmrFunc) == 0 {
@@ -945,6 +951,8 @@ func annotEntryFill(xYangSpecMap map[string]*yangXpathInfo, xpath string, entry 
 				xYangModSpecMap[xpath].xfmrPre = ext.NName()
 			case "get-validate":
 				xpathData.validateFunc = ext.NName()
+			case "get-namespace":
+				xpathData.namespaceFunc = ext.NName()
 			case "rpc-callback":
 				xYangRpcSpecMap[xpath] = ext.NName()
 				xpathData.yangType = YANG_RPC
@@ -1064,9 +1072,39 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 	var err error
 	var dbXpathData *dbInfo
 	var ok bool
+	var tableName string
 
 	pname := strings.Split(dbXpath, "/")
-	if len(pname) < 3 {
+
+	if len(pname) == 2 {
+		//Populating getnamespace function name for topLevel container
+		tableName = pname[1]
+		for key := range xDbSpecMap {
+			// Check if the key starts with the tableName
+			if strings.Contains(key, tableName) {
+				tableName = key
+				break
+			}
+		}
+		dbXpathData, ok = xDbSpecMap[tableName]
+		if !ok {
+			log.Warningf("DB spec-map data not found(%v) \r\n", dbXpath)
+			return err
+		}
+		if entry != nil && len(entry.Exts) > 0 {
+			for _, ext := range entry.Exts {
+				dataTagArr := strings.Split(ext.Keyword, ":")
+				tagType := dataTagArr[len(dataTagArr)-1]
+				switch tagType {
+				case "get-namespace":
+					dbXpathData.namespaceFunc = ext.NName()
+
+				default:
+				}
+			}
+		}
+
+	} else if len(pname) < 3 {
 		// check rpc?
 		if entry != nil && len(entry.Exts) > 0 {
 			for _, ext := range entry.Exts {
@@ -1082,64 +1120,70 @@ func annotDbSpecMapFill(xDbSpecMap map[string]*dbInfo, dbXpath string, entry *ya
 			log.Warningf("DB Rpc spec-map doesn't contain rpc entry(%v) \r\n", dbXpath)
 		}
 		return err
-	}
 
-	tableName := pname[2]
-	// container(redis tablename)
-	dbXpathData, ok = xDbSpecMap[tableName]
-	if !ok {
-		log.Warningf("DB spec-map data not found(%v) \r\n", dbXpath)
-		return err
-	}
+	} else {
+		tableName = pname[2]
 
-	if dbXpathData.dbIndex >= db.MaxDB {
-		dbXpathData.dbIndex = db.ConfigDB // default value
-	}
+		// container(redis tablename)
+		dbXpathData, ok = xDbSpecMap[tableName]
 
-	/* fill table with cvl yang extension data. */
-	if entry != nil && len(entry.Exts) > 0 {
-		for _, ext := range entry.Exts {
-			dataTagArr := strings.Split(ext.Keyword, ":")
-			tagType := dataTagArr[len(dataTagArr)-1]
-			switch tagType {
-			case "key-name":
-				if dbXpathData.keyName == nil {
-					dbXpathData.keyName = new(string)
-				}
-				*dbXpathData.keyName = ext.NName()
-			case "value-transformer":
-				fieldName := pname[len(pname)-1]
-				fieldXpath := tableName + "/" + fieldName
-				if fldXpathData, ok := xDbSpecMap[fieldXpath]; ok {
-					fldXpathData.xfmrValue = new(string)
-					*fldXpathData.xfmrValue = ext.NName()
-					dbXpathData.hasXfmrFn = true
-					if xpathList, ok := sonicLeafRefMap[fieldXpath]; ok {
-						for _, curpath := range xpathList {
-							if curSpecData, ok := xDbSpecMap[curpath]; ok && curSpecData.xfmrValue == nil {
-								curSpecData.xfmrValue = fldXpathData.xfmrValue
-								curTableName := strings.Split(curpath, "/")[0]
-								if curTblSpecInfo, ok := xDbSpecMap[curTableName]; ok {
-									curTblSpecInfo.hasXfmrFn = true
+		if !ok {
+			log.Warningf("DB spec-map data not found(%v) \r\n", dbXpath)
+			return err
+		}
+
+		if dbXpathData.dbIndex >= db.MaxDB {
+			dbXpathData.dbIndex = db.ConfigDB // default value
+		}
+
+		/* fill table with cvl yang extension data. */
+		if entry != nil && len(entry.Exts) > 0 {
+			for _, ext := range entry.Exts {
+				dataTagArr := strings.Split(ext.Keyword, ":")
+				tagType := dataTagArr[len(dataTagArr)-1]
+				switch tagType {
+				case "key-name":
+					if dbXpathData.keyName == nil {
+						dbXpathData.keyName = new(string)
+					}
+					*dbXpathData.keyName = ext.NName()
+				case "value-transformer":
+					fieldName := pname[len(pname)-1]
+					fieldXpath := tableName + "/" + fieldName
+					if fldXpathData, ok := xDbSpecMap[fieldXpath]; ok {
+						fldXpathData.xfmrValue = new(string)
+						*fldXpathData.xfmrValue = ext.NName()
+						dbXpathData.hasXfmrFn = true
+						if xpathList, ok := sonicLeafRefMap[fieldXpath]; ok {
+							for _, curpath := range xpathList {
+								if curSpecData, ok := xDbSpecMap[curpath]; ok && curSpecData.xfmrValue == nil {
+									curSpecData.xfmrValue = fldXpathData.xfmrValue
+									curTableName := strings.Split(curpath, "/")[0]
+									if curTblSpecInfo, ok := xDbSpecMap[curTableName]; ok {
+										curTblSpecInfo.hasXfmrFn = true
+									}
 								}
 							}
 						}
 					}
-				}
-			case "cascade-delete":
-				if ext.NName() == "ENABLE" || ext.NName() == "enable" {
-					dbXpathData.cascadeDel = XFMR_ENABLE
-				} else {
-					dbXpathData.cascadeDel = XFMR_DISABLE
-				}
-			case "key-transformer":
-				listName := pname[SONIC_TBL_CHILD_INDEX]
-				listXpath := tableName + "/" + listName
-				if listXpathData, ok := xDbSpecMap[listXpath]; ok {
-					listXpathData.xfmrKey = ext.NName()
-				}
+				case "cascade-delete":
+					if ext.NName() == "ENABLE" || ext.NName() == "enable" {
+						dbXpathData.cascadeDel = XFMR_ENABLE
+					} else {
+						dbXpathData.cascadeDel = XFMR_DISABLE
+					}
+				case "key-transformer":
+					listName := pname[SONIC_TBL_CHILD_INDEX]
+					listXpath := tableName + "/" + listName
+					if listXpathData, ok := xDbSpecMap[listXpath]; ok {
+						listXpathData.xfmrKey = ext.NName()
+					}
+				case "get-namespace":
+					dbXpathData.namespaceFunc = ext.NName()
 
-			default:
+				default:
+
+				}
 			}
 		}
 	}
@@ -1240,6 +1284,7 @@ func mapPrint(fileName string) {
 		fmt.Fprintf(fp, "\r\n    xfmrField :%v", d.xfmrField)
 		fmt.Fprintf(fp, "\r\n    dbIndex  : %v", d.dbIndex)
 		fmt.Fprintf(fp, "\r\n    validateFunc  : %v", d.validateFunc)
+		fmt.Fprintf(fp, "\r\n    namespaceFunc  : %v", d.namespaceFunc)
 		fmt.Fprintf(fp, "\r\n    yangEntry: ")
 		if d.yangEntry != nil {
 			fmt.Fprintf(fp, "%v", *d.yangEntry)

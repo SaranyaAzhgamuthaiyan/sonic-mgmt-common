@@ -1,0 +1,30 @@
+module openconfig-terminal-device-deviation {
+
+	yang-version "1";
+
+	namespace "http://openconfig.net/yang/deviation/oc-terminal-device-deviation";
+	prefix "oc-terminal-device-deviation";
+
+	import openconfig-extensions { prefix oc-ext; }
+	import openconfig-terminal-device { prefix oc-opt-term; }
+
+	organization "SONiC";
+	contact
+		"SONiC";
+	description
+		"This is a deviation yang for openconfig terminal device.";
+
+	oc-ext:openconfig-version "0.1.0";
+
+	revision 2020-06-23 {
+		description
+			"Initial version.";
+		reference "0.1.0";
+	}
+
+	deviation /oc-opt-term:terminal-device/oc-opt-term:logical-channels/oc-opt-term:channel/oc-opt-term:ethernet/oc-opt-term:lldp/oc-opt-term:neighbors/oc-opt-term:neighbor/oc-opt-term:custom-tlvs {
+		deviate not-supported;
+	}
+
+}
+

@@ -1110,7 +1110,8 @@ func (c *CVL) doCustomValidation(node *xmlquery.Node,
 			YNodeVal:  nodeVal,
 			YCur:      node,
 			SessCache: &(c.custvCache),
-			RClient:   c.dbAccess}
+			RClient:   c.dbAccess,
+			NameSpace: c.dbAccess.GetMDBName()}
 		for _, custFunction := range custFuncs {
 			CVL_LOG(INFO_TRACE, "Calling custom validation function %s", custFunction)
 			errObj := custv.InvokeCustomValidation(&custv.CustomValidation{}, custFunction, pCustv)

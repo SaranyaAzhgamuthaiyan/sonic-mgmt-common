@@ -93,7 +93,7 @@ func init() {
 }
 
 // HFunc gives the name of the table, and other per-table customizations.
-type HFunc func(*DB, *SKey, *Key, SEvent) error
+type HFunc func(*DB, *SKey, *Key, SEvent, string) error
 
 // SubscribeDB is the factory method to create a subscription to the DB.
 // The returned instance can only be used for Subscription.
@@ -125,11 +125,6 @@ func iSubscribeDB(opt Options, skeys []*SKey, handler interface{}) (*DB, error) 
 		return nil, tlerr.TranslibDBNotSupported{}
 	}
 
-	if glog.V(3) {
-		glog.Info("SubscribeDB: Begin: opt: ", opt,
-			" skeys: ", skeys, " handler: ", handler)
-	}
-
 	patterns := make([]string, 0, len(skeys))
 	patMap := make(map[string]([]int), len(skeys))
 	var s string
@@ -142,6 +137,7 @@ func iSubscribeDB(opt Options, skeys []*SKey, handler interface{}) (*DB, error) 
 	opt.IsSubscribeDB = true
 
 	// NewDB
+
 	d, e := NewDB(opt)
 
 	if d.client == nil {
@@ -215,7 +211,7 @@ func iSubscribeDB(opt Options, skeys []*SKey, handler interface{}) (*DB, error) 
 					if isSA {
 						hFuncSA(d, RunningConfigNotif, "", skey, &key, sevent)
 					} else {
-						hFunc(d, skey, &key, sevent)
+						hFunc(d, skey, &key, sevent, opt.MDBName)
 					}
 				}
 			}
@@ -226,11 +222,10 @@ func iSubscribeDB(opt Options, skeys []*SKey, handler interface{}) (*DB, error) 
 		if !d.sCIP {
 			sEvent = SEventErr
 		}
-		glog.Info("SubscribeDB: SEventClose|Err: ", sEvent)
 		if isSA {
 			hFuncSA(d, RunningConfigNotif, "", &SKey{}, &Key{}, sEvent)
 		} else {
-			hFunc(d, &SKey{}, &Key{}, sEvent)
+			hFunc(d, &SKey{}, &Key{}, sEvent, opt.MDBName)
 		}
 	}()
 
@@ -300,7 +295,7 @@ func (d *DB) key2redisChannel(ts *TableSpec, key Key) string {
 		glog.Info("key2redisChannel: ", *ts, " key: "+key.String())
 	}
 
-	dbId := strconv.Itoa(d.Opts.DBNo.ID())
+	dbId := strconv.Itoa(d.Opts.DBNo.ID(d.Opts.MDBName))
 	return "__keyspace@" + dbId + "__:" + d.key2redis(ts, key)
 }
 

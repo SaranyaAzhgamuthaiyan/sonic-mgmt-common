@@ -1,0 +1,29 @@
+module openconfig-wavelength-router-deviation {
+
+        yang-version "1";
+
+        namespace "http://openconfig.net/yang/deviation/oc-wavelength-router-deviation";
+        prefix "oc-wavelength-router-deviation";
+
+        import openconfig-extensions { prefix oc-ext; }
+        import openconfig-wavelength-router { prefix oc-wave-router; }
+
+        organization "SONiC";
+        contact
+                "SONiC";
+        description
+                "This is a deviation yang for openconfig terminal device.";
+
+        oc-ext:openconfig-version "0.1.0";
+
+        revision 2020-06-23 {
+                description
+                        "Initial version.";
+                reference "0.1.0";
+        }
+
+        deviation /oc-wave-router:wavelength-router/oc-wave-router:port-spectrum-power-profiles {
+                deviate not-supported;
+        }
+
+}

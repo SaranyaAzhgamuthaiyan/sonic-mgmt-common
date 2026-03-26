@@ -434,3 +434,26 @@ func (app *lldpApp) getRemoteSysCap(capb string, ifname string, setCap bool) {
 		}
 	}
 }
+
+func (app *lldpApp) getNamespace(path string) ([]NamespacePayload, error) {
+
+	var nameSpaceList []NamespacePayload
+
+	nameSpaceList = append(nameSpaceList, NamespacePayload{
+		Namespace: "host",
+		Payloads:  []map[string]interface{}{},
+		Key:       "",
+	})
+
+	log.Infof("LldpApp:getNamespace: nameSpaceList:%v ", nameSpaceList)
+
+	return nameSpaceList, nil
+}
+
+func (app *lldpApp) processPreparePhase(d *db.DB, ckey string) error {
+	return nil
+}
+
+func (app *lldpApp) rollback(d *db.DB) error {
+	return nil
+}

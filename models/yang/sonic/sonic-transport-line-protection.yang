@@ -1,0 +1,44 @@
+module sonic-transport-line-protection {
+  namespace "http://github.com/Azure/sonic-transport-line-protection";
+  prefix sonic-tra-lin-pro;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC TRANSPORT LINE PROTECTION";
+
+  revision 2024-06-28 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-transport-line-protection {
+    container APS {
+      description
+        "Enclosing container for list of automatic protection
+         switch modules";
+      list APS_LIST {
+        key "name";
+        leaf name {
+          type string;
+          description
+            "Reference to the component name (in the platform model)
+             corresponding to this automatic protection switch module
+             in the device";
+        }
+        leaf force-to-port {
+          type string;
+          description
+            "Explicitly set the switch to stay on a port regardless of
+             its operational condition";
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,117 @@
+module sonic-optical-time-domain-reflectometer {
+  namespace "http://github.com/Azure/sonic-optical-time-domain-reflectometer";
+  prefix sonic-opt-tim-dom-ref;
+
+  import sonic-extension {
+    prefix sonic-ext;
+  }
+
+  organization
+    "SONiC";
+  contact
+    "SONiC";
+  description
+    "SONIC OPTICAL TIME DOMAIN REFLECTOMETER";
+
+  revision 2024-06-28 {
+    description
+      "Initial revision.";
+  }
+
+  container sonic-optical-time-domain-reflectometer {
+    container OTDR {
+      sonic-ext:db-name "CONFIG_DB";
+      description
+        "Enclosing container for OTDR scan list";
+      list OTDR_LIST {
+        key "name";
+        leaf start-time {
+          type string;
+          description
+            "The start date and time of the repetition";
+        }
+        leaf period {
+          type uint32;
+          units "s";
+          description
+            "The scan period of the repetition, e.g. 60s, 15*60s, 24*60*60s";
+        }
+        leaf enable {
+          type boolean;
+          description
+            "Repetition or not. If True, then
+             periodic scan the fiber with given frequency";
+        }
+        leaf name {
+          type string;
+          description
+            "OTDR name";
+        }
+        leaf parent-port {
+          type string;
+          description
+            "OTDR scan port";
+        }
+        leaf refractive-index {
+          type decimal64 {
+            fraction-digits 4;
+          }
+          description
+            "refractive ratio";
+        }
+        leaf backscatter-index {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description
+            "backscatter ratio";
+        }
+        leaf reflection-threshold {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description
+            "reflection threshold";
+        }
+        leaf splice-loss-threshold {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description
+            "splice loss threshold";
+        }
+        leaf end-of-fiber-threshold {
+          type decimal64 {
+            fraction-digits 2;
+          }
+          description
+            "fiber end event threshold";
+        }
+        leaf pulse-width {
+          type uint32;
+          units "ns";
+          description
+            "pulse width in ns";
+        }
+        leaf average-time {
+          type uint32;
+          units "s";
+          description
+            "Average time of each scanning";
+        }
+        leaf output-frequency {
+          type uint64;
+          units "MHz";
+          description
+            "The output frequency in MHz of the OTDR";
+        }
+        leaf distance-range {
+          type uint32;
+          units "km";
+          description
+            "distance range in km";
+        }
+      }
+    }
+  }
+}

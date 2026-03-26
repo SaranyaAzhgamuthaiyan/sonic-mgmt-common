@@ -29,6 +29,7 @@ var hValue = map[string]string{"a": "1", "b": "2"}
 func newEnableCVLDB(dBNum DBNum) (*DB, error) {
 	d, e := NewDB(Options{
 		DBNo:               dBNum,
+		MDBName:            hostDBName,
 		InitIndicator:      "",
 		TableNameSeparator: "|",
 		KeySeparator:       "|",

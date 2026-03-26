@@ -8,13 +8,13 @@ module openconfig-transport-line-common {
   prefix "oc-line-com";
 
   // import some basic types
-//import iana-if-type { prefix ianaift; }
+  import iana-if-type { prefix ianaift; }
   import openconfig-extensions { prefix oc-ext; }
-//import openconfig-interfaces { prefix oc-if; }
+  import openconfig-interfaces { prefix oc-if; }
   import openconfig-platform { prefix oc-platform; }
   import openconfig-types { prefix oc-types; }
   import openconfig-transport-types { prefix oc-opt-types; }
-//import openconfig-platform-transceiver { prefix oc-transceiver; }
+  import openconfig-platform-transceiver { prefix oc-transceiver; }
 
 
   // meta

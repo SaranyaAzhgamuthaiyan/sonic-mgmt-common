@@ -21,6 +21,7 @@ package transformer
 import (
 	"github.com/Azure/sonic-mgmt-common/translib/db"
 	log "github.com/golang/glog"
+	"github.com/openconfig/ygot/ygot"
 )
 
 func xfmrHandlerFunc(inParams XfmrParams, xfmrFuncNm string, ygotCtx *ygotUnMarshalCtx) error {
@@ -142,6 +143,38 @@ func validateHandlerFunc(inParams XfmrParams, validateFuncNm string) bool {
 	result := ret[0].Interface().(bool)
 	xfmrLogDebug("Validate transformer returned %v", result)
 	return result
+}
+
+func namespaceHandlerFunc(namespaceFuncNm string, uri string, ygotRoot *ygot.GoStruct, body []byte) ([]NamespacePayload, error) {
+	var inParams XfmrParams
+	inParams.uri = uri
+	inParams.ygRoot = ygotRoot
+	inParams.body = body
+
+	ret, err := XlateFuncCall(namespaceFuncNm, inParams)
+	if err != nil {
+		return nil, err
+	}
+
+	var nsPayloads []NamespacePayload
+
+	if len(ret) > 0 && ret != nil {
+		val := ret[0].Interface()
+
+		if castedPayloads, ok := val.([]NamespacePayload); ok {
+			nsPayloads = castedPayloads
+		} else if namespaces, ok := val.([]string); ok {
+			for _, ns := range namespaces {
+				nsPayloads = append(nsPayloads, NamespacePayload{
+					Namespace: ns,
+					Payloads:  []map[string]interface{}{},
+				})
+			}
+		}
+	}
+
+	xfmrLogDebug("Namespace transformer returned %v", nsPayloads)
+	return nsPayloads, nil
 }
 
 func xfmrTblHandlerFunc(xfmrTblFunc string, inParams XfmrParams, xfmrTblKeyCache map[string]tblKeyCache) ([]string, error) {

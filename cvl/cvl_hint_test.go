@@ -30,19 +30,22 @@ var hKey = "TESTKEY"
 var hValue = map[string]string{"a": "1", "b": "2"}
 
 func TestSetHint(t *testing.T) {
-	cvSess, retCode := NewCvlSession()
-	if retCode != cvl.CVL_SUCCESS {
-		t.Fatalf("cvl.ValidationSessOpen() fails e: %v", retCode)
-	}
+	for _, dbName := range MdbNames {
+		d := configDb[dbName]
+		cvSess, retCode := NewCvlSession(d)
+		if retCode != cvl.CVL_SUCCESS {
+			t.Fatalf("cvl.ValidationSessOpen() fails e: %v", retCode)
+		}
 
-	t.Cleanup(func() { cvl.ValidationSessClose(cvSess) })
+		t.Cleanup(func() { cvl.ValidationSessClose(cvSess) })
 
-	if retCode = cvSess.StoreHint(hKey, hValue); retCode != cvl.CVL_SUCCESS {
-		t.Fatalf("cvSess.StoreHint() fails e: %v", retCode)
-	}
+		if retCode = cvSess.StoreHint(hKey, hValue); retCode != cvl.CVL_SUCCESS {
+			t.Fatalf("cvSess.StoreHint() fails e: %v", retCode)
+		}
 
-	value, ok := cvSess.LoadHint(hKey)
-	if !ok || !reflect.DeepEqual(hValue, value) {
-		t.Errorf("%v != %v", hValue, value)
+		value, ok := cvSess.LoadHint(hKey)
+		if !ok || !reflect.DeepEqual(hValue, value) {
+			t.Errorf("%v != %v", hValue, value)
+		}
 	}
 }

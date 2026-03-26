@@ -171,7 +171,8 @@ func (config *DBCacheConfig) handleReconfigureSignal() error {
 ////////////////////////////////////////////////////////////////////////////////
 
 func (config *DBCacheConfig) readFromDB() error {
-	fields, e := readRedis("TRANSLIB_DB|default")
+	var e error
+	fields, e := readRedis("TRANSLIB_DB|default", "host")
 	if e != nil {
 
 		config.PerConnection = defaultDBCacheConfig.PerConnection
@@ -199,7 +200,6 @@ func (config *DBCacheConfig) readFromDB() error {
 		for k, v := range defaultDBCacheConfig.NoCacheMaps {
 			config.NoCacheMaps[k] = v
 		}
-
 	} else {
 		for k, v := range fields {
 			switch {
