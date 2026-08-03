@@ -146,8 +146,8 @@ type subscribeInfo struct {
 	termDone bool   // Terminate message has been sent
 	q        *queue.PriorityQueue
 	stop     chan struct{}
-	sDBs     []*db.DB         //Subscription DB should be used only for keyspace notification unsubscription
-	dbs      [db.MaxDB]*db.DB //used to perform get operations
+	sDBs     []*db.DB                    //Subscription DB should be used only for keyspace notification unsubscription
+	dbs      map[string][db.MaxDB]*db.DB //used to perform get operations
 }
 
 // notificationGroup is the grouping of notificationInfo by the key pattern.
@@ -167,44 +167,84 @@ func init() {
 	cleanupMap = make(map[*db.DB]*subscribeInfo)
 }
 
+// Function to get APP module based on path and fetch the multi DB Names
+func fetchDbNames(path string, clientVer Version) ([]string, error) {
+	var nameSpaces []string
+
+	app, _, err := getAppModule(path, clientVer)
+	if err != nil {
+		return nil, err
+	}
+
+	namespacePayloads, err := (*app).getNamespace(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetching the DBNames to iterate if getNamespace returned *
+	// if keys is not present in xpath of GetRequest.
+	if len(namespacePayloads) == 1 && namespacePayloads[0].Namespace == "*" {
+		nameSpaces = db.GetMultiDbNames()
+	} else {
+		nameSpaces = append(nameSpaces, namespacePayloads[0].Namespace) //Specfic key Get operation.
+	}
+
+	return nameSpaces, err
+}
+
 // Subscribe - Subscribes to the paths requested and sends notifications when the data changes in DB
 func Subscribe(req SubscribeRequest) error {
 	sid := subscribeContextId(req.Session)
 	paths := req.Paths
 	log.Infof("[%v] Subscribe: paths = %v", sid, paths)
 
-	dbs, err := getAllDbs(withWriteDisable, withOnChange)
+	mdb, err := getAllMdbs(withWriteDisable, withOnChange)
 	if err != nil {
 		return err
 	}
 
-	sInfo := &subscribeInfo{
-		id:   sid,
-		q:    req.Q,
-		stop: req.Stop,
-		dbs:  dbs,
-	}
-
-	sCtx := subscribeContext{
-		id:      sid,
-		sInfo:   sInfo,
-		dbs:     dbs,
-		version: req.ClientVersion,
-		session: req.Session,
-		recurse: true,
-	}
-
 	for _, path := range paths {
-		err = sCtx.translateAndAddPath(path, OnChange)
-		if err != nil {
-			closeAllDbs(dbs[:])
+
+		dbNames, err := fetchDbNames(path, req.ClientVersion)
+		log.Infof("Subscribe:fetchDbNames returned:%v", dbNames)
+		if dbNames == nil {
+			log.Infof("fetchDbNames returned:%v", err)
 			return err
 		}
-	}
+		for _, dbName := range dbNames {
 
-	// Start db subscription and exit. DB objects will be
-	// closed automatically when the subscription ends.
-	err = sCtx.startSubscribe()
+			sInfo := &subscribeInfo{
+				id:   sid,
+				q:    req.Q,
+				stop: req.Stop,
+				dbs:  mdb,
+			}
+
+			sCtx := subscribeContext{
+				id:      sid,
+				sInfo:   sInfo,
+				dbs:     mdb[dbName],
+				version: req.ClientVersion,
+				session: req.Session,
+				recurse: true,
+				mdbName: dbName,
+			}
+
+			err = sCtx.translateAndAddPath(path, OnChange)
+			if err != nil {
+				closeAllMdbs(mdb)
+				return err
+			}
+			// Start db subscription and exit. DB objects will be
+			// closed automatically when the subscription ends.
+			err = sCtx.startSubscribe()
+			if err != nil {
+				closeAllMdbs(mdb)
+				return err
+			}
+		}
+	}
 
 	return err
 }
@@ -218,45 +258,57 @@ func Subscribe(req SubscribeRequest) error {
 // Client should be authorized to perform "subscribe" operation.
 func Stream(req SubscribeRequest) error {
 	sid := subscribeContextId(req.Session)
+	var sInfo *subscribeInfo
 	log.Infof("[%v] Stream: paths = %v", sid, req.Paths)
 
-	dbs, err := getAllDbs(withWriteDisable)
+	mdb, err := getAllMdbs(withWriteDisable)
 	if err != nil {
 		return err
 	}
 
-	defer closeAllDbs(dbs[:])
-
-	sc := subscribeContext{
-		id:      sid,
-		dbs:     dbs,
-		version: req.ClientVersion,
-		session: req.Session,
-	}
+	defer closeAllMdbs(mdb)
 
 	for _, path := range req.Paths {
-		err := sc.translateAndAddPath(path, Sample)
-		if err != nil {
+		dbNames, err := fetchDbNames(path, req.ClientVersion)
+		if dbNames == nil {
+			log.Infof("fetchDbNames returned:%v", err)
 			return err
 		}
-	}
 
-	sInfo := &subscribeInfo{
-		id:  sid,
-		q:   req.Q,
-		dbs: dbs,
-	}
+		for _, dbName := range dbNames {
 
-	for _, nInfo := range sc.tgtInfos {
-		err = sendInitialUpdate(sInfo, nInfo)
-		if err != nil {
-			return err
+			sc := subscribeContext{
+				id:      sid,
+				dbs:     mdb[dbName],
+				version: req.ClientVersion,
+				session: req.Session,
+			}
+
+			err = sc.translateAndAddPath(path, Sample)
+			if err != nil {
+				return err
+			}
+			sInfo = &subscribeInfo{
+				id:  sid,
+				q:   req.Q,
+				dbs: mdb,
+			}
+
+			for _, nInfo := range sc.tgtInfos {
+				err = sendInitialUpdate(sInfo, nInfo, dbName)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 
 	// Push a SyncComplete message at the end
-	sInfo.syncDone = true
-	sendSyncNotification(sInfo, false)
+	if sInfo != nil {
+		sInfo.syncDone = true
+		sendSyncNotification(sInfo, false)
+	}
+
 	return nil
 }
 
@@ -272,48 +324,58 @@ func IsSubscribeSupported(req IsSubscribeRequest) ([]*IsSubscribeResponse, error
 
 	log.Infof("[%v] IsSubscribeSupported: paths = %v", reqID, paths)
 
-	dbs, err := getAllDbs(withWriteDisable)
+	mdb, err := getAllMdbs(withWriteDisable)
 	if err != nil {
 		return resp, err
 	}
 
-	defer closeAllDbs(dbs[:])
+	defer closeAllMdbs(mdb)
 
-	sc := subscribeContext{
-		id:      reqID,
-		dbs:     dbs,
-		version: req.ClientVersion,
-		session: req.Session,
-		recurse: true,
-	}
-
-	for i, p := range paths {
-		trInfo, errApp := sc.translateSubscribe(p.Path, p.Mode)
-		if errApp != nil {
-			resp[i].Err = errApp
-			err = errApp
-			continue
+	for i, p := range req.Paths {
+		dbNames, err := fetchDbNames(p.Path, req.ClientVersion)
+		log.Infof("fetchDbNames returned:%v", dbNames)
+		if dbNames == nil {
+			log.Infof("fetchDbNames returned:%v", err)
+			return resp, err
 		}
 
-		// Split target_defined request into separate on_change and sample
-		// sub-requests if required.
-		if p.Mode == TargetDefined {
-			for _, xInfo := range trInfo.segregateSampleSubpaths() {
-				xr := newIsSubscribeResponse(p.ID, xInfo.path)
-				xr.IsSubPath = true
-				resp = append(resp, xr)
-				collectNotificationPreferences(xInfo.response.ntfAppInfoTrgt, xr)
-				collectNotificationPreferences(xInfo.response.ntfAppInfoTrgtChlds, xr)
-				xInfo.saveToSession()
+		for _, dbName := range dbNames {
+
+			sc := subscribeContext{
+				id:      reqID,
+				dbs:     mdb[dbName],
+				version: req.ClientVersion,
+				session: req.Session,
+				recurse: true,
 			}
+
+			trInfo, errApp := sc.translateSubscribe(p.Path, p.Mode)
+			if errApp != nil {
+				resp[i].Err = errApp
+				err = errApp
+				continue
+			}
+
+			// Split target_defined request into separate on_change and sample
+			// sub-requests if required.
+			if p.Mode == TargetDefined {
+				for _, xInfo := range trInfo.segregateSampleSubpaths() {
+					xr := newIsSubscribeResponse(p.ID, xInfo.path)
+					xr.IsSubPath = true
+					resp = append(resp, xr)
+					collectNotificationPreferences(xInfo.response.ntfAppInfoTrgt, xr)
+					collectNotificationPreferences(xInfo.response.ntfAppInfoTrgtChlds, xr)
+					xInfo.saveToSession()
+				}
+			}
+
+			r := resp[i]
+			collectNotificationPreferences(trInfo.response.ntfAppInfoTrgt, r)
+			collectNotificationPreferences(trInfo.response.ntfAppInfoTrgtChlds, r)
+			trInfo.saveToSession()
+
 		}
-
-		r := resp[i]
-		collectNotificationPreferences(trInfo.response.ntfAppInfoTrgt, r)
-		collectNotificationPreferences(trInfo.response.ntfAppInfoTrgtChlds, r)
-		trInfo.saveToSession()
 	}
-
 	log.Infof("[%v] IsSubscribeSupported: returning %d IsSubscribeResponse; err=%v", reqID, len(resp), err)
 	if log.V(5) {
 		for i, r := range resp {
@@ -364,7 +426,7 @@ func collectNotificationPreferences(nAppInfos []*notificationAppInfo, resp *IsSu
 
 func startDBSubscribe(opt db.Options, nGroups map[db.TableSpec]*notificationGroup, sInfo *subscribeInfo) error {
 	var sKeyList []*db.SKey
-	d := sInfo.dbs[int(opt.DBNo)]
+	d := sInfo.dbs[opt.MDBName][int(opt.DBNo)]
 
 	for tSpec, nGroup := range nGroups {
 		skeys := nGroup.toSKeys()
@@ -378,6 +440,7 @@ func startDBSubscribe(opt db.Options, nGroups map[db.TableSpec]*notificationGrou
 
 		sKeyList = append(sKeyList, skeys...)
 
+		log.Info("Calling RegisterTableForOnChangeCaching..")
 		d.RegisterTableForOnChangeCaching(&tSpec)
 	}
 
@@ -394,6 +457,7 @@ func startDBSubscribe(opt db.Options, nGroups map[db.TableSpec]*notificationGrou
 type subscribeContext struct {
 	id      string // context id
 	dbs     [db.MaxDB]*db.DB
+	mdbName string
 	version Version
 	session *SubscribeSession
 	sInfo   *subscribeInfo
@@ -439,6 +503,7 @@ func (sc *subscribeContext) translateAndAddPath(path string, mode NotificationTy
 	// Group nInfo by table and key pattern for OnChange.
 	// Required for registering db subscriptions.
 	if mode == OnChange {
+		log.Infof("Mode: ON CHANGE")
 		if sc.dbNInfos == nil {
 			sc.dbNInfos = make(map[db.DBNum]map[db.TableSpec]*notificationGroup)
 		}
@@ -455,6 +520,7 @@ func (sc *subscribeContext) translateAndAddPath(path string, mode NotificationTy
 
 func (sc *subscribeContext) startSubscribe() error {
 	var err error
+	log.Info("In startSubscribe")
 
 	sMutex.Lock()
 	defer sMutex.Unlock()
@@ -465,6 +531,7 @@ func (sc *subscribeContext) startSubscribe() error {
 
 	for dbno, nGroups := range sc.dbNInfos {
 		opt := getDBOptions(dbno, withWriteDisable)
+		opt.MDBName = sc.mdbName
 		err = startDBSubscribe(opt, nGroups, sInfo)
 
 		if err != nil {
@@ -475,7 +542,7 @@ func (sc *subscribeContext) startSubscribe() error {
 	}
 
 	for _, nInfo := range sc.tgtInfos {
-		err := sendInitialUpdate(sInfo, nInfo)
+		err := sendInitialUpdate(sInfo, nInfo, sc.mdbName)
 		if err != nil {
 			log.Warningf("[%v] init sync failed -- %v", sInfo.id, err)
 			cleanup(sInfo.stop)
@@ -935,7 +1002,16 @@ func cleanup(stop chan struct{}) {
 		}
 
 		sInfo.sDBs = nil
-		closeAllDbs(sInfo.dbs[:])
+		for _, dbName := range db.GetMultiDbNames() {
+			if dbArray, exists := sInfo.dbs[dbName]; exists {
+				dbSlice := dbArray[:]
+
+				// Close all databases in the slice
+				closeAllDbs(dbSlice)
+			} else {
+				log.Warningf("DB name not found in sInfo.dbs: %s", dbName)
+			}
+		}
 
 		delete(stopMap, stop)
 	}

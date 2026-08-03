@@ -96,26 +96,28 @@ func verifyGet(t *testing.T, req GetRequest, expJson string, expError bool) {
 	}
 
 	var respJson []byte
-	if req.FmtType == TRANSLIB_FMT_YGOT && response.ValueTree != nil {
-		respJson, err = dumpIetfJson(response.ValueTree)
-		if err != nil {
-			t.Fatalf("GET %s returned invalid YGOT. error=%v", req.Path, err)
+	for _, resp := range response {
+		if req.FmtType == TRANSLIB_FMT_YGOT && resp.ValueTree != nil {
+			respJson, err = dumpIetfJson(resp.ValueTree)
+			if err != nil {
+				t.Fatalf("GET %s returned invalid YGOT. error=%v ", req.Path, err)
+			}
+		} else if req.FmtType == TRANSLIB_FMT_IETF_JSON {
+			respJson = resp.Payload
 		}
-	} else if req.FmtType == TRANSLIB_FMT_IETF_JSON {
-		respJson = response.Payload
-	}
 
-	var jResponse, jExpected map[string]interface{}
-	if err := json.Unmarshal(respJson, &jResponse); err != nil {
-		t.Fatalf("invalid response json; err = %v\npayload = %s", err, respJson)
-	}
-	if err := json.Unmarshal([]byte(expJson), &jExpected); err != nil {
-		t.Fatalf("invalid expected json; err = %v", err)
-	}
-	if !reflect.DeepEqual(jResponse, jExpected) {
-		t.Errorf("GET %s returned invalid response", req.Path)
-		t.Errorf("Expected: %s", expJson)
-		t.Fatalf("Received: %s", respJson)
+		var jResponse, jExpected map[string]interface{}
+		if err := json.Unmarshal(respJson, &jResponse); err != nil {
+			t.Fatalf("invalid response json; err = %v\npayload = %s", err, respJson)
+		}
+		if err := json.Unmarshal([]byte(expJson), &jExpected); err != nil {
+			t.Fatalf("invalid expected json; err = %v", err)
+		}
+		if !reflect.DeepEqual(jResponse, jExpected) {
+			t.Errorf("GET %s returned invalid response", req.Path)
+			t.Errorf("Expected: %s", expJson)
+			t.Fatalf("Received: %s", respJson)
+		}
 	}
 }
 
@@ -152,6 +154,7 @@ func processDeleteRequest(url string) func(*testing.T) {
 func getConfigDb() *db.DB {
 	configDb, _ := db.NewDB(db.Options{
 		DBNo:               db.ConfigDB,
+		MDBName:            "host",
 		TableNameSeparator: "|",
 		KeySeparator:       "|",
 	})

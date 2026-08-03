@@ -515,3 +515,26 @@ func GetYangPath() string {
 func GetYangModuleSetID() string {
 	return GetYangBundleVersion().String()
 }
+
+func (app *yanglibApp) getNamespace(path string) ([]NamespacePayload, error) {
+
+	var nameSpaceList []NamespacePayload
+
+	nameSpaceList = append(nameSpaceList, NamespacePayload{
+		Namespace: "host",
+		Payloads:  []map[string]interface{}{},
+		Key:       "",
+	})
+
+	glog.Infof("yanglibApp:getNamespace: nameSpaceList:%v ", nameSpaceList)
+
+	return nameSpaceList, nil
+}
+
+func (app *yanglibApp) processPreparePhase(d *db.DB, ckey string) error {
+	return nil
+}
+
+func (app *yanglibApp) rollback(d *db.DB) error {
+	return nil
+}

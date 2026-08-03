@@ -102,7 +102,10 @@ Example:
 package db
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	//	"reflect"
@@ -117,16 +120,88 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
+var (
 	DefaultRedisUNIXSocket  string = "/var/run/redis/redis.sock"
 	DefaultRedisLocalTCPEP  string = "localhost:6379"
 	DefaultRedisRemoteTCPEP string = "127.0.0.1:6379"
 	DefaultRedisUNIXNetwork string = "unix"
 	DefaultRedisTCPNetwork  string = "tcp"
+	DefaultAsicConfFilePath        = "/usr/share/sonic/platform/asic.conf"
+	DefaultGlobalDbFilePath        = "/var/run/redis/sonic-db/database_global.json"
+	NumAsic                        = 1
+	GlobalKeySeperator             = ""
 )
 
+type DbGlobal struct {
+	Includes     []DbInclude `json:"INCLUDES"`
+	Version      string      `json:"VERSION"`
+	KeySeperator string      `json:"KEY_SEPERATOR"`
+}
+
+type DbInclude struct {
+	Include   string `json:"include"`
+	Namespace string `json:"namespace"`
+}
+
 func init() {
-	dbConfigInit()
+	initAllDbs()
+}
+
+func initAllDbs() {
+	if os.Getenv("REDIS_LOCAL_TCP_EP") != "" {
+		DefaultRedisLocalTCPEP = os.Getenv("REDIS_LOCAL_TCP_EP")
+	}
+
+	dbConfigPath := "/var/run/redis/sonic-db/database_config.json"
+	if path, ok := os.LookupEnv("DB_CONFIG_PATH"); ok {
+		dbConfigPath = path
+	}
+
+	if path, ok := os.LookupEnv("ASIC_CONFIG_PATH"); ok {
+		DefaultAsicConfFilePath = path
+	}
+
+	if path, ok := os.LookupEnv("DB_GLOBAL_CONFIG_PATH"); ok {
+		DefaultGlobalDbFilePath = path
+	}
+
+	NumAsic = getNumAsic()
+
+	if !isMultiAsic() {
+		dbConfigInit(dbConfigPath, "host")
+	} else {
+		globalDbInfo := loadGlobalDatabase(DefaultGlobalDbFilePath)
+		for namespace, path := range globalDbInfo {
+			dbConfigInit(path, namespace)
+		}
+	}
+}
+
+func loadGlobalDatabase(globalDbFilePath string) map[string]string {
+	var globalDbCfg DbGlobal
+
+	data, err := os.ReadFile(globalDbFilePath)
+	if err != nil {
+		assert(err)
+	} else {
+		err = json.Unmarshal([]byte(data), &globalDbCfg)
+		if err != nil {
+			assert(err)
+		}
+	}
+
+	var dbConfigMap = make(map[string]string)
+	var pwd = filepath.Dir(globalDbFilePath) + "/"
+	for i := 0; i < len(globalDbCfg.Includes); i++ {
+		if i == 0 {
+			dbConfigMap["host"] = pwd + globalDbCfg.Includes[0].Include
+		} else {
+			include := globalDbCfg.Includes[i]
+			dbConfigMap[include.Namespace] = pwd + include.Include
+		}
+	}
+	GlobalKeySeperator = globalDbCfg.KeySeperator
+	return dbConfigMap
 }
 
 // DBNum type indicates the type of DB (Eg: ConfigDB, ApplDB, ...).
@@ -152,17 +227,19 @@ func (dbNo DBNum) String() string {
 }
 
 // ID returns the redis db id for this DBNum
-func (dbNo DBNum) ID() int {
+func (dbNo DBNum) ID(MDBName string) int {
 	name := getDBInstName(dbNo)
 	if len(name) == 0 {
 		panic("Invalid DBNum " + fmt.Sprintf("%d", dbNo))
 	}
+	name = name + "." + MDBName
 	return getDbId(name)
 }
 
 // Options gives parameters for opening the redis client.
 type Options struct {
 	DBNo               DBNum
+	MDBName            string
 	InitIndicator      string
 	TableNameSeparator string //Overriden by the DB config file's separator.
 	KeySeparator       string //Overriden by the DB config file's separator.
@@ -384,7 +461,7 @@ func GetdbNameToIndex(dbName string) DBNum {
 	return dbIndex
 }
 
-// NewDB is the factory method to create new DB's.
+// NewDB for Multi Asic
 func NewDB(opt Options) (*DB, error) {
 
 	var e error
@@ -506,7 +583,7 @@ func NewDB(opt Options) (*DB, error) {
 	if opt.DBNo == ConfigDB && !opt.IsSession &&
 		!opt.IsWriteDisabled && !opt.ConfigDBLazyLock {
 
-		if e = ConfigDBTryLock(noSessionToken); e != nil {
+		if e = ConfigDBTryLock(noSessionToken, opt.MDBName); e != nil {
 			glog.Errorf("NewDB: ConfigDB possibly locked: %s", e)
 			d.client.Close()
 			goto NewDBExit
@@ -532,7 +609,6 @@ NewDBExit:
 	if glog.V(3) {
 		glog.Info("NewDB: End: d: ", d, " e: ", e)
 	}
-
 	return &d, e
 }
 
@@ -547,7 +623,7 @@ func (d *DB) DeleteDB() error {
 
 	// Release the ConfigDB Lock if we placed on in NewDB()
 	if d.configDBLocked {
-		ConfigDBUnlock(noSessionToken)
+		ConfigDBUnlock(noSessionToken, d.Opts.MDBName)
 		d.configDBLocked = false
 	}
 
@@ -1082,7 +1158,7 @@ func (d *DB) doWrite(ts *TableSpec, op _txOp, k Key, val interface{}) error {
 	}
 
 	if d.Opts.DBNo == ConfigDB && !d.Opts.IsSession && !d.configDBLocked {
-		if e = ConfigDBTryLock(noSessionToken); e != nil {
+		if e = ConfigDBTryLock(noSessionToken, d.Opts.MDBName); e != nil {
 			glog.Errorf("doWrite: ConfigDB possibly locked: %s", e)
 			goto doWriteExit
 		}
@@ -1266,10 +1342,8 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 	var valueComplement Value = Value{Field: make(map[string]string, len(value.Field))}
 	var valueCurrent Value
 
-	if glog.V(3) {
-		glog.Info("setEntry: Begin: ", d.Name(), ": ts: ", ts, " key: ", key,
-			" value: ", value, " isCreate: ", isCreate)
-	}
+	glog.Info("setEntry: Begin: ", d.Name(), ": ts: ", ts, " key: ", key,
+		" value: ", value, " isCreate: ", isCreate)
 
 	if len(value.Field) == 0 {
 		if ts.NoDelete {
@@ -1298,9 +1372,7 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 	}
 
 	if !isCreate && e == nil {
-		if glog.V(3) {
-			glog.Info("setEntry: DoCVL for UPDATE")
-		}
+		glog.Info("setEntry: DoCVL for UPDATE")
 		if len(valueComplement.Field) == 0 {
 			e = d.doCVL(ts, []cmn.CVLOperation{cmn.OP_UPDATE},
 				key, []Value{value})
@@ -1309,9 +1381,7 @@ func (d *DB) setEntry(ts *TableSpec, key Key, value Value, isCreate bool) error 
 				key, []Value{value, valueComplement})
 		}
 	} else {
-		if glog.V(3) {
-			glog.Info("setEntry: DoCVL for CREATE")
-		}
+		glog.Info("setEntry: DoCVL for CREATE")
 		e = d.doCVL(ts, []cmn.CVLOperation{cmn.OP_CREATE}, key, []Value{value})
 	}
 
@@ -1721,9 +1791,7 @@ SkipWatch:
 
 // CommitTx method is used by infra to commit a check-and-set Transaction.
 func (d *DB) commitTx() error {
-	if glog.V(3) {
-		glog.Info("CommitTx: Begin:")
-	}
+	glog.Infof("CommitTx: Begin::%v", d)
 
 	var e error = nil
 	var tsmap map[TableSpec]bool = make(map[TableSpec]bool, len(d.txCmds)) // UpperBound
@@ -1764,10 +1832,12 @@ func (d *DB) commitTx() error {
 		glog.Warning("CommitTx: Do: MULTI e: ", e.Error())
 		goto CommitTxExit
 	}
+	glog.Infof("CommitTx:d.txCmds):%v ", d.txCmds)
 
 	// For each cmd in txCmds
 	//   Invoke it
 	for i := 0; i < len(d.txCmds); i++ {
+		glog.Infof("CommitTx:inside for loop :%v ", i)
 
 		var args []interface{}
 

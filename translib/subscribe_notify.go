@@ -50,9 +50,10 @@ type notificationEvent struct {
 	// Meta info for processSubscribe calls
 	forceProcessSub bool
 	appCache        map[*appInfo]appInterface
+	mdbName         string
 }
 
-func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) error {
+func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent, dbName string) error {
 	nid := fmt.Sprintf("n%d", dbNotificationCounter.Next())
 	log.Infof("[%v] notificationHandler: d=%v, table=%v, kayPattern=%v, key=%v, event=%v",
 		nid, dbInfo(d), tableInfo(sKey.Ts), keyInfo(sKey.Key), keyInfo(key), event)
@@ -64,10 +65,11 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 	case db.SEventHSet, db.SEventHDel, db.SEventDel:
 		if nGrup, ok := sKey.Opaque.(*notificationGroup); ok {
 			n := notificationEvent{
-				id:    nid,
-				event: event,
-				key:   key,
-				nGrup: nGrup,
+				id:      nid,
+				event:   event,
+				key:     key,
+				nGrup:   nGrup,
+				mdbName: dbName,
 			}
 			n.process()
 		} else {
@@ -95,10 +97,11 @@ func notificationHandler(d *db.DB, sKey *db.SKey, key *db.Key, event db.SEvent) 
 //  1. Scan all keys for the table
 //  2. Map each key to yang path
 //  3. Get value for each path and send the notification message
-func sendInitialUpdate(sInfo *subscribeInfo, nInfo *notificationInfo) error {
+func sendInitialUpdate(sInfo *subscribeInfo, nInfo *notificationInfo, dbName string) error {
 	ne := notificationEvent{
-		id:    sInfo.id,
-		sInfo: sInfo,
+		id:      sInfo.id,
+		sInfo:   sInfo,
+		mdbName: dbName,
 	}
 
 	pathStr := path.String(nInfo.path)
@@ -122,7 +125,7 @@ func sendInitialUpdate(sInfo *subscribeInfo, nInfo *notificationInfo) error {
 
 	// DB path.. iterate over keys and generate notification for each.
 
-	d := sInfo.dbs[int(nInfo.dbno)]
+	d := sInfo.dbs[dbName][int(nInfo.dbno)]
 	scanType := db.KeyScanType
 	if len(nInfo.fldScanPatt) > 0 {
 		scanType = db.FieldScanType
@@ -325,17 +328,19 @@ func (ne *notificationEvent) process() {
 // DiffAndMergeOnChangeCache Compare modified entry with cached entry and
 // return modified fields. Also update the cache with changes.
 func (ne *notificationEvent) DiffAndMergeOnChangeCache() (*apis.EntryDiff, error) {
+	log.Infof("In DiffAndMergeOnChangeCache:")
 	var nInfo *notificationInfo
 	for _, n := range ne.nGrup.nInfos {
 		nInfo = n[0] // Pick any one nInfo from notificationGroup to read dbno and table spec
 		break
 	}
+
 	if nInfo == nil {
 		return nil, nil
 	}
 
 	ts := nInfo.table
-	d := nInfo.sInfo.dbs[nInfo.dbno] // FIXME do not assume all nInfos belong to same sInfo
+	d := nInfo.sInfo.dbs[ne.mdbName][nInfo.dbno] // FIXME do not assume all nInfos belong to same sInfo
 	var oldValue, newValue db.Value
 	var err error
 
@@ -482,10 +487,6 @@ func (ne *notificationEvent) createYangPathInfos(nInfo *notificationInfo, fields
 					leafName:     leaf,
 					deleted:      isDelete,
 				})
-				// If nInfo is for a leaf path, do not add multiple updates.
-				if nInfo.flags.Has(niLeafPath) {
-					return yInfos
-				}
 				continue
 			}
 			// DB field mapped to multiple leaf nodes -- a comma separated value
@@ -508,10 +509,10 @@ func (ne *notificationEvent) invokeAppHandler(nInfo *notificationInfo, entryDiff
 	log.V(2).Infof("[%s] invoking custom handler: %v", ne.id, nInfo.handler)
 	nc := apis.NotificationContext{
 		Path:      path.Clone(nInfo.path),
-		Db:        ne.sInfo.dbs[int(nInfo.dbno)],
+		Db:        ne.sInfo.dbs[ne.mdbName][int(nInfo.dbno)],
 		Table:     nInfo.table,
 		Key:       ne.key,
-		AllDb:     ne.sInfo.dbs,
+		AllDb:     ne.sInfo.dbs[ne.mdbName],
 		EntryDiff: *entryDiff,
 		Opaque:    nInfo.opaque,
 	}
@@ -537,7 +538,7 @@ func (ne *notificationEvent) getValue(nInfo *notificationInfo, path string) (ygo
 	var payload ygot.ValidatedGoStruct
 	app := ne.getApp(nInfo)
 	appInfo := nInfo.appInfo
-	dbs := ne.sInfo.dbs
+	dbs := ne.sInfo.dbs[ne.mdbName]
 
 	err := appInitialize(&app, appInfo, path, nil, &appOptions{}, GET)
 
@@ -582,7 +583,7 @@ func (ne *notificationEvent) processSubscribe(nInfo *notificationInfo, subpath s
 		table:  nInfo.table,
 		key:    ne.key,
 		entry:  ne.entry,
-		dbs:    ne.sInfo.dbs,
+		dbs:    ne.sInfo.dbs[ne.mdbName],
 		opaque: nInfo.opaque,
 		path:   path.Clone(inPath),
 	}

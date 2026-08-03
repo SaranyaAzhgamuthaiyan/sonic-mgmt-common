@@ -63,7 +63,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	// Create test cases
 
 	t.Run("create_all", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -78,7 +79,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("create_without_min0", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -91,7 +93,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("create_without_min1", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -103,7 +106,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("create_without_min4", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -115,7 +119,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("create_more_than_max", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -128,7 +133,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("create_less_than_min", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_CREATE,
@@ -143,7 +149,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	// update cases
 
 	t.Run("update_without_minmax", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -155,7 +162,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_min0", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -168,7 +176,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_to_min1", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -181,7 +190,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_to_min4", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -193,7 +203,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_to_max", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -206,7 +217,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_more_than_max", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -219,7 +231,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_less_than_min", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -232,7 +245,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_to_empty1", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -245,7 +259,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("update_to_empty4", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_UPDATE,
@@ -258,7 +273,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	// delete cases
 
 	t.Run("delete_without_minmax", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_DELETE,
@@ -269,7 +285,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("delete_min0", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_DELETE,
@@ -280,7 +297,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("delete_min1", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_DELETE,
@@ -291,7 +309,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("delete_min4", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			VType: VALIDATE_ALL,
 			VOp:   OP_DELETE,
@@ -304,7 +323,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	// replace cases
 
 	t.Run("replace_no_constraints2", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,
@@ -322,7 +342,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("replace_remove_min0", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,
@@ -340,7 +361,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("replace_remove_min1", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,
@@ -358,7 +380,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("replace_remove_min4", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,
@@ -376,7 +399,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("replace_set_more_than_max", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,
@@ -394,7 +418,8 @@ func TestValidateEditConfig_Leaflist_MinMax(t *testing.T) {
 	})
 
 	t.Run("replace_set_less_than_min", func(tt *testing.T) {
-		c := NewTestSession(tt)
+		d := getMDBInstance(hostDBName)
+		c := NewTestSession(tt, d)
 		res, _ := c.ValidateEditConfig([]CVLEditConfigData{{
 			ReplaceOp: true,
 			VType:     VALIDATE_ALL,

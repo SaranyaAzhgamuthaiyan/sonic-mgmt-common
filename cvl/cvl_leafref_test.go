@@ -57,7 +57,8 @@ func TestValidateEditConfig_Create_Chained_Leafref_DepData_Positive(t *testing.T
 		},
 	})
 
-	cvSess, _ := NewCvlSession()
+	d := getMDBInstance(hostDBName)
+	cvSess, _ := NewCvlSession(d)
 
 	cfgDataVlan := []cmn.CVLEditConfigData{
 		cmn.CVLEditConfigData{
@@ -389,7 +390,8 @@ func TestValidateEditConfig_Delete_Leafref(t *testing.T) {
 
 func deletePO(poId int, expSuccess bool) func(*testing.T) {
 	return func(t *testing.T) {
-		session, _ := NewCvlSession()
+		d := getMDBInstance(hostDBName)
+		session, _ := NewCvlSession(d)
 		defer cvl.ValidationSessClose(session)
 		validateDeletePO(t, session, nil, poId, expSuccess)
 	}
@@ -397,7 +399,8 @@ func deletePO(poId int, expSuccess bool) func(*testing.T) {
 
 func deleteACLAndPO(aclName, ports string, poId int, bulk, expSuccess bool) func(*testing.T) {
 	return func(t *testing.T) {
-		session, _ := NewCvlSession()
+		d := getMDBInstance(hostDBName)
+		session, _ := NewCvlSession(d)
 		defer cvl.ValidationSessClose(session)
 		var cfgData []cmn.CVLEditConfigData
 

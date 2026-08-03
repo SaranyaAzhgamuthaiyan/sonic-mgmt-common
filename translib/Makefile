@@ -94,7 +94,7 @@ endif
 .SECONDEXPANSION:
 
 $(FORMAT_CHECK): $(SRCS) $(SRCX) $(TESTS) | $(YGOT_BINDS) $$(@D)/.
-	$(TOPDIR)/tools/test/format-check.sh \
+	$(TOPDIR)/tools/test/format-check.sh -v \
 		--log=$(TRANSLIB_BLD)/formatcheck.log \
 		$?
 	touch $@

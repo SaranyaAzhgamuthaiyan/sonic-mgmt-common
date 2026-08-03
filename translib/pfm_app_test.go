@@ -62,7 +62,7 @@ func init() {
 
 // This will test GET on /openconfig-platform:components
 func Test_PfmApp_TopLevelPath(t *testing.T) {
-	url := "/openconfig-platform:components"
+	url := "/openconfig-platform:components/component[name=System Eeprom]"
 
 	t.Run("Default_Response_Top_Level", processGetRequest(url, bulkPfmShowDefaultResponse, false))
 
@@ -119,6 +119,7 @@ func createPfmFactoryDb() error {
 func getStateDB() *db.DB {
 	stateDb, _ := db.NewDB(db.Options{
 		DBNo:               db.StateDB,
+		MDBName:            "host",
 		InitIndicator:      "STATE_DB_INITIALIZED",
 		TableNameSeparator: "|",
 		KeySeparator:       "|",
@@ -130,6 +131,6 @@ func getStateDB() *db.DB {
 /***************************************************************************/
 ///////////                  JSON Data for Tests              ///////////////
 /***************************************************************************/
-var bulkPfmShowDefaultResponse string = "{\"openconfig-platform:components\":{\"component\":[{\"name\":\"System Eeprom\",\"state\":{\"empty\":false,\"location\":\"Slot 1\",\"name\":\"System Eeprom\",\"oper-status\":\"openconfig-platform-types:ACTIVE\",\"removable\":false}}]}}"
+var bulkPfmShowDefaultResponse string = "{\"openconfig-platform:component\":[{\"name\":\"System Eeprom\",\"state\":{\"empty\":false,\"location\":\"Slot 1\",\"name\":\"System Eeprom\",\"oper-status\":\"openconfig-platform-types:ACTIVE\",\"removable\":false}}]}"
 
-var bulkPfmShowAllJsonResponse string = "{\"openconfig-platform:components\":{\"component\":[{\"name\":\"System Eeprom\",\"state\":{\"description\":\"" + TEST_PLATFORM_NAME + "\",\"empty\":false,\"id\":\"" + TEST_PRODUCT_NAME + "\",\"location\":\"Slot 1\",\"mfg-name\":\"" + TEST_MANUF_NAME + "\",\"name\":\"System Eeprom\",\"oper-status\":\"openconfig-platform-types:ACTIVE\",\"part-no\":\"" + TEST_PART_NUMBER + "\",\"removable\":false,\"serial-no\":\"" + TEST_SERVICE_TAG + "\"}}]}}"
+var bulkPfmShowAllJsonResponse string = "{\"openconfig-platform:component\":[{\"name\":\"System Eeprom\",\"state\":{\"description\":\"" + TEST_PLATFORM_NAME + "\",\"empty\":false,\"id\":\"" + TEST_PRODUCT_NAME + "\",\"location\":\"Slot 1\",\"mfg-name\":\"" + TEST_MANUF_NAME + "\",\"name\":\"System Eeprom\",\"oper-status\":\"openconfig-platform-types:ACTIVE\",\"part-no\":\"" + TEST_PART_NUMBER + "\",\"removable\":false,\"serial-no\":\"" + TEST_SERVICE_TAG + "\"}}]}"
